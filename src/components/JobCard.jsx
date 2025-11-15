@@ -1,7 +1,7 @@
 function JobCard({ title, salary, location, experience, skills }) {
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300"
+      className="bg-gray-200 border rounded-lg shadow-lg hover:shadow-green-100 overflow-hidden hover:border-green-600 hover:bg-white transition duration-300"
       data-aos="fade-up"
     >
       <div className="p-4">
@@ -13,7 +13,7 @@ function JobCard({ title, salary, location, experience, skills }) {
         <p className="text-gray-600 mb-1">📍 {location}</p>
         <p className="text-gray-600 mb-1">🧠 {experience} kinh nghiệm</p>
         <p className="text-gray-600 mb-3">🔧 Kỹ năng: {skills}</p>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button className="bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700">
           Ứng tuyển ngay
         </button>
       </div>

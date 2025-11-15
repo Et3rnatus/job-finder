@@ -22,7 +22,6 @@ function App() {
     <div className="bg-white min-h-screen">
       <Navbar />
       <HeroSection />
-      {/* Container căn giữa nội dung */}
       <main className="max-w-[1200px] mx-auto px-4">
         <JobList />
         <KeyIndustries />

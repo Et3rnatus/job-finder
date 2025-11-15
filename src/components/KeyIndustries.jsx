@@ -19,7 +19,7 @@ function KeyIndustries() {
         {industries.map((item, index) => (
           <div
             key={index}
-            className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-all duration-300"
+            className="bg-gray-200 border rounded-lg shadow-lg hover:shadow-green-100 p-4 text-center hover:border-green-600 hover:bg-white transition-all duration-300"
             data-aos="fade-up"
           >
             <div className="text-4xl mb-2">{item.icon}</div>

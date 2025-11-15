@@ -32,6 +32,9 @@ function Navbar() {
           <button className="bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700 font-semibold">
             Đăng nhập
           </button>
+          <button className="bg-gray-100 text-black px-4 py-2 rounded-full hover:bg-gray-200 font-semibold">
+            Đăng tuyển & tìm hồ sơ
+          </button>
         </div>
       </div>
     </nav>
