@@ -2,15 +2,15 @@ function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 py-12 px-6" data-aos="fade-up">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-        {/* Địa chỉ */}
+        {/* Code địa chỉ*/}
         <div data-aos="fade-up" data-aos-delay="100">
           <h3 className="text-white text-lg font-semibold mb-4">Địa chỉ</h3>
           <p>JobFinder Việt Nam</p>
-          <p>4329 Đường Nguyễn Văn Cừ</p>
-          <p>Quận 5, TP. Hồ Chí Minh</p>
+          <p>180 Cao Lỗ</p>
+          <p>Phường 4, Quận 8, TP. Hồ Chí Minh</p>
         </div>
 
-        {/* Liên kết nhanh */}
+        {/* Code liên kết nhanh */}
         <div data-aos="fade-up" data-aos-delay="200">
           <h3 className="text-white text-lg font-semibold mb-4">
             Liên kết nhanh
@@ -63,7 +63,7 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Đăng ký nhận tin */}
+        {/* Form nhập Email đăng ký nhận tin */}
         <div data-aos="fade-up" data-aos-delay="400">
           <h3 className="text-white text-lg font-semibold mb-4">
             Đăng ký nhận tin
@@ -88,7 +88,7 @@ function Footer() {
         data-aos="fade-up"
         data-aos-delay="500"
       >
-        © 2025. JobFinder Việt Nam. Thiết kế bởi Trần cho luận văn tốt nghiệp.
+        © 2025. JobFinder Việt Nam.
       </div>
     </footer>
   );
