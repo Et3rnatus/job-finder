@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
@@ -10,7 +9,6 @@ import JobList from "./components/JobList";
 import Footer from "./components/Footer";
 import KeyIndustries from "./components/KeyIndustries";
 import TopCompanies from "./components/TopCompanies";
-import LoginPage from "./pages/LoginPage";
 
 function App() {
   useEffect(() => {
