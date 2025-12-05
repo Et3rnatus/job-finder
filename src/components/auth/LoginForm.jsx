@@ -1,18 +1,20 @@
+import { Link } from "react-router-dom";
+
 function LoginForm() {
   return (
-    <div className="max-w-md mx-auto mt-20 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+    <div className="max-w-4xl mx-auto mt-20 my-40 bg-white p-10 rounded-lg shadow-md">
+      <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
         Chào mừng bạn quay trở lại
       </h2>
 
-      <form className="space-y-4">
+      <form className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Email
           </label>
           <input
             type="email"
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             placeholder="Nhập email của bạn"
           />
         </div>
@@ -23,7 +25,7 @@ function LoginForm() {
           </label>
           <input
             type="password"
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             placeholder="Nhập mật khẩu"
           />
         </div>
@@ -31,12 +33,19 @@ function LoginForm() {
         <div className="text-right text-sm text-blue-600 hover:underline cursor-pointer">
           Quên mật khẩu?
         </div>
+
         <button
           type="submit"
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+          className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 transition font-semibold"
         >
           Đăng nhập
         </button>
+        <div className="text-center text-sm mt-4">
+          <span className="text-gray-700">Bạn chưa có tài khoản? </span>
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Đăng ký
+          </Link>
+        </div>
       </form>
     </div>
   );
