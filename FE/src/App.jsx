@@ -4,10 +4,10 @@ import "aos/dist/aos.css";
 
 import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import "./App.css";
-  // Component Imports
+
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
-// Page Imports
+
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";  
 import RegisterPage from "./pages/RegisterPage";
