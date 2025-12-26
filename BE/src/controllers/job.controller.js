@@ -27,6 +27,21 @@ exports.getJobs = async (req, res) => {
     }
 };
 
+exports.searchJobs = async (req, res) => {
+    const {keyword='', location=''} = req.query;
+
+    try{
+        const [rows] = await pool.query(
+            'SELECT id,title,location,min_salary,max_salary FROM job WHERE title LIKE ? AND location LIKE ? ORDER BY created_at DESC',
+            [`%${keyword}%`, `%${location}%`]
+        );
+        res.json(rows);
+    }
+    catch (err) {
+        res.status(500).json({error: err.message});
+    }
+};
+
 exports.getJobDetail = async (req, res) => {
     const {id} = req.params;
 

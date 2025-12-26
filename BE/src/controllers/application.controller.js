@@ -34,6 +34,31 @@ exports.applyJob = async (req, res) => {
     }
 };
 
+exports.updateStatus = async (req, res) => {
+    const {id}=req.params;
+    const {status}=req.body;
+
+    const allowedStatuses = ['PENDING', 'ACCEPTED', 'REJECTED'];
+    if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    try{
+        const [result] = await pool.query(
+            'UPDATE application SET status = ? WHERE id = ?',
+            [status, id]
+        );
+
+        if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Application not found' });
+        }
+        res.json({message:'Status Updated Successfully'});  
+    }
+    catch (error) {
+        res.status(500).json({error:error.message});
+    }
+}; 
+
 exports.getByCandidate = async (req, res) => {
     const {candidate_id} = req.params;
 
@@ -47,3 +72,4 @@ exports.getByCandidate = async (req, res) => {
         res.status(500).json({error:error.message});
     }
 };
+
