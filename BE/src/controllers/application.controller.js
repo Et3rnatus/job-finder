@@ -15,10 +15,22 @@ exports.applyJob = async (req, res) => {
                 'PENDING'
             ]
         );
+        const [[employer]] = await pool.query(
+            'SELECT u.id as user_id FROM job j JOIN employer e ON j.employer_id = e.id JOIN users u ON e.user_id = u.id WHERE j.id = ?',
+            [job_id]
+        );
+        await pool.query(
+            'INSERT INTO notification(id,user_id,message,is_read,created_at) VALUES (?, ?, ?, ?, NOW())',
+            [
+                uuidv4(),
+                employer.user_id,
+                'New Job Application',0
+            ]
+        );  
         res.json({message:'Apply Successfully'}); 
     } 
     catch (error) {
-        res.status(500).json({error:message.error});
+        res.status(500).json({error:error.message});
     }
 };
 

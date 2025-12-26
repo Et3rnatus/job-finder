@@ -5,6 +5,7 @@ const authRoutes = require('./routes/auth.routes');
 const jobRoutes = require('./routes/job.routes');
 const applicationRoutes = require('./routes/application.routes');
 const saveJobRoutes = require('./routes/saveJob.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 console.log('APP.JS LOADED');
 
@@ -16,6 +17,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/saved-jobs', saveJobRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/health', (req, res) => {
   console.log('HIT /health');
