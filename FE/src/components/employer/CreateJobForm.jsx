@@ -29,7 +29,7 @@ function CreateJobForm() {
         max_salary: "",
         employment_type: "Full-time"
       });
-    } catch {
+    } catch (err){
       console.err(err);
       alert("Đăng tuyển thất bại");
     }

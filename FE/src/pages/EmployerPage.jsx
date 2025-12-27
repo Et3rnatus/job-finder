@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import UserAvatar from "../components/employer/UserAvatar";
 import EmployerSidebarTool from "../components/employer/EmployerSidebarTool";
 import EmployerProfileForm from "../components/employer/EmployerProfileForm";
