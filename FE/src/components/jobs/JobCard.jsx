@@ -3,12 +3,13 @@
   function JobCard({ id, title, salary, location, experience, skills }) {
     const navigate = useNavigate();
 
-    const handleApply = () => {
+    const handleClick  = () => {
       navigate(`/jobs/${id}`);
     };
 
     return (
       <div
+        onClick={handleClick}
         className="bg-gray-200 border rounded-lg shadow-lg hover:shadow-green-100 overflow-hidden hover:border-green-600 hover:bg-white transition duration-300"
         data-aos="fade-up"
       >
@@ -26,13 +27,6 @@
           <div className="flex justify-end items-center gap-2">
             <button className="bg-white text-white p-2 rounded-full hover:bg-gray-200">
               ❤️
-            </button>
-
-            <button
-              onClick={handleApply}
-              className="bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700"
-            >
-              Ứng tuyển
             </button>
           </div>
         </div>

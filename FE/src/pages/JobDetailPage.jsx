@@ -1,34 +1,24 @@
-
 import JobHeader from "../components/job_detail/JobHeader";
 import JobInfoSection from "../components/job_detail/JobInfo";
 import JobSidebar from "../components/job_detail/JobSidebar";
 import ApplyButton from "../components/job_detail/ApplyButton";
-function JobDetailPage() {
-  // data để test UI
-  const job = {
-    title: "Frontend Developer",
-    company: "Tech Corp",
-    location: "Hồ Chí Minh",
-    salary: "20 - 25 triệu",
-    description: `- Build UI bằng ReactJS
-- Tối ưu hiệu suất
-- Phối hợp với backend`,
-    requirements: `- 1+ năm kinh nghiệm
-- Biết ReactJS, Tailwind
-- Biết Git`,
-    benefits: `- Lương tháng 13
-- Thưởng dự án
-- Bảo hiểm đầy đủ`,
-  };
+import { useState,useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { getJobDetail } from "../services/jobService";
 
-  const company = {
-    name: "Tech Corp",
-    website: "https://techcorp.com",
-    size: "100-500 nhân viên",
-    address: "Quận 1, TP.HCM",
-    logo:
-      "https://i.pinimg.com/564x/ee/a3/4b/eea34b8bb57130a062b842b887149cf1.jpg",
-  };
+function JobDetailPage() {
+  const { id } = useParams();
+  const [job, setJob] = useState(null);
+
+  useEffect(() => {
+    getJobDetail(id).then(data => {
+      setJob(data);
+    });
+  }, [id]);
+
+  if (!job) {
+    return <div className="text-center py-10">Loading...</div>;
+  }
 
   return (
     <div className="w-full bg-gray-100 py-6">
@@ -47,7 +37,7 @@ function JobDetailPage() {
 
         {/* RIGHT */}
         <div>
-          <JobSidebar company={company} />
+          <JobSidebar company={job.company} />
         </div>
       </div>
     </div>

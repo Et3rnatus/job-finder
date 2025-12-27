@@ -43,19 +43,55 @@ exports.searchJobs = async (req, res) => {
 };
 
 exports.getJobDetail = async (req, res) => {
-    const {id} = req.params;
+  const { id } = req.params;
 
-    try {
-        const [rows] = await pool.query(
-            'SELECT * FROM job WHERE id=?',
-            [id]
-        );
-        if (rows.length === 0) {
-            return res.status(404).json({error: 'Job not found'});
-        }
-        res.json(rows[0]);
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        j.id,
+        j.title,
+        j.description,
+        j.job_requirements,
+        j.location,
+        j.min_salary,
+        j.max_salary,
+        e.company_name,
+        e.logo,
+        e.website,
+        e.address
+      FROM job j
+      JOIN employer e ON j.employer_id = e.id
+      WHERE j.id = ?
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Job not found' });
     }
-    catch (err) {
-        res.status(500).json({error: err.message});
-    }
-}
+
+    const job = rows[0];
+
+    res.json({
+      id: job.id,
+      title: job.title,
+      salary: `${job.min_salary} - ${job.max_salary}`,
+      location: job.location,
+
+      description: job.description,
+      requirements: job.job_requirements,
+      benefits: "Thưởng lễ, BHYT, nghỉ phép năm",
+
+      company: {
+        name: job.company_name,
+        logo: job.logo || "https://via.placeholder.com/150",
+        website: job.website,
+        address: job.address,
+        size: "50-100 nhân sự"
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -1,4 +1,4 @@
-// components/job-detail/JobInfoSection.jsx
+
 function JobInfo({ title, content }) {
   return (
     <div className="bg-white p-6 shadow rounded mb-4">

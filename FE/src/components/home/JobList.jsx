@@ -1,35 +1,24 @@
 import JobCard from "../jobs/JobCard";
+import { useEffect, useState } from "react";
+import { getJobs } from "../../services/jobService";
 
 function JobList() {
-  const jobs = [
-    {
-      id: 1,
-      type: "Tuyển dụng",
-      title: "Frontend Developer",
-      salary: "$1000",
-      location: "Hà Nội",
-      experience: "1 năm",
-      skills: "React, Tailwind",
-    },
-    {
-      id: 2,
-      type: "Tuyển dụng",
-      title: "Backend Developer",
-      salary: "$1200",
-      location: "TP.HCM",
-      experience: "2 năm",
-      skills: "Node.js, MongoDB",
-    },
-    {
-      id: 3,
-      type: "Tuyển dụng",
-      title: "UX/UI Designer",
-      salary: "$900",
-      location: "Đà Nẵng",
-      experience: "1 năm",
-      skills: "Figma, Adobe XD",
-    },
-  ];
+  const [jobs, setJobs] = useState([]);
+
+  useEffect(() => {
+    getJobs().then((data) => {
+      const mappedJobs = data.map((job) => ({
+        id: job.id,
+        type:"Tuyển dụng",
+        title: job.title,
+        salary: `${job.min_salary} - ${job.max_salary}`,
+        location: job.location,
+        company: job.company,
+      }));
+      setJobs(mappedJobs);
+    })
+    .catch((err) => console.error(err));
+  },[]);
 
   return (
     <div className="bg-white py-12 px-6">
