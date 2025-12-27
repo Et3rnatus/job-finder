@@ -30,6 +30,7 @@ function CreateJobForm() {
         employment_type: "Full-time"
       });
     } catch {
+      console.err(err);
       alert("Đăng tuyển thất bại");
     }
   };

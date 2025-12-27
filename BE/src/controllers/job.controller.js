@@ -2,19 +2,31 @@ const pool = require('../config/db');
 const {v4: uuidv4} = require('uuid');
 
 exports.createJob = async (req, res) => {
-    const {employer_id,title,description,min_salary,max_salary,location,employment_type} = req.body;
+  try {
+    const employer_id = req.user.id;
+    const {
+      title,
+      description,
+      min_salary,
+      max_salary,
+      location,
+      employment_type
+    } = req.body;
 
-    try {
-        await pool.query(
-            'INSERT INTO job (id, employer_id, title, description, min_salary, max_salary, location, employment_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [uuidv4(), employer_id, title, description, min_salary, max_salary, location, employment_type]
-        );
-        res.json({message: 'Job created successfully'});
-    }
-    catch (err) {
-        res.status(500).json({error: err.message});
-    }
+    await pool.query(
+      `INSERT INTO job 
+       (employer_id, title, description, min_salary, max_salary, location, employment_type, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [employer_id, title, description, min_salary, max_salary, location, employment_type]
+    );
+
+    res.status(201).json({ message: 'Job created successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 };
+
 
 exports.getJobs = async (req, res) => {
     try {

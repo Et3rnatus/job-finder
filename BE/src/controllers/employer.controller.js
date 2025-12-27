@@ -1,8 +1,16 @@
-const pool = require('../config/db');
+const pool = require("../config/db");
 
+// ======================
+// GET EMPLOYER PROFILE
+// ======================
 exports.getProfile = async (req, res) => {
-  if (req.user.role !== 'employer') {
-    return res.status(403).json({ error: 'Access denied' });
+  // 🔒 Check auth
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (req.user.role !== "employer") {
+    return res.status(403).json({ error: "Access denied" });
   }
 
   const userId = req.user.userId;
@@ -16,18 +24,26 @@ exports.getProfile = async (req, res) => {
     );
 
     if (!employer) {
-      return res.status(404).json({ error: 'Employer not found' });
+      return res.status(404).json({ error: "Employer not found" });
     }
 
-    res.json(employer);
+    return res.json(employer);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("getProfile error:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
+// ======================
+// UPDATE EMPLOYER PROFILE
+// ======================
 exports.updateProfile = async (req, res) => {
-  if (req.user.role !== 'employer') {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (req.user.role !== "employer") {
+    return res.status(403).json({ error: "Access denied" });
   }
 
   const userId = req.user.userId;
@@ -35,39 +51,51 @@ exports.updateProfile = async (req, res) => {
 
   try {
     const [[employer]] = await pool.query(
-      'SELECT id FROM employer WHERE user_id = ?',
+      "SELECT id FROM employer WHERE user_id = ?",
       [userId]
     );
 
     if (!employer) {
-      return res.status(404).json({ error: 'Employer not found' });
+      return res.status(404).json({ error: "Employer not found" });
     }
 
     await pool.query(
       `UPDATE employer
-       SET company_name=?, website=?, address=?, description=?
-       WHERE id=?`,
+       SET company_name = ?, website = ?, address = ?, description = ?
+       WHERE id = ?`,
       [company_name, website, address, description, employer.id]
     );
 
-    res.json({ message: 'Employer profile updated' });
+    return res.json({ message: "Employer profile updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("updateProfile error:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
+// ======================
+// GET JOBS BY EMPLOYER
+// ======================
 exports.getMyJobs = async (req, res) => {
-  if (req.user.role !== 'employer') {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (req.user.role !== "employer") {
+    return res.status(403).json({ error: "Access denied" });
   }
 
   const userId = req.user.userId;
 
   try {
     const [[employer]] = await pool.query(
-      'SELECT id FROM employer WHERE user_id = ?',
+      "SELECT id FROM employer WHERE user_id = ?",
       [userId]
     );
+
+    if (!employer) {
+      return res.status(404).json({ error: "Employer not found" });
+    }
 
     const [jobs] = await pool.query(
       `SELECT id, title, location, created_at
@@ -77,15 +105,23 @@ exports.getMyJobs = async (req, res) => {
       [employer.id]
     );
 
-    res.json(jobs);
+    return res.json(jobs);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("getMyJobs error:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
+// ======================
+// GET APPLICATIONS BY JOB
+// ======================
 exports.getApplicationsByJob = async (req, res) => {
-  if (req.user.role !== 'employer') {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (req.user.role !== "employer") {
+    return res.status(403).json({ error: "Access denied" });
   }
 
   const { jobId } = req.params;
@@ -101,8 +137,9 @@ exports.getApplicationsByJob = async (req, res) => {
       [jobId]
     );
 
-    res.json(applications);
+    return res.json(applications);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("getApplicationsByJob error:", error);
+    return res.status(500).json({ error: "Server error" });
   }
 };
