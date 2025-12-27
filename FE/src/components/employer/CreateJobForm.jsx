@@ -30,7 +30,7 @@ function CreateJobForm() {
         employment_type: "Full-time"
       });
     } catch (err){
-      console.err(err);
+      console.error(err);
       alert("Đăng tuyển thất bại");
     }
   };
@@ -70,6 +70,7 @@ function CreateJobForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <input
+            type="number"
             name="min_salary"
             value={form.min_salary}
             onChange={handleChange}
@@ -77,6 +78,7 @@ function CreateJobForm() {
             className="w-full border p-2 rounded"
           />
           <input
+            type="number"
             name="max_salary"
             value={form.max_salary}
             onChange={handleChange}

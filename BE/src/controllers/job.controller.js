@@ -3,7 +3,20 @@ const {v4: uuidv4} = require('uuid');
 
 exports.createJob = async (req, res) => {
   try {
-    const employer_id = req.user.id;
+    // DEBUG – nhìn thấy ngay lỗi
+    console.log('JWT PAYLOAD:', req.user);
+    console.log('BODY:', req.body);
+
+    // FIX: lấy đúng employer id
+    const employer_id =
+      req.user.id || req.user.userId || req.user.employerId;
+
+    if (!employer_id) {
+      return res.status(401).json({
+        error: 'Không xác định được employer_id từ token'
+      });
+    }
+
     const {
       title,
       description,
@@ -17,15 +30,24 @@ exports.createJob = async (req, res) => {
       `INSERT INTO job 
        (employer_id, title, description, min_salary, max_salary, location, employment_type, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [employer_id, title, description, min_salary, max_salary, location, employment_type]
+      [
+        employer_id,
+        title,
+        description,
+        min_salary || null,
+        max_salary || null,
+        location,
+        employment_type
+      ]
     );
 
     res.status(201).json({ message: 'Job created successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('CREATE JOB ERROR:', err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 exports.getJobs = async (req, res) => {
