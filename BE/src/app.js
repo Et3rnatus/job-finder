@@ -8,6 +8,7 @@ const saveJobRoutes = require('./routes/saveJob.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const candidateRoutes = require('./routes/candidate.routes');
 const skillRoutes = require('./routes/skill.routes');
+const employerRoutes = require('./routes/employer.routes');
 
 console.log('APP.JS LOADED');
 
@@ -22,6 +23,7 @@ app.use('/api/saved-jobs', saveJobRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/skills', skillRoutes);
+app.use('/api/employers', employerRoutes);
 
 app.get('/health', (req, res) => {
   console.log('HIT /health');

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import UserAvatar from "../components/account/UserAvatar";
-import UserSidebarTool from "../components/account/UserSidebarTool";
-import AppliedJobList from "../components/account/AppliedJobList";
-import EditProfileForm from "../components/account/EditProfileForm";
+import UserAvatar from "../components/candidate/UserAvatar";
+import UserSidebarTool from "../components/candidate/UserSidebarTool";
+import AppliedJobList from "../components/candidate/AppliedJobList";
+import EditProfileForm from "../components/candidate/EditProfileForm";
 
 function AccountPage() {
   const [mode, setMode] = useState("view"); // view | edit

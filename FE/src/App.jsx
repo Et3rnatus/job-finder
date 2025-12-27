@@ -11,8 +11,9 @@ import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";  
 import RegisterPage from "./pages/RegisterPage";
-import AccountPage from "./pages/AccountPage";
+import CandidatePage from "./pages/CandidatePage";
 import JobDetailPage from "./pages/JobDetailPage";
+import EmployerPage from "./pages/EmployerPage";
 
 function App() {
   useEffect(() => {
@@ -30,8 +31,12 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/account" element={<AccountPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
+
+          <Route path="/account">
+            <Route path="candidate" element={<CandidatePage />} />
+            <Route path="employer" element={<EmployerPage />} />
+          </Route>
         </Routes>
         <Footer />
       </div>
