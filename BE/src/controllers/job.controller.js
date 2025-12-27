@@ -88,7 +88,6 @@ exports.getJobDetail = async (req, res) => {
         logo: job.logo || "https://via.placeholder.com/150",
         website: job.website,
         address: job.address,
-        size: "50-100 nhân sự"
       }
     });
   } catch (err) {

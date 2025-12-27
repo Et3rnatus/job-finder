@@ -2,37 +2,67 @@ const pool = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
 exports.applyJob = async (req, res) => {
-    const {job_id,candidate_id,cover_letter} = req.body;
+  const { job_id, cover_letter } = req.body;
+  const userId = req.user.userId;
+  const role = req.user.role;
 
-    try{
-        await pool.query(
-            'INSERT INTO application(id, job_id, candidate_id, cover_letter, status, applied_at) VALUES (?, ?, ?, ?, ?, NOW())',
-            [
-                uuidv4(),
-                job_id,
-                candidate_id,
-                cover_letter || '',
-                'PENDING'
-            ]
-        );
-        const [[employer]] = await pool.query(
-            'SELECT u.id as user_id FROM job j JOIN employer e ON j.employer_id = e.id JOIN users u ON e.user_id = u.id WHERE j.id = ?',
-            [job_id]
-        );
-        await pool.query(
-            'INSERT INTO notification(id,user_id,message,is_read,created_at) VALUES (?, ?, ?, ?, NOW())',
-            [
-                uuidv4(),
-                employer.user_id,
-                'New Job Application',0
-            ]
-        );  
-        res.json({message:'Apply Successfully'}); 
-    } 
-    catch (error) {
-        res.status(500).json({error:error.message});
+  if (role !== 'candidate') {
+    return res.status(403).json({ error: 'Only candidates can apply' });
+  }
+
+  try {
+    const [[candidate]] = await pool.query(
+      'SELECT id FROM candidate WHERE user_id = ?',
+      [userId]
+    );
+
+    if (!candidate) {
+      return res.status(400).json({ error: 'Candidate profile not found' });
     }
+
+    await pool.query(
+      `INSERT INTO application
+       (job_id, candidate_id, cover_letter, status, applied_at)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [
+        job_id,
+        candidate.id,
+        cover_letter || '',
+        'PENDING'
+      ]
+    );
+
+    const [[employer]] = await pool.query(
+      `SELECT u.id AS user_id
+       FROM job j
+       JOIN employer e ON j.employer_id = e.id
+       JOIN users u ON e.user_id = u.id
+       WHERE j.id = ?`,
+      [job_id]
+    );
+
+    if (employer) {
+      await pool.query(
+        `INSERT INTO notification
+         (user_id, message, is_read, created_at)
+         VALUES (?, ?, ?, NOW())`,
+        [
+          employer.user_id,
+          'New Job Application',
+          0
+        ]
+      );
+    }
+
+    res.json({ message: 'Apply Successfully' });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
+
+
+
 
 exports.updateStatus = async (req, res) => {
     const {id}=req.params;
