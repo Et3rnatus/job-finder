@@ -1,10 +1,7 @@
 const pool = require("../config/db");
 
-// ======================
 // GET EMPLOYER PROFILE
-// ======================
 exports.getProfile = async (req, res) => {
-  // 🔒 Check auth
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -34,9 +31,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// ======================
 // UPDATE EMPLOYER PROFILE
-// ======================
 exports.updateProfile = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -73,9 +68,8 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// ======================
+
 // GET JOBS BY EMPLOYER
-// ======================
 exports.getMyJobs = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -112,9 +106,7 @@ exports.getMyJobs = async (req, res) => {
   }
 };
 
-// ======================
 // GET APPLICATIONS BY JOB
-// ======================
 exports.getApplicationsByJob = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });

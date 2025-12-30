@@ -3,11 +3,9 @@ const {v4: uuidv4} = require('uuid');
 
 exports.createJob = async (req, res) => {
   try {
-    // DEBUG – nhìn thấy ngay lỗi
     console.log('JWT PAYLOAD:', req.user);
     console.log('BODY:', req.body);
 
-    // FIX: lấy đúng employer id
     const employer_id =
       req.user.id || req.user.userId || req.user.employerId;
 
