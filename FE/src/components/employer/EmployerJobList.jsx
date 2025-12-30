@@ -17,53 +17,89 @@ function EmployerJobList() {
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow">
-      <h3 className="text-xl font-bold mb-4">Việc làm đã đăng</h3>
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        Việc làm đã đăng
+      </h3>
 
       {/* JOB LIST */}
-      {jobs.length === 0 && (
-        <p className="text-gray-500">Chưa có việc làm nào</p>
+      {jobs.length === 0 ? (
+        <p className="text-sm text-gray-500">
+          Chưa có việc làm nào được đăng
+        </p>
+      ) : (
+        <>
+          {/* TABLE HEADER */}
+          <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-600 border-b pb-2">
+            <div>Công việc</div>
+            <div>Địa điểm</div>
+            <div>Thao tác</div>
+          </div>
+
+          {/* TABLE BODY */}
+          <div className="divide-y">
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="grid grid-cols-3 gap-4 py-3 text-sm text-gray-700"
+              >
+                <div className="font-medium text-gray-800">
+                  {job.title}
+                </div>
+                <div>{job.location}</div>
+                <div>
+                  <button
+                    onClick={() => handleViewApplicants(job.id)}
+                    className="text-green-600 hover:underline"
+                  >
+                    Xem ứng viên
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
-
-      <ul className="space-y-3">
-        {jobs.map(job => (
-          <li
-            key={job.id}
-            className="border p-3 rounded flex justify-between items-center"
-          >
-            <div>
-              <p className="font-semibold">{job.title}</p>
-              <p className="text-sm text-gray-600">{job.location}</p>
-            </div>
-
-            <button
-              onClick={() => handleViewApplicants(job.id)}
-              className="text-blue-600"
-            >
-              Xem ứng viên
-            </button>
-          </li>
-        ))}
-      </ul>
 
       {/* APPLICATION LIST */}
       {selectedJob && (
-        <div className="mt-6">
-          <h4 className="font-bold mb-2">Ứng viên ứng tuyển</h4>
+        <div className="mt-8">
+          <h4 className="text-base font-semibold text-gray-800 mb-3">
+            Danh sách ứng viên
+          </h4>
 
-          {applications.length === 0 && (
-            <p className="text-gray-500">Chưa có ứng viên</p>
+          {applications.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Chưa có ứng viên ứng tuyển
+            </p>
+          ) : (
+            <>
+              {/* TABLE HEADER */}
+              <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-600 border-b pb-2">
+                <div>Họ tên</div>
+                <div>Số điện thoại</div>
+                <div>Trạng thái</div>
+              </div>
+
+              {/* TABLE BODY */}
+              <div className="divide-y">
+                {applications.map((app) => (
+                  <div
+                    key={app.id}
+                    className="grid grid-cols-3 gap-4 py-3 text-sm text-gray-700"
+                  >
+                    <div className="font-medium text-gray-800">
+                      {app.full_name}
+                    </div>
+                    <div>{app.contact_number}</div>
+                    <div className="text-green-600 font-medium">
+                      {app.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
-
-          <ul className="space-y-2">
-            {applications.map(app => (
-              <li key={app.id} className="border p-2 rounded">
-                <p><strong>Họ tên:</strong> {app.full_name}</p>
-                <p><strong>SĐT:</strong> {app.contact_number}</p>
-                <p><strong>Trạng thái:</strong> {app.status}</p>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
     </div>

@@ -3,31 +3,20 @@ const cors = require('cors');
 
 const authRoutes = require('./routes/auth.routes');
 const jobRoutes = require('./routes/job.routes');
-const applicationRoutes = require('./routes/application.routes');
 const saveJobRoutes = require('./routes/saveJob.routes');
-const notificationRoutes = require('./routes/notification.routes');
-const candidateRoutes = require('./routes/candidate.routes');
-const skillRoutes = require('./routes/skill.routes');
-const employerRoutes = require('./routes/employer.routes');
-const paymentRoutes = require('./routes/payment.routes');
-
+const applicationRoutes = require('./routes/application.routes');
 
 console.log('APP.JS LOADED');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/save-jobs', saveJobRoutes);
 app.use('/api/applications', applicationRoutes);
-app.use('/api/saved-jobs', saveJobRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/candidates', candidateRoutes);
-app.use('/api/skills', skillRoutes);
-app.use('/api/employers', employerRoutes);
-app.use('/api/payments', paymentRoutes);
-
 
 app.get('/health', (req, res) => {
   console.log('HIT /health');
@@ -35,3 +24,4 @@ app.get('/health', (req, res) => {
 });
 
 module.exports = app;
+  

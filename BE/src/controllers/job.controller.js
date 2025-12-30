@@ -1,128 +1,181 @@
-const pool = require('../config/db');
-const {v4: uuidv4} = require('uuid');
+const db = require('../config/db');
 
+
+//API Đăng tin tuyển dụng
 exports.createJob = async (req, res) => {
   try {
-    console.log('JWT PAYLOAD:', req.user);
-    console.log('BODY:', req.body);
-
-    const employer_id =
-      req.user.id || req.user.userId || req.user.employerId;
-
-    if (!employer_id) {
-      return res.status(401).json({
-        error: 'Không xác định được employer_id từ token'
-      });
-    }
+    const employerId = req.user.id;
 
     const {
       title,
       description,
       min_salary,
       max_salary,
+      is_salary_negotiable,
+      hiring_quantity,
+      job_requirements,
+      benefits,
+      expired_at,
       location,
-      employment_type
+      employment_type,
+      category_id,
+      skills
     } = req.body;
 
-    await pool.query(
-      `INSERT INTO job 
-       (employer_id, title, description, min_salary, max_salary, location, employment_type, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [
+    // 1. validate cơ bản
+    if (!title || !description) {
+      return res.status(400).json({
+        message: 'Title and description are required'
+      });
+    }
+
+    // 2. validate skills (BẮT BUỘC)
+    if (!Array.isArray(skills) || skills.length === 0) {
+      return res.status(400).json({
+        message: 'Job skills are required'
+      });
+    }
+
+    // 3. tạo job
+    const [jobResult] = await db.execute(
+      `
+      INSERT INTO jobs (
         employer_id,
+        title,
+        description,
+        min_salary,
+        max_salary,
+        is_salary_negotiable,
+        hiring_quantity,
+        job_requirements,
+        benefits,
+        created_at,
+        expired_at,
+        location,
+        employment_type,
+        category_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)
+      `,
+      [
+        employerId,
         title,
         description,
         min_salary || null,
         max_salary || null,
-        location,
-        employment_type
+        is_salary_negotiable ?? 0,
+        hiring_quantity || null,
+        job_requirements || null,
+        benefits || null,
+        expired_at || null,
+        location || null,
+        employment_type || null,
+        category_id || null
       ]
     );
 
-    res.status(201).json({ message: 'Job created successfully' });
-  } catch (err) {
-    console.error('CREATE JOB ERROR:', err);
-    res.status(500).json({ error: err.message });
+    const jobId = jobResult.insertId;
+
+    // 4. lưu job_skill (N-N)
+    const jobSkillValues = skills.map(skillId => [jobId, skillId]);
+
+    await db.query(
+      `
+      INSERT INTO job_skill (job_id, skill_id)
+      VALUES ?
+      `,
+      [jobSkillValues]
+    );
+
+    res.status(201).json({
+      message: 'Job created successfully with skills'
+    });
+  } catch (error) {
+    console.error('CREATE JOB ERROR:', error);
+    res.status(500).json({ message: 'Create job failed' });
   }
 };
 
 
-
-exports.getJobs = async (req, res) => {
-    try {
-        const [rows] = await pool.query(
-            'SELECT j.id, j.title, j.location, j.min_salary, j.max_salary,e.company_name FROM job j JOIN employer e ON j.employer_id = e.id ORDER BY j.created_at DESC');
-        res.json(rows);
-    }
-    catch (err) {
-        res.status(500).json({error: err.message});
-    }
-};
-
-exports.searchJobs = async (req, res) => {
-    const {keyword='', location=''} = req.query;
-
-    try{
-        const [rows] = await pool.query(
-            'SELECT id,title,location,min_salary,max_salary FROM job WHERE title LIKE ? AND location LIKE ? ORDER BY created_at DESC',
-            [`%${keyword}%`, `%${location}%`]
-        );
-        res.json(rows);
-    }
-    catch (err) {
-        res.status(500).json({error: err.message});
-    }
-};
-
-exports.getJobDetail = async (req, res) => {
-  const { id } = req.params;
-
+//API Lấy danh sách tất cả tin tuyển dụng
+exports.getAllJobs = async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const [rows] = await db.execute(`
+      SELECT
+        jobs.id,
+        title,
+        location,
+        min_salary,
+        max_salary,
+        created_at,
+        employer.company_name
+      FROM jobs
+      JOIN employer ON jobs.employer_id = employer.user_id
+      ORDER BY created_at DESC
+    `);
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Get jobs failed' });
+  }
+};
+
+// API Xem chi tiết một tin tuyển dụng
+exports.getJobDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. lấy thông tin job + employer
+    const [jobRows] = await db.execute(
       `
-      SELECT 
-        j.id,
-        j.title,
-        j.description,
-        j.job_requirements,
-        j.location,
-        j.min_salary,
-        j.max_salary,
-        e.company_name,
-        e.logo,
-        e.website,
-        e.address
-      FROM job j
-      JOIN employer e ON j.employer_id = e.id
-      WHERE j.id = ?
+      SELECT
+        jobs.id,
+        jobs.title,
+        jobs.description,
+        jobs.min_salary,
+        jobs.max_salary,
+        jobs.is_salary_negotiable,
+        jobs.hiring_quantity,
+        jobs.job_requirements,
+        jobs.benefits,
+        jobs.location,
+        jobs.employment_type,
+        jobs.created_at,
+        jobs.expired_at,
+
+        employer.company_name,
+        employer.logo,
+        employer.description AS company_description,
+        employer.website,
+        employer.address
+      FROM jobs
+      JOIN employer ON jobs.employer_id = employer.user_id
+      WHERE jobs.id = ?
       `,
       [id]
     );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Job not found' });
+    if (jobRows.length === 0) {
+      return res.status(404).json({ message: 'Job not found' });
     }
 
-    const job = rows[0];
+    // 2. lấy kỹ năng yêu cầu
+    const [skillRows] = await db.execute(
+      `
+      SELECT skills.id, skills.name
+      FROM job_skill
+      JOIN skills ON job_skill.skill_id = skills.id
+      WHERE job_skill.job_id = ?
+      `,
+      [id]
+    );
 
     res.json({
-      id: job.id,
-      title: job.title,
-      salary: `${job.min_salary} - ${job.max_salary}`,
-      location: job.location,
-
-      description: job.description,
-      requirements: job.job_requirements,
-      benefits: "Thưởng lễ, BHYT, nghỉ phép năm",
-
-      company: {
-        name: job.company_name,
-        logo: job.logo || "https://via.placeholder.com/150",
-        website: job.website,
-        address: job.address,
-      }
+      ...jobRows[0],
+      skills: skillRows
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error('GET JOB DETAIL ERROR:', error);
+    res.status(500).json({ message: 'Get job detail failed' });
   }
 };
+

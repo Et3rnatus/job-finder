@@ -10,34 +10,34 @@ function UserSidebarTool({ onEditProfile }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">
-        Công cụ tài khoản
+    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+      <h3 className="text-base font-semibold text-gray-800 mb-4">
+        Quản lý tài khoản
       </h3>
 
-      <ul className="space-y-3 text-gray-600">
+      <ul className="space-y-2 text-sm">
         <li
-          className="cursor-pointer hover:text-blue-600"
           onClick={onEditProfile}
+          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
         >
           Cập nhật hồ sơ
         </li>
 
-        <li className="cursor-pointer hover:text-blue-600">
+        <li className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100">
           Đổi mật khẩu
         </li>
 
-        <li className="cursor-pointer hover:text-blue-600">
+        <li className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100">
           Thông báo
         </li>
 
-        <li className="cursor-pointer hover:text-blue-600">
+        <li className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100">
           Bảo mật & quyền riêng tư
         </li>
 
         <li
-          className="cursor-pointer hover:text-red-600 font-medium"
           onClick={handleLogout}
+          className="px-3 py-2 rounded cursor-pointer text-red-600 hover:bg-red-50 font-medium"
         >
           Đăng xuất
         </li>

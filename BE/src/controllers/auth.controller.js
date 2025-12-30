@@ -1,68 +1,91 @@
-const pool = require('../config/db');
-const bcrypt = require('bcrypt');
+const db = require('../config/db');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const {v4: uuidv4} = require('uuid');
+
+const JWT_SECRET = 'secret_key_luan_van';
+
 
 exports.register = async (req, res) => {
-  const { email, password, role } = req.body;
-
   try {
+    const { email, password, role } = req.body;
+
+    // 1. validate
+    if (!email || !password || !role) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // 2. kiểm tra email tồn tại
+    const [exists] = await db.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (exists.length > 0) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    // 3. hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await pool.query(
-      'INSERT INTO users (email, password, role) VALUES (?,?,?)',
+    // 4. tạo user
+    const [result] = await db.execute(
+      'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
       [email, hashedPassword, role]
     );
+
     const userId = result.insertId;
 
-    if (role === 'candidate') {
-      await pool.query(
-        'INSERT INTO candidate (user_id, email, full_name) VALUES (?,?,?)',
-        [userId, email, '']
-      );
-    }
-
+    // 5. nếu là employer → tạo hồ sơ employer (chưa hoàn thiện)
     if (role === 'employer') {
-      await pool.query(
-        'INSERT INTO employer (user_id, email, company_name) VALUES (?,?,?)',
-        [userId, email, '']
+      await db.execute(
+        `
+        INSERT INTO employer (user_id, email, is_profile_completed)
+        VALUES (?, ?, 0)
+        `,
+        [userId, email]
       );
     }
 
-    res.json({ message: 'User registered successfully' });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(201).json({ message: 'Register successful' });
+  } catch (error) {
+    console.error('REGISTER ERROR:', error);
+    res.status(500).json({ message: 'Register failed' });
   }
 };
 
+
 exports.login = async (req, res) => {
-    const {email,password}=req.body;
+  try {
+    const { email, password } = req.body;
 
-    try{
-        const [rows]=await pool.query(
-            'SELECT * FROM users WHERE email=?',
-            [email]
-        );
-        if(rows.length===0){
-            return  res.status(400).json({error:'Invalid email or password'});
-        }
-        const user=rows[0];
-        const isPasswordValid=await bcrypt.compare(password,user.password);
-
-        if(!isPasswordValid){
-            return res.status(400).json({error:'Invalid password'});
-        }
-
-        const token=jwt.sign(
-            {userId:user.id,role:user.role},
-            process.env.JWT_SECRET,
-            {expiresIn:'1d'}
-        );
-        res.json({ token, role: user.role } );
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Missing email or password' });
     }
-    catch(err){
-        res.status(500).json({error:err.message});
-    }
-};  
 
+    const [rows] = await db.execute(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const user = rows[0];
+    
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: 'Login failed' });
+  }
+};

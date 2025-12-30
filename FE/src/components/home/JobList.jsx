@@ -6,32 +6,53 @@ function JobList() {
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
-    getJobs().then((data) => {
-      const mappedJobs = data.map((job) => ({
-        id: job.id,
-        type:"Tuyển dụng",
-        title: job.title,
-        salary: `${job.min_salary} - ${job.max_salary}`,
-        location: job.location,
-        company: job.company,
-      }));
-      setJobs(mappedJobs);
-    })
-    .catch((err) => console.error(err));
-  },[]);
+    getJobs()
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          console.error("API getJobs trả sai định dạng:", data);
+          setJobs([]);
+          return;
+        }
+
+        const mappedJobs = data.map((job) => ({
+          id: job.id,
+          title: job.title,
+          salary:
+            job.min_salary && job.max_salary
+              ? `${job.min_salary} - ${job.max_salary}`
+              : "Thỏa thuận",
+          location: job.location,
+          company: job.company_name || "Chưa cập nhật",
+          skill: job.job_skill || "Chưa cập nhật",
+        }));
+
+        setJobs(mappedJobs);
+      })
+      .catch((err) => {
+        console.error("Lỗi gọi getJobs:", err);
+        setJobs([]);
+      });
+  }, []);
 
   return (
-    <div className="bg-white py-12 px-6">
-      <h2 className="text-3xl font-bold text-left mb-8 text-gray-800">
-        Việc làm nổi bật
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {jobs.map((job) => (
-          <JobCard key={job.id} {...job} />
-        ))}
+    <section className="bg-white rounded-lg border border-gray-200">
+      <div className="px-6 py-5 border-b">
+        <h2 className="text-xl font-semibold text-gray-800">
+          Danh sách công việc đang tuyển dụng
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Tất cả các công việc hiện có trên hệ thống
+        </p>
       </div>
-    </div>
+
+      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {jobs.length > 0 ? (
+          jobs.map((job) => <JobCard key={job.id} {...job} />)
+        ) : (
+          <p className="text-gray-500">Chưa có công việc nào.</p>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -47,16 +47,15 @@ export const createJob = async (data) => {
     max_salary: data.max_salary ? Number(data.max_salary) : null,
   };
 
-  const res = await axios.post(
-    `${API_URL}/jobs`,
-    payload,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  axios.post(
+  `${API_URL}/employers/jobs`,
+  payload,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
   return res.data;
 };

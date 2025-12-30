@@ -1,18 +1,33 @@
 function JobHeader({ job }) {
   return (
-    <div className="bg-white p-6 shadow rounded mb-4">
-      <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      {/* JOB TITLE */}
+      <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+        {job.title}
+      </h1>
 
-      <div className="text-gray-700">
-        <p className="text-sm">{job.location}</p>
-      </div>
+      {/* COMPANY NAME */}
+      <p className="text-gray-600 mb-4">
+        {job.company?.name}
+      </p>
 
-      <div className="mt-3">
-        <span className="bg-green-100 text-green-700 px-3 py-1 rounded">
+      {/* META INFO */}
+      <div className="flex flex-wrap gap-6 text-sm text-gray-700">
+        <span>
+          <strong>Địa điểm:</strong> {job.location}
+        </span>
+
+        <span>
+          <strong>Mức lương:</strong>{" "}
           {job.min_salary} - {job.max_salary}
+        </span>
+
+        <span>
+          <strong>Hình thức:</strong> Toàn thời gian
         </span>
       </div>
     </div>
   );
 }
+
 export default JobHeader;

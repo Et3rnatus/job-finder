@@ -4,52 +4,44 @@ function EmployerSidebarTool({ setMode }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 1. Xóa auth info
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-
-    // (nếu bạn có lưu thêm)
-    // localStorage.removeItem("user");
-
-    // 2. Điều hướng về login
     navigate("/login");
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-      <h3 className="text-lg font-semibold mb-4">
-        Công cụ nhà tuyển dụng
+    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+      <h3 className="text-base font-semibold text-gray-800 mb-4">
+        Quản lý tuyển dụng
       </h3>
 
-      <ul className="space-y-3 text-gray-600">
+      <ul className="space-y-2 text-sm">
         <li
-          className="cursor-pointer hover:text-blue-600"
           onClick={() => setMode("profile")}
+          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
         >
           Hồ sơ công ty
         </li>
 
         <li
-          className="cursor-pointer hover:text-blue-600"
           onClick={() => setMode("jobs")}
+          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
         >
           Việc làm đã đăng
         </li>
 
         <li
-          className="cursor-pointer hover:text-blue-600"
           onClick={() => setMode("create")}
+          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
         >
           Đăng tuyển mới
         </li>
 
-        {/* Divider */}
         <hr className="my-3" />
 
-        {/* LOGOUT */}
         <li
-          className="cursor-pointer text-red-600 hover:text-red-700 font-semibold"
           onClick={handleLogout}
+          className="px-3 py-2 rounded cursor-pointer text-red-600 hover:bg-red-50 font-medium"
         >
           Đăng xuất
         </li>

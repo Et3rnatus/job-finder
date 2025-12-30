@@ -1,107 +1,136 @@
 import { useState } from "react";
-import { createJob } from "../../services/jobService";
 
 function CreateJobForm() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    requirements: "",
+    benefits: "",
     location: "",
     min_salary: "",
     max_salary: "",
-    employment_type: "Full-time"
+    job_skill: "",
   });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      await createJob(form);
-      alert("Đăng tuyển thành công");
-      setForm({
-        title: "",
-        description: "",
-        location: "",
-        min_salary: "",
-        max_salary: "",
-        employment_type: "Full-time"
-      });
-    } catch (err){
-      console.error(err);
-      alert("Đăng tuyển thất bại");
-    }
+    alert("Đăng tin tuyển dụng thành công (demo)");
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow">
-      <h3 className="text-xl font-bold mb-4">Đăng tuyển việc làm</h3>
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+        Đăng tin tuyển dụng
+      </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-8">
 
-        <input
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Tiêu đề công việc"
-          className="w-full border p-2 rounded"
-          required
-        />
+        {/* ===== THÔNG TIN CHUNG ===== */}
+        <section>
+          <h3 className="text-base font-semibold text-gray-700 mb-3">
+            Thông tin công việc
+          </h3>
 
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Mô tả công việc"
-          className="w-full border p-2 rounded"
-          rows="4"
-          required
-        />
-
-        <input
-          name="location"
-          value={form.location}
-          onChange={handleChange}
-          placeholder="Địa điểm làm việc"
-          className="w-full border p-2 rounded"
-        />
-
-        <div className="grid grid-cols-2 gap-4">
           <input
-            type="number"
-            name="min_salary"
-            value={form.min_salary}
+            name="title"
+            placeholder="Tên công việc"
             onChange={handleChange}
-            placeholder="Lương tối thiểu"
-            className="w-full border p-2 rounded"
+            className="w-full border p-3 rounded mb-3"
           />
-          <input
-            type="number"
-            name="max_salary"
-            value={form.max_salary}
-            onChange={handleChange}
-            placeholder="Lương tối đa"
-            className="w-full border p-2 rounded"
-          />
-        </div>
 
-        <select
-          name="employment_type"
-          value={form.employment_type}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
+          <input
+            name="location"
+            placeholder="Địa điểm làm việc"
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+          />
+        </section>
+
+        {/* ===== MÔ TẢ & YÊU CẦU ===== */}
+        <section>
+          <h3 className="text-base font-semibold text-gray-700 mb-3">
+            Mô tả & yêu cầu
+          </h3>
+
+          <textarea
+            name="description"
+            placeholder="Mô tả công việc"
+            onChange={handleChange}
+            className="w-full border p-3 rounded mb-3"
+          />
+
+          <textarea
+            name="requirements"
+            placeholder="Yêu cầu ứng viên"
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+          />
+        </section>
+
+        {/* ===== KỸ NĂNG ===== */}
+        <section>
+          <h3 className="text-base font-semibold text-gray-700 mb-3">
+            Kỹ năng yêu cầu
+          </h3>
+
+          <input
+            name="job_skill"
+            placeholder="VD: ReactJS, NodeJS, MySQL"
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Nhập các kỹ năng, cách nhau bằng dấu phẩy
+          </p>
+        </section>
+
+        {/* ===== QUYỀN LỢI ===== */}
+        <section>
+          <h3 className="text-base font-semibold text-gray-700 mb-3">
+            Quyền lợi
+          </h3>
+
+          <textarea
+            name="benefits"
+            placeholder="Quyền lợi dành cho ứng viên"
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+          />
+        </section>
+
+        {/* ===== LƯƠNG ===== */}
+        <section>
+          <h3 className="text-base font-semibold text-gray-700 mb-3">
+            Mức lương
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              name="min_salary"
+              placeholder="Lương tối thiểu"
+              onChange={handleChange}
+              className="w-full border p-3 rounded"
+            />
+            <input
+              name="max_salary"
+              placeholder="Lương tối đa"
+              onChange={handleChange}
+              className="w-full border p-3 rounded"
+            />
+          </div>
+        </section>
+
+        {/* ===== SUBMIT ===== */}
+        <button
+          type="submit"
+          className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 font-medium"
         >
-          <option>Full-time</option>
-          <option>Part-time</option>
-          <option>Intern</option>
-        </select>
-
-        <button className="bg-green-600 text-white px-4 py-2 rounded">
-          Đăng tuyển
+          Đăng tin tuyển dụng
         </button>
-
       </form>
     </div>
   );

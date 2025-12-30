@@ -1,27 +1,43 @@
-
 function JobSidebar({ company }) {
   return (
-    <div className="bg-white p-6 shadow rounded">
-      <div className="flex items-center gap-3 mb-4">
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      {/* COMPANY HEADER */}
+      <div className="flex items-center gap-4 mb-5">
         <img
           src={company.logo}
           alt="logo"
-          className="w-14 h-14 object-cover rounded"
+          className="w-12 h-12 object-contain border rounded"
         />
         <div>
-          <h3 className="font-bold text-lg">{company.name}</h3>
-          <p className="text-sm text-gray-600">{company.size}</p>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {company.name}
+          </h3>
+          <p className="text-sm text-gray-600">
+            Quy mô: {company.size}
+          </p>
         </div>
       </div>
 
-      <p className="text-gray-700 mb-2">
-        <strong>Website:</strong> {company.website}
-      </p>
+      {/* COMPANY INFO */}
+      <div className="text-sm text-gray-700 space-y-2">
+        <p>
+          <strong>Website:</strong>{" "}
+          <a
+            href={company.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-green-600 hover:underline"
+          >
+            {company.website}
+          </a>
+        </p>
 
-      <p className="text-gray-700">
-        <strong>Địa chỉ:</strong> {company.address}
-      </p>
+        <p>
+          <strong>Địa chỉ:</strong> {company.address}
+        </p>
+      </div>
     </div>
   );
 }
+
 export default JobSidebar;

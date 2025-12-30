@@ -1,14 +1,23 @@
 const express = require('express');
 const router = express.Router();
+
 const jobController = require('../controllers/job.controller');
-const {verifyToken} = require('../middlewares/auth.middleware');
+const { verifyToken, requireRole } = require('../middlewares/auth.middleware');
+const { requireCompletedEmployerProfile } = require('../middlewares/employerProfile.middleware');
 
-// EMPLOYER đăng tuyển (CẦN LOGIN)
-router.post('/', verifyToken, jobController.createJob);
+// employer đăng job
+router.post(
+  '/',
+  verifyToken,
+  requireRole('employer'),
+  requireCompletedEmployerProfile,
+  jobController.createJob
+);
 
-// PUBLIC
-router.get('/', jobController.getJobs);
-router.get('/search', jobController.searchJobs);
+// public: lấy tất cả job
+router.get('/', jobController.getAllJobs);
+
+// public: xem chi tiết job
 router.get('/:id', jobController.getJobDetail);
 
 module.exports = router;

@@ -9,7 +9,9 @@ import { getJobDetail } from "../services/jobService";
 function JobDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [job, setJob] = useState(null);
+  const [applied, setApplied] = useState(false);
 
   useEffect(() => {
     getJobDetail(id).then((data) => {
@@ -46,9 +48,9 @@ function JobDetailPage() {
         return;
       }
 
-      // 3️⃣ OK → CHO APPLY (DEMO)
-      alert("Hồ sơ hợp lệ – mở form ứng tuyển");
-
+      // 3️⃣ APPLY THÀNH CÔNG (DEMO)
+      setApplied(true);
+      alert("Ứng tuyển thành công");
     } catch (error) {
       alert("Có lỗi xảy ra");
     }
@@ -59,22 +61,50 @@ function JobDetailPage() {
   }
 
   return (
-    <div className="w-full bg-gray-100 py-6">
+    <div className="w-full bg-gray-100 py-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
 
-        {/* LEFT */}
-        <div className="md:col-span-2">
+        {/* LEFT CONTENT */}
+        <div className="md:col-span-2 space-y-6">
           <JobHeader job={job} />
 
-          <JobInfoSection title="Mô tả công việc" content={job.description} />
-          <JobInfoSection title="Yêu cầu ứng viên" content={job.requirements} />
-          <JobInfoSection title="Quyền lợi" content={job.benefits} />
+          <JobInfoSection
+            title="Mô tả công việc"
+            content={job.description}
+          />
 
-          <ApplyButton onApply={handleApply} />
+          <JobInfoSection
+            title="Yêu cầu ứng viên"
+            content={job.requirements}
+          />
+
+          <JobInfoSection
+            title="Kỹ năng yêu cầu"
+            content={job.job_skill}
+          />
+
+          <JobInfoSection
+            title="Quyền lợi"
+            content={job.benefits}
+          />
         </div>
 
-        {/* RIGHT */}
-        <div>
+        {/* RIGHT SIDEBAR */}
+        <div className="space-y-6">
+
+          {/* APPLY BOX */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <ApplyButton
+              onApply={handleApply}
+              disabled={applied}
+              text={applied ? "Đã ứng tuyển" : "Ứng tuyển"}
+            />
+            <p className="text-xs text-gray-500 mt-3">
+              Ứng viên cần hoàn thiện hồ sơ trước khi ứng tuyển
+            </p>
+          </div>
+
+          {/* COMPANY INFO */}
           <JobSidebar company={job.company} />
         </div>
       </div>
