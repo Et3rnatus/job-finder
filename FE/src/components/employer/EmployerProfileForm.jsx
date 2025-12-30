@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  getEmployerProfile,
-  updateEmployerProfile,
-} from "../../services/employerService";
+import employerService from "../../services/employerService";
 
 function EmployerProfileForm() {
   const [form, setForm] = useState({
@@ -16,7 +13,8 @@ function EmployerProfileForm() {
 
   // ================= LOAD PROFILE =================
   useEffect(() => {
-    getEmployerProfile()
+    employerService
+      .getProfile()
       .then((data) => {
         setForm({
           company_name: data.company_name || "",
@@ -26,7 +24,8 @@ function EmployerProfileForm() {
         });
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error(error);
         alert("Không tải được hồ sơ công ty");
         setLoading(false);
       });
@@ -39,9 +38,13 @@ function EmployerProfileForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await updateEmployerProfile(form);
+      await employerService.updateProfile(form);
       alert("Cập nhật hồ sơ công ty thành công");
-    } catch {
+
+      onProfileCompleted && onProfileCompleted();
+
+    } catch (error) {
+      console.error(error);
       alert("Cập nhật thất bại");
     }
   };
@@ -57,8 +60,6 @@ function EmployerProfileForm() {
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-
-        {/* ===== THÔNG TIN CƠ BẢN ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Thông tin doanh nghiệp
@@ -90,7 +91,6 @@ function EmployerProfileForm() {
           />
         </section>
 
-        {/* ===== GIỚI THIỆU CÔNG TY ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Giới thiệu công ty
@@ -106,7 +106,6 @@ function EmployerProfileForm() {
           />
         </section>
 
-        {/* ===== SUBMIT ===== */}
         <div>
           <button
             type="submit"

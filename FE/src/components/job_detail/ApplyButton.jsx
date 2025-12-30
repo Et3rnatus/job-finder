@@ -1,7 +1,7 @@
 function ApplyButton({ onApply, disabled = false, text = "Ứng tuyển" }) {
   return (
     <button
-      onClick={onApply}
+      onClick={!disabled ? onApply : undefined}
       disabled={disabled}
       className={`w-full py-3 mt-4 rounded-lg text-base font-semibold transition
         ${

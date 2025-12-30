@@ -1,30 +1,46 @@
-const API_URL = "http://127.0.0.1:3001/api/employers";
+import axios from "axios";
 
-export const getEmployerProfile = async () => {
+const API_URL = "http://127.0.0.1:3001/api/employer";
+
+const getAuthHeader = () => {
   const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}/profile`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-
-  if (!res.ok) throw new Error("Failed to load employer profile");
-  return res.json();
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 };
 
-export const updateEmployerProfile = async (data) => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}/profile`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(data)
+/**
+ * 1️⃣ Check hồ sơ đã hoàn thiện hay chưa
+ */
+const checkProfile = async () => {
+  const res = await axios.get(`${API_URL}/check-profile`, {
+    headers: getAuthHeader(),
   });
+  return res.data; // { completed: true/false }
+};
 
-  if (!res.ok) throw new Error("Update employer profile failed");
-  return res.json();
+/**
+ * 2️⃣ Lấy hồ sơ công ty (đổ form)
+ */
+const getProfile = async () => {
+  const res = await axios.get(`${API_URL}/profile`, {
+    headers: getAuthHeader(),
+  });
+  return res.data;
+};
+
+/**
+ * 3️⃣ Cập nhật hồ sơ công ty
+ */
+const updateProfile = async (data) => {
+  const res = await axios.put(`${API_URL}/profile`, data, {
+    headers: getAuthHeader(),
+  });
+  return res.data;
+};
+
+export default {
+  checkProfile,
+  getProfile,
+  updateProfile,
 };
