@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
 import employerService from "../../services/employerService";
+import vnAddress from "../../data/vn-address.json";
 
-function EmployerProfileForm() {
+function EmployerProfileForm({ onProfileCompleted }) {
   const [form, setForm] = useState({
     company_name: "",
     website: "",
-    address: "",
     description: "",
+    city: "",
+    district: "",
+    address_detail: "",
+    business_license: "",
   });
 
+  const [districts, setDistricts] = useState([]);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
 
   // ================= LOAD PROFILE =================
@@ -16,36 +22,116 @@ function EmployerProfileForm() {
     employerService
       .getProfile()
       .then((data) => {
+        const cityData = vnAddress.find((c) => c.Name === data.city);
+        const districtData = cityData?.Districts?.find(
+          (d) => d.Name === data.district
+        );
+
         setForm({
           company_name: data.company_name || "",
           website: data.website || "",
-          address: data.address || "",
           description: data.description || "",
+          city: cityData?.Id || "",
+          district: districtData?.Id || "",
+          address_detail: data.address_detail || "",
+          business_license: data.business_license || "",
         });
+
+        setDistricts(cityData ? cityData.Districts : []);
         setLoading(false);
       })
-      .catch((error) => {
-        console.error(error);
-        alert("Không tải được hồ sơ công ty");
+      .catch(() => {
         setLoading(false);
       });
   }, []);
 
+  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+
+    // clear error khi user sửa
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: "" });
+    }
   };
 
+  const handleCityChange = (e) => {
+    const cityId = e.target.value;
+    const cityData = vnAddress.find((c) => c.Id === cityId);
+
+    setForm({
+      ...form,
+      city: cityId,
+      district: "",
+    });
+
+    setDistricts(cityData ? cityData.Districts : []);
+
+    setErrors({
+      ...errors,
+      city: "",
+      district: "",
+    });
+  };
+
+  // ================= VALIDATE =================
+  const validate = () => {
+    const newErrors = {};
+
+    if (!form.company_name) {
+      newErrors.company_name = "Tên công ty không được để trống";
+    }
+    if (!form.city) {
+      newErrors.city = "Vui lòng chọn tỉnh / thành phố";
+    }
+    if (!form.district) {
+      newErrors.district = "Vui lòng chọn quận / huyện";
+    }
+    if (!form.address_detail) {
+      newErrors.address_detail = "Vui lòng nhập địa chỉ chi tiết";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validate()) return;
+
+    const cityName =
+      vnAddress.find((c) => c.Id === form.city)?.Name || "";
+
+    const districtName =
+      districts.find((d) => d.Id === form.district)?.Name || "";
+
+    const payload = {
+      ...form,
+      city: cityName,
+      district: districtName,
+    };
+
     try {
-      await employerService.updateProfile(form);
-      alert("Cập nhật hồ sơ công ty thành công");
+      await employerService.updateProfile(payload);
 
-      onProfileCompleted && onProfileCompleted();
-
+      if (onProfileCompleted) {
+        onProfileCompleted();
+      }
     } catch (error) {
-      console.error(error);
-      alert("Cập nhật thất bại");
+      if (error.response?.status === 400) {
+        alert(error.response.data.message);
+      } else {
+        alert("Cập nhật thất bại");
+      }
+    }
+  };
+
+  // ================= HỦY =================
+  const handleCancel = () => {
+    if (onProfileCompleted) {
+      onProfileCompleted();
     }
   };
 
@@ -56,10 +142,11 @@ function EmployerProfileForm() {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-6">
-        Hồ sơ công ty
+        Cập nhật hồ sơ công ty
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* ===== THÔNG TIN DOANH NGHIỆP ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Thông tin doanh nghiệp
@@ -69,10 +156,16 @@ function EmployerProfileForm() {
             name="company_name"
             value={form.company_name}
             onChange={handleChange}
-            placeholder="Tên công ty"
-            className="w-full border p-3 rounded mb-3"
-            required
+            placeholder="Tên công ty *"
+            className={`w-full border p-3 rounded mb-1 ${
+              errors.company_name ? "border-red-500" : ""
+            }`}
           />
+          {errors.company_name && (
+            <p className="text-red-500 text-sm mb-3">
+              {errors.company_name}
+            </p>
+          )}
 
           <input
             name="website"
@@ -83,14 +176,77 @@ function EmployerProfileForm() {
           />
 
           <input
-            name="address"
-            value={form.address}
+            name="business_license"
+            value={form.business_license}
             onChange={handleChange}
-            placeholder="Địa chỉ công ty"
-            className="w-full border p-3 rounded"
+            placeholder="Giấy phép kinh doanh"
+            className="w-full border p-3 rounded mb-3"
           />
         </section>
 
+        {/* ===== ĐỊA CHỈ ===== */}
+        <section>
+          <h4 className="text-base font-semibold text-gray-700 mb-3">
+            Địa chỉ công ty
+          </h4>
+
+          <select
+            value={form.city}
+            onChange={handleCityChange}
+            className={`w-full border p-3 rounded mb-1 ${
+              errors.city ? "border-red-500" : ""
+            }`}
+          >
+            <option value="">Chọn tỉnh / thành phố *</option>
+            {vnAddress.map((city) => (
+              <option key={city.Id} value={city.Id}>
+                {city.Name}
+              </option>
+            ))}
+          </select>
+          {errors.city && (
+            <p className="text-red-500 text-sm mb-3">{errors.city}</p>
+          )}
+
+          <select
+            name="district"
+            value={form.district}
+            onChange={handleChange}
+            disabled={!form.city}
+            className={`w-full border p-3 rounded mb-1 ${
+              errors.district ? "border-red-500" : ""
+            } ${!form.city ? "bg-gray-100 cursor-not-allowed" : ""}`}
+          >
+            <option value="">Chọn quận / huyện *</option>
+            {districts.map((d) => (
+              <option key={d.Id} value={d.Id}>
+                {d.Name}
+              </option>
+            ))}
+          </select>
+          {errors.district && (
+            <p className="text-red-500 text-sm mb-3">
+              {errors.district}
+            </p>
+          )}
+
+          <input
+            name="address_detail"
+            value={form.address_detail}
+            onChange={handleChange}
+            placeholder="Số nhà, tên đường *"
+            className={`w-full border p-3 rounded mb-1 ${
+              errors.address_detail ? "border-red-500" : ""
+            }`}
+          />
+          {errors.address_detail && (
+            <p className="text-red-500 text-sm">
+              {errors.address_detail}
+            </p>
+          )}
+        </section>
+
+        {/* ===== MÔ TẢ ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Giới thiệu công ty
@@ -106,12 +262,21 @@ function EmployerProfileForm() {
           />
         </section>
 
-        <div>
+        {/* ===== ACTIONS ===== */}
+        <div className="flex gap-4">
           <button
             type="submit"
             className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium"
           >
             Lưu hồ sơ
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300 font-medium"
+          >
+            Hủy
           </button>
         </div>
       </form>

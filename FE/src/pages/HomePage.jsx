@@ -15,14 +15,21 @@ function HomePage() {
   useEffect(() => {
     const role = localStorage.getItem("role");
 
-    // 🔹 chỉ check nếu là nhà tuyển dụng
-    if (role === "employer") {
-      employerService.checkProfile().then((res) => {
-        if (!res.completed) {
-          setShowEmployerModal(true);
-        }
-      });
-    }
+    // 🔹 chỉ áp dụng cho nhà tuyển dụng
+    if (role !== "employer") return;
+
+    // 🔹 modal đã hiện trong phiên này rồi thì bỏ qua
+    const modalShown = sessionStorage.getItem("employerProfileModalShown");
+    if (modalShown === "true") return;
+
+    // 🔹 check trạng thái hồ sơ
+    employerService.checkProfile().then((res) => {
+      if (!res.completed) {
+        setShowEmployerModal(true);
+        // đánh dấu đã hiện modal trong phiên
+        sessionStorage.setItem("employerProfileModalShown", "true");
+      }
+    });
   }, []);
 
   return (
@@ -31,7 +38,6 @@ function HomePage() {
       <HeroSection />
 
       <main className="max-w-6xl mx-auto px-4 py-10 space-y-14">
-
         {/* JOB LIST */}
         <section>
           <JobList />
@@ -46,10 +52,9 @@ function HomePage() {
         <section>
           <TopCompanies />
         </section>
-
       </main>
 
-      {/* 🔔 MODAL NHẮC HOÀN THIỆN HỒ SƠ */}
+      {/* 🔔 MODAL NHẮC HOÀN THIỆN HỒ SƠ (1 LẦN / PHIÊN) */}
       {showEmployerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -70,7 +75,10 @@ function HomePage() {
               </button>
 
               <button
-                onClick={() => navigate("/account/employer")}
+                onClick={() => {
+                  setShowEmployerModal(false);
+                  navigate("/account/employer");
+                }}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
               >
                 Hoàn thiện hồ sơ

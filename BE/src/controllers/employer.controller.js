@@ -3,36 +3,86 @@ const db = require('../config/db');
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { company_name, description, website, address, logo } = req.body;
 
-    // validate tối thiểu
-    if (!company_name || !address) {
+    const {
+      company_name,
+      description,
+      website,
+      city,
+      district,
+      address_detail,
+      business_license,
+      logo
+    } = req.body;
+
+    // 1️⃣ validate tối thiểu (BẮT BUỘC)
+    if (!company_name || !city || !district || !address_detail) {
       return res.status(400).json({
-        message: 'Company name and address are required'
+        message: "Vui lòng nhập đầy đủ thông tin bắt buộc"
       });
     }
 
+    // 2️⃣ ghép địa chỉ đầy đủ
+    const fullAddress = `${address_detail}, ${district}, ${city}`;
+
+    // 3️⃣ xác định trạng thái hoàn thiện hồ sơ
+    // ❗ description KHÔNG bắt buộc
+    const isProfileCompleted =
+      company_name &&
+      city &&
+      district &&
+      address_detail &&
+      business_license
+        ? 1
+        : 0;
+
+    // 4️⃣ update DB
     await db.execute(
       `
       UPDATE employer
-      SET company_name = ?, description = ?, website = ?, address = ?, logo = ?, is_profile_completed = 1
+      SET
+        company_name = ?,
+        description = ?,
+        website = ?,
+        city = ?,
+        district = ?,
+        address_detail = ?,
+        business_license = ?,
+        address = ?,
+        logo = ?,
+        is_profile_completed = ?
       WHERE user_id = ?
       `,
       [
         company_name,
         description || null,
         website || null,
-        address,
+        city,
+        district,
+        address_detail,
+        business_license || null,
+        fullAddress,
         logo || null,
+        isProfileCompleted,
         userId
       ]
     );
 
-    res.json({ message: 'Employer profile completed' });
+    res.json({
+      message: isProfileCompleted
+        ? "Employer profile completed"
+        : "Employer profile updated but not completed",
+      completed: !!isProfileCompleted
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Update employer profile failed' });
+    console.error("UPDATE EMPLOYER PROFILE ERROR:", error);
+    res.status(500).json({
+      message: "Update employer profile failed"
+    });
   }
 };
+
 
 
 //kiem tra profile employer da hoan thanh chua
@@ -70,7 +120,10 @@ exports.getProfile = async (req, res) => {
         logo,
         description,
         website,
-        address,
+        city,
+        district,
+        address_detail,
+        business_license,
         is_profile_completed
       FROM employer
       WHERE user_id = ?
@@ -80,7 +133,7 @@ exports.getProfile = async (req, res) => {
 
     if (rows.length === 0) {
       return res.status(404).json({
-        message: "Employer profile not found"
+        message: "Employer profile not found",
       });
     }
 
@@ -88,8 +141,7 @@ exports.getProfile = async (req, res) => {
   } catch (error) {
     console.error("GET EMPLOYER PROFILE ERROR:", error);
     res.status(500).json({
-      message: "Get employer profile failed"
+      message: "Get employer profile failed",
     });
   }
 };
-

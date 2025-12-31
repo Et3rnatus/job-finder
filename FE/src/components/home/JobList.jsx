@@ -17,13 +17,19 @@ function JobList() {
         const mappedJobs = data.map((job) => ({
           id: job.id,
           title: job.title,
+
           salary:
-            job.min_salary && job.max_salary
+            job.min_salary != null && job.max_salary != null
               ? `${job.min_salary} - ${job.max_salary}`
               : "Thỏa thuận",
-          location: job.location,
+
+          location: job.location || "Chưa cập nhật",
           company: job.company_name || "Chưa cập nhật",
-          skill: job.job_skill || "Chưa cập nhật",
+
+          // 🔥 QUAN TRỌNG: để chuỗi rỗng nếu không có skill
+          skills: Array.isArray(job.skills)
+            ? job.skills.map((s) => s.name).join(", ")
+            : "",
         }));
 
         setJobs(mappedJobs);

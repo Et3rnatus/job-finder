@@ -14,9 +14,9 @@ function JobDetailPage() {
   const [applied, setApplied] = useState(false);
 
   useEffect(() => {
-    getJobDetail(id).then((data) => {
-      setJob(data);
-    });
+    getJobDetail(id)
+      .then((data) => setJob(data))
+      .catch((err) => console.error("GET JOB DETAIL ERROR:", err));
   }, [id]);
 
   const handleApply = async () => {
@@ -48,7 +48,7 @@ function JobDetailPage() {
         return;
       }
 
-      // 3️⃣ APPLY THÀNH CÔNG (DEMO)
+      // 3️⃣ APPLY (DEMO)
       setApplied(true);
       alert("Ứng tuyển thành công");
     } catch (error) {
@@ -75,12 +75,16 @@ function JobDetailPage() {
 
           <JobInfoSection
             title="Yêu cầu ứng viên"
-            content={job.requirements}
+            content={job.job_requirements}
           />
 
           <JobInfoSection
             title="Kỹ năng yêu cầu"
-            content={job.job_skill}
+            content={
+              Array.isArray(job.skills)
+                ? job.skills.map((s) => s.name)
+                : []
+            }
           />
 
           <JobInfoSection
@@ -105,7 +109,7 @@ function JobDetailPage() {
           </div>
 
           {/* COMPANY INFO */}
-          <JobSidebar company={job.company} />
+          <JobSidebar job={job} />
         </div>
       </div>
     </div>

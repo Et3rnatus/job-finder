@@ -1,12 +1,20 @@
 import { useNavigate } from "react-router-dom";
 
-function EmployerSidebarTool({ setMode }) {
+function EmployerSidebarTool({ setMode, setProfileMode }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    sessionStorage.removeItem("employerProfileModalShown");
     navigate("/login");
+  };
+
+  const handleProfileClick = () => {
+    setMode("profile");
+    if (setProfileMode) {
+      setProfileMode("view"); // 🔥 luôn quay về VIEW
+    }
   };
 
   return (
@@ -17,7 +25,7 @@ function EmployerSidebarTool({ setMode }) {
 
       <ul className="space-y-2 text-sm">
         <li
-          onClick={() => setMode("profile")}
+          onClick={handleProfileClick}
           className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
         >
           Hồ sơ công ty
