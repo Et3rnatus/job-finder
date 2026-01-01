@@ -3,18 +3,25 @@ const router = express.Router();
 
 const applicationController = require('../controllers/application.controller');
 const { verifyToken, requireRole } = require('../middlewares/auth.middleware');
-const { requireCompletedCandidateProfile } = require('../middlewares/candidateProfile.middleware');
+const {
+  requireCandidate,
+  requireCompletedCandidateProfile
+} = require('../middlewares/candidateProfile.middleware');
 
-// chỉ cho phép ứng viên nộp đơn ứng tuyển
+/**
+ * Candidate apply job
+ */
 router.post(
   '/',
   verifyToken,
-  requireRole('candidate'),
+  requireCandidate,
   requireCompletedCandidateProfile,
   applicationController.applyJob
 );
 
-//xem danh sách ứng viên ứng tuyển cho một job
+/**
+ * Employer xem danh sách ứng viên của 1 job
+ */
 router.get(
   '/job/:jobId',
   verifyToken,
@@ -22,5 +29,20 @@ router.get(
   applicationController.getApplicantsByJob
 );
 
+router.get(
+  '/me',
+  verifyToken,
+  requireRole('candidate'),
+  applicationController.getMyApplications
+);
+
+router.delete(
+  '/:id',
+  verifyToken,
+  requireRole('candidate'),
+  applicationController.cancelApplication
+);
+
 
 module.exports = router;
+

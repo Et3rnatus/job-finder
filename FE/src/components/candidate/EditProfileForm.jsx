@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { getProfile, updateProfile } from "../../services/candidateService";
+import candidateService from "../../services/candidateService";
+import axios from "axios";
 
-function EditProfileForm({ onCancel }) {
+function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [form, setForm] = useState({
     full_name: "",
     contact_number: "",
@@ -15,27 +16,35 @@ function EditProfileForm({ onCancel }) {
   });
 
   const [allSkills, setAllSkills] = useState([]);
+  const [saving, setSaving] = useState(false);
 
-  // ================= LOAD DATA =================
+  // ================= INIT DATA =================
   useEffect(() => {
-    getProfile().then((data) => {
+    if (profile) {
       setForm({
-        full_name: data.full_name || "",
-        contact_number: data.contact_number || "",
-        address: data.address || "",
-        bio: data.bio || "",
-        gender: data.gender || "",
-        date_of_birth: data.date_of_birth || "",
-        skills: data.skills ? data.skills.map((s) => s.id) : [],
-        education: data.education || [],
-        experiences: data.experiences || [],
+        full_name: profile.full_name || "",
+        contact_number: profile.contact_number || "",
+        address: profile.address || "",
+        bio: profile.bio || "",
+        gender: profile.gender || "",
+        date_of_birth: profile.date_of_birth || "",
+        skills: profile.skills ? profile.skills.map((s) => s.id) : [],
+        education: profile.education || [],
+        experiences: profile.experiences || [],
       });
-    });
+    }
 
-    fetch("http://127.0.0.1:3001/api/skills")
-      .then((res) => res.json())
-      .then((data) => setAllSkills(data));
-  }, []);
+    loadSkills();
+  }, [profile]);
+
+  const loadSkills = async () => {
+    try {
+      const res = await axios.get("http://127.0.0.1:3001/api/skills");
+      setAllSkills(res.data);
+    } catch (error) {
+      console.error("LOAD SKILLS ERROR:", error);
+    }
+  };
 
   // ================= BASIC INPUT =================
   const handleChange = (e) => {
@@ -56,10 +65,7 @@ function EditProfileForm({ onCancel }) {
   const addEducation = () => {
     setForm((prev) => ({
       ...prev,
-      education: [
-        ...prev.education,
-        { school: "", degree: "", major: "" },
-      ],
+      education: [...prev.education, { school: "", degree: "", major: "" }],
     }));
   };
 
@@ -104,11 +110,18 @@ function EditProfileForm({ onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await updateProfile(form);
+      setSaving(true);
+      const res = await candidateService.updateProfile(form);
+
       alert("Cập nhật hồ sơ thành công");
-      onCancel();
-    } catch {
+
+      // báo cho CandidatePage reload profile
+      onUpdated(res.is_profile_completed);
+    } catch (error) {
+      console.error("UPDATE PROFILE ERROR:", error);
       alert("Cập nhật thất bại");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -134,6 +147,7 @@ function EditProfileForm({ onCancel }) {
               onChange={handleChange}
               placeholder="Họ và tên"
               className="border p-2 rounded"
+              required
             />
             <input
               name="contact_number"
@@ -141,6 +155,7 @@ function EditProfileForm({ onCancel }) {
               onChange={handleChange}
               placeholder="Số điện thoại"
               className="border p-2 rounded"
+              required
             />
             <input
               name="address"
@@ -148,6 +163,7 @@ function EditProfileForm({ onCancel }) {
               onChange={handleChange}
               placeholder="Địa chỉ"
               className="border p-2 rounded md:col-span-2"
+              required
             />
           </div>
 
@@ -185,7 +201,7 @@ function EditProfileForm({ onCancel }) {
         {/* ===== SKILLS ===== */}
         <section>
           <h4 className="font-semibold text-gray-700 mb-3">
-            Kỹ năng
+            Kỹ năng (bắt buộc chọn ít nhất 1)
           </h4>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
             {allSkills.map((skill) => (
@@ -311,8 +327,11 @@ function EditProfileForm({ onCancel }) {
 
         {/* ===== BUTTON ===== */}
         <div className="flex gap-3">
-          <button className="bg-green-600 text-white px-5 py-2 rounded">
-            Lưu hồ sơ
+          <button
+            disabled={saving}
+            className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50"
+          >
+            {saving ? "Đang lưu..." : "Lưu hồ sơ"}
           </button>
           <button
             type="button"

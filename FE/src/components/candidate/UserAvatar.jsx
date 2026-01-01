@@ -1,4 +1,4 @@
-function UserAvatar() {
+function UserAvatar({ fullName, isProfileCompleted }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
       {/* AVATAR */}
@@ -10,13 +10,24 @@ function UserAvatar() {
 
       {/* USER NAME */}
       <h3 className="text-lg font-semibold text-gray-800">
-        Tên người dùng
+        {fullName || "Ứng viên"}
       </h3>
 
-      {/* ACTION */}
-      <button className="mt-3 text-sm text-green-600 hover:underline">
-        Thay đổi ảnh đại diện
-      </button>
+      {/* PROFILE STATUS */}
+      <p
+        className={`text-sm mt-1 ${
+          isProfileCompleted ? "text-green-600" : "text-red-600"
+        }`}
+      >
+        {isProfileCompleted
+          ? "Hồ sơ đã hoàn thiện"
+          : "Hồ sơ chưa hoàn thiện"}
+      </p>
+
+      {/* ACTION (DISABLED – GIẢI THÍCH RÕ) */}
+      <p className="mt-3 text-xs text-gray-400">
+        (Chức năng thay đổi ảnh đại diện sẽ được phát triển sau)
+      </p>
     </div>
   );
 }

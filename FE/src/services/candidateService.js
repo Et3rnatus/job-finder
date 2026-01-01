@@ -1,30 +1,51 @@
-const API_URL = "http://127.0.0.1:3001/api/candidates";
+import axios from "axios";
 
-export const getProfile = async () => {
+const API_URL = "http://127.0.0.1:3001/api/candidate";
+
+const getAuthHeader = () => {
   const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}/profile`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-
-  if (!res.ok) throw new Error("Failed to load profile");
-  return res.json();
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 };
 
-export const updateProfile = async (data) => {
-  const token = localStorage.getItem("token");
+/**
+ * 1️⃣ Lấy toàn bộ hồ sơ ứng viên
+ * GET /api/candidate/profile
+ */
+const getProfile = async () => {
+  const res = await axios.get(`${API_URL}/profile`, {
+    headers: getAuthHeader(),
+  });
+  return res.data;
+};
 
-  const res = await fetch(`${API_URL}/profile`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(data)
+/**
+ * 2️⃣ Check hồ sơ đã hoàn thiện hay chưa
+ * GET /api/candidate/check-profile
+ */
+const checkProfile = async () => {
+  const res = await axios.get(`${API_URL}/check-profile`, {
+    headers: getAuthHeader(),
+  });
+  return res.data; // { is_profile_completed: true/false }
+};
+
+/**
+ * 3️⃣ Cập nhật hồ sơ ứng viên
+ * PUT /api/candidate/profile
+ */
+const updateProfile = async (data) => {
+  const res = await axios.put(`${API_URL}/profile`, data, {
+    headers: getAuthHeader(),
   });
 
-  if (!res.ok) throw new Error("Update failed");
-  return res.json();
+  // { message, is_profile_completed }
+  return res.data;
+};
+
+export default {
+  getProfile,
+  checkProfile,
+  updateProfile,
 };

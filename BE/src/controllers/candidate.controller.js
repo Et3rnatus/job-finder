@@ -1,72 +1,16 @@
 const pool = require('../config/db');
 
-exports.checkProfile = async (req, res) => {
-  const userId = req.user.userId;
-
-  try {
-    const [[candidate]] = await pool.query(
-      'SELECT id, full_name, contact_number, address FROM candidate WHERE user_id = ?',
-      [userId]
-    );
-
-    if (!candidate) {
-      return res.json({ completed: false });
-    }
-
-    // Hàm check rỗng an toàn
-    const isEmpty = (value) => {
-      return !value || value.trim() === '';
-    };
-
-    if (
-      isEmpty(candidate.full_name) ||
-      isEmpty(candidate.contact_number) ||
-      isEmpty(candidate.address)
-    ) {
-      return res.json({ completed: false });
-    }
-
-    // Check có ít nhất 1 skill
-    const [skills] = await pool.query(
-      'SELECT id FROM candidate_skill WHERE candidate_id = ?',
-      [candidate.id]
-    );
-
-    if (skills.length === 0) {
-      return res.json({ completed: false });
-    }
-
-    res.json({ completed: true });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+/**
+ * GET /candidate/profile
+ * Lấy toàn bộ hồ sơ candidate
+ */
 exports.getProfile = async (req, res) => {
-  const userId = req.user.userId;
+  const candidate = req.candidate;
 
   try {
-    const [[candidate]] = await pool.query(
-      `SELECT 
-        id,
-        full_name,
-        contact_number,
-        address,
-        bio,
-        gender,
-        DATE_FORMAT(date_of_birth, '%Y-%m-%d') AS date_of_birth
-       FROM candidate
-       WHERE user_id = ?`,
-      [userId]
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ error: 'Candidate not found' });
-    }
-
     // Skills
     const [skills] = await pool.query(
-      `SELECT s.id, s.name 
+      `SELECT s.id, s.name
        FROM skill s
        JOIN candidate_skill cs ON s.id = cs.skill_id
        WHERE cs.candidate_id = ?`,
@@ -75,12 +19,7 @@ exports.getProfile = async (req, res) => {
 
     // Education
     const [education] = await pool.query(
-      `SELECT 
-        school,
-        degree,
-        major,
-        start_date,
-        end_date
+      `SELECT school, degree, major, start_date, end_date
        FROM education
        WHERE candidate_id = ?`,
       [candidate.id]
@@ -88,12 +27,7 @@ exports.getProfile = async (req, res) => {
 
     // Work experience
     const [experiences] = await pool.query(
-      `SELECT
-        company,
-        position,
-        start_date,
-        end_date,
-        description
+      `SELECT company, position, start_date, end_date, description
        FROM work_experience
        WHERE candidate_id = ?`,
       [candidate.id]
@@ -107,18 +41,32 @@ exports.getProfile = async (req, res) => {
       bio: candidate.bio,
       gender: candidate.gender,
       date_of_birth: candidate.date_of_birth,
+      is_profile_completed: candidate.is_profile_completed,
       skills,
       education,
       experiences
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+/**
+ * GET /candidate/check-profile
+ * FE chỉ dùng để check trạng thái
+ */
+exports.checkProfile = async (req, res) => {
+  res.json({
+    is_profile_completed: req.candidate.is_profile_completed
+  });
+};
+
+/**
+ * PUT /candidate/profile
+ * Update toàn bộ hồ sơ + quyết định hoàn thiện
+ */
 exports.updateProfile = async (req, res) => {
-  const userId = req.user.userId;
+  const candidate = req.candidate;
   const {
     full_name,
     contact_number,
@@ -136,17 +84,7 @@ exports.updateProfile = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const [[candidate]] = await connection.query(
-      'SELECT id FROM candidate WHERE user_id = ?',
-      [userId]
-    );
-
-    if (!candidate) {
-      await connection.rollback();
-      return res.status(404).json({ error: 'Candidate not found' });
-    }
-
-    // 1️⃣ Update candidate
+    // 1️⃣ Update candidate info
     await connection.query(
       `UPDATE candidate
        SET full_name=?, contact_number=?, address=?, bio=?, gender=?, date_of_birth=?
@@ -177,7 +115,7 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    // 3️⃣ Update education (OPTIONAL)
+    // 3️⃣ Update education
     await connection.query(
       'DELETE FROM education WHERE candidate_id=?',
       [candidate.id]
@@ -203,7 +141,7 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    // 4️⃣ Update work experience (OPTIONAL)
+    // 4️⃣ Update work experience
     await connection.query(
       'DELETE FROM work_experience WHERE candidate_id=?',
       [candidate.id]
@@ -229,9 +167,27 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    await connection.commit();
-    res.json({ message: 'Profile updated successfully' });
+    // 5️⃣ Quyết định hồ sơ đã hoàn thiện hay chưa (CHỐT NGHIỆP VỤ)
+    const isCompleted =
+      full_name &&
+      contact_number &&
+      address &&
+      Array.isArray(skills) &&
+      skills.length > 0
+        ? 1
+        : 0;
 
+    await connection.query(
+      'UPDATE candidate SET is_profile_completed=? WHERE id=?',
+      [isCompleted, candidate.id]
+    );
+
+    await connection.commit();
+
+    res.json({
+      message: 'Profile updated successfully',
+      is_profile_completed: isCompleted
+    });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ error: error.message });
