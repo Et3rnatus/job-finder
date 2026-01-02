@@ -30,7 +30,7 @@ function CreateJobForm() {
     skill_ids: [],
   });
 
-  /* ================= LOAD SKILLS ================= */
+
   useEffect(() => {
     const loadSkills = async () => {
       try {
@@ -45,7 +45,7 @@ function CreateJobForm() {
     loadSkills();
   }, []);
 
-  /* ================= HANDLERS ================= */
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -63,11 +63,11 @@ function CreateJobForm() {
     setDistricts(cityData ? cityData.Districts : []);
   };
 
-  /* ================= SUBMIT ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ===== FE VALIDATE (KHỚP BE) =====
+
     if (
       !form.title ||
       !form.description ||
@@ -86,8 +86,7 @@ function CreateJobForm() {
       return;
     }
 
-    // ===== LOCATION =====
-    // FE chỉ build location khi KHÔNG dùng địa chỉ công ty
+  
     let location = "";
 
     if (!useCompanyAddress) {
@@ -103,11 +102,7 @@ function CreateJobForm() {
         districts.find((d) => d.Id === form.district)?.Name || "";
 
       location = `${form.address_detail}, ${districtName}, ${cityName}`;
-    }
-    // Nếu useCompanyAddress = true → location để rỗng
-    // BE sẽ tự lấy employer.address
-
-    // ===== SALARY CHECK =====
+    }   
     if (
       !salaryNegotiable &&
       Number(form.min_salary) > Number(form.max_salary)
@@ -122,7 +117,7 @@ function CreateJobForm() {
       job_requirements: form.job_requirements,
       benefits: form.benefits,
 
-      location, // có thể là "" → BE xử lý
+      location, 
 
       employment_type: form.employment_type,
       hiring_quantity: Number(form.hiring_quantity),
@@ -145,7 +140,6 @@ function CreateJobForm() {
     }
   };
 
-  /* ================= UI ================= */
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
@@ -154,7 +148,7 @@ function CreateJobForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
 
-        {/* ===== THÔNG TIN CÔNG VIỆC ===== */}
+
         <section>
           <h3 className="font-semibold mb-3">Thông tin công việc</h3>
 
@@ -197,7 +191,6 @@ function CreateJobForm() {
           />
         </section>
 
-        {/* ===== ĐỊA ĐIỂM ===== */}
         <section>
           <h3 className="font-semibold mb-3">Địa điểm làm việc</h3>
 
@@ -262,7 +255,6 @@ function CreateJobForm() {
           )}
         </section>
 
-        {/* ===== MÔ TẢ & YÊU CẦU ===== */}
         <section>
           <h3 className="font-semibold mb-3">Mô tả & yêu cầu</h3>
 
@@ -313,7 +305,6 @@ function CreateJobForm() {
           </div>
         </section>
 
-        {/* ===== QUYỀN LỢI ===== */}
         <section>
           <h3 className="font-semibold mb-3">Quyền lợi</h3>
 
@@ -327,7 +318,6 @@ function CreateJobForm() {
           />
         </section>
 
-        {/* ===== LƯƠNG ===== */}
         <section>
           <h3 className="font-semibold mb-3">Mức lương</h3>
 

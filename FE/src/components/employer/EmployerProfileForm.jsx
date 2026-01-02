@@ -45,11 +45,8 @@ function EmployerProfileForm({ onProfileCompleted }) {
       });
   }, []);
 
-  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-
-    // clear error khi user sửa
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: "" });
     }
@@ -74,7 +71,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
     });
   };
 
-  // ================= VALIDATE =================
   const validate = () => {
     const newErrors = {};
 
@@ -95,7 +91,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -128,7 +123,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
     }
   };
 
-  // ================= HỦY =================
   const handleCancel = () => {
     if (onProfileCompleted) {
       onProfileCompleted();
@@ -146,7 +140,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* ===== THÔNG TIN DOANH NGHIỆP ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Thông tin doanh nghiệp
@@ -184,7 +177,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
           />
         </section>
 
-        {/* ===== ĐỊA CHỈ ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Địa chỉ công ty
@@ -246,7 +238,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
           )}
         </section>
 
-        {/* ===== MÔ TẢ ===== */}
         <section>
           <h4 className="text-base font-semibold text-gray-700 mb-3">
             Giới thiệu công ty
@@ -262,7 +253,6 @@ function EmployerProfileForm({ onProfileCompleted }) {
           />
         </section>
 
-        {/* ===== ACTIONS ===== */}
         <div className="flex gap-4">
           <button
             type="submit"

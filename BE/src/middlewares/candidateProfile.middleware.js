@@ -1,12 +1,5 @@
 const db = require('../config/db');
 
-/**
- * Middleware:
- * - Kiểm tra user đăng nhập
- * - Kiểm tra role = candidate
- * - Load candidate theo user_id
- * - Inject req.candidate
- */
 exports.requireCandidate = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -42,43 +35,33 @@ exports.requireCandidate = async (req, res, next) => {
   }
 };
 
-/**
- * Middleware:
- * - Kiểm tra hồ sơ ứng viên đã hoàn thiện
- * - Kiểm tra có ít nhất 1 skill
- * - Dùng cho APPLY JOB
- */
+
 exports.requireCompletedCandidateProfile = async (req, res, next) => {
-  try {
-    const candidate = req.candidate;
+  const userId = req.user.id;
 
-    if (!candidate.is_profile_completed) {
-      return res.status(403).json({
-        message: 'Please complete your profile before applying'
-      });
-    }
+  const [[candidate]] = await db.execute(
+    `
+    SELECT id, full_name, contact_number, date_of_birth, is_profile_completed
+    FROM candidate
+    WHERE user_id = ?
+    `,
+    [userId]
+  );
 
-    const [[skill]] = await db.execute(
-      `
-      SELECT 1
-      FROM candidate_skill
-      WHERE candidate_id = ?
-      LIMIT 1
-      `,
-      [candidate.id]
-    );
-
-    if (!skill) {
-      return res.status(403).json({
-        message: 'Please add at least one skill before applying'
-      });
-    }
-
-    next();
-  } catch (error) {
-    console.error('CANDIDATE PROFILE CHECK ERROR:', error);
-    res.status(500).json({
-      message: 'Candidate profile check failed'
+  if (!candidate) {
+    return res.status(403).json({
+      message: "Bạn cần tạo hồ sơ ứng viên trước",
     });
   }
+
+  if (!candidate.is_profile_completed) {
+    return res.status(400).json({
+      message: "Vui lòng hoàn thiện hồ sơ trước khi ứng tuyển",
+    });
+  }
+
+  // 🔑 QUAN TRỌNG NHẤT
+  req.candidate = candidate;
+
+  next();
 };

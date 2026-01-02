@@ -3,16 +3,15 @@ const router = express.Router();
 const { verifyToken,requireRole } = require('../middlewares/auth.middleware');
 const employerController = require('../controllers/employer.controller');
 
-    // Profile
     router.put('/profile', verifyToken, employerController.updateProfile);
     
-    // Check profile completion
+    // Kiểm tra hoàn thành hồ sơ
     router.get("/check-profile", verifyToken, requireRole("employer"), employerController.checkProfile);
 
-    //Get employer profile information
+    //Lấy hồ sơ nhà tuyển dụng
     router.get("/profile", verifyToken, requireRole("employer"), employerController.getProfile);
 
-    // Get jobs posted by employer
+    // lấy công việc đã đăng của nhà tuyển dụng
     router.get("/jobs", verifyToken, requireRole("employer"), employerController.getMyJobs);
 
 module.exports = router;

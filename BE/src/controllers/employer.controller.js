@@ -1,5 +1,6 @@
 const db = require('../config/db');
 
+//cập nhật hồ sơ nhà tuyển dụng
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -14,19 +15,14 @@ exports.updateProfile = async (req, res) => {
       business_license,
       logo
     } = req.body;
-
-    // 1️⃣ validate tối thiểu (BẮT BUỘC)
     if (!company_name || !city || !district || !address_detail) {
       return res.status(400).json({
         message: "Vui lòng nhập đầy đủ thông tin bắt buộc"
       });
     }
 
-    // 2️⃣ ghép địa chỉ đầy đủ
     const fullAddress = `${address_detail}, ${district}, ${city}`;
 
-    // 3️⃣ xác định trạng thái hoàn thiện hồ sơ
-    // ❗ description KHÔNG bắt buộc
     const isProfileCompleted =
       company_name &&
       city &&
@@ -146,6 +142,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+//lấy những công việc đã đăng tuyển
 exports.getMyJobs = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -158,7 +155,7 @@ exports.getMyJobs = async (req, res) => {
         j.created_at,
         j.expired_at,
 
-        COUNT(a.id) AS total_applications,
+        SUM(a.status != 'cancelled') AS total_applications,
         SUM(a.status = 'pending') AS pending_count,
         SUM(a.status = 'approved') AS approved_count,
         SUM(a.status = 'rejected') AS rejected_count
@@ -181,5 +178,3 @@ exports.getMyJobs = async (req, res) => {
     });
   }
 };
-
-

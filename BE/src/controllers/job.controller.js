@@ -1,10 +1,6 @@
 const db = require("../config/db");
 
-/**
- * ================================
- * CREATE JOB (EMPLOYER)
- * ================================
- */
+//Đăng tin tuyển dụng
 exports.createJob = async (req, res) => {
   const connection = await db.getConnection();
   let transactionStarted = false;
@@ -22,13 +18,13 @@ exports.createJob = async (req, res) => {
       is_salary_negotiable,
       hiring_quantity,
       expired_at,
-      location,              // có thể rỗng
+      location,            
       employment_type,
       category_id,
       skill_ids,
     } = req.body;
 
-    /* ========== 1️⃣ VALIDATE BẮT BUỘC ========== */
+
 
     if (!title) return res.status(400).json({ message: "Title is required" });
     if (!description) return res.status(400).json({ message: "Description is required" });
@@ -55,7 +51,7 @@ exports.createJob = async (req, res) => {
       });
     }
 
-    // ✅ Fix validate ngày hết hạn (cho phép hết hạn cuối ngày)
+ 
     const expiredDate = new Date(expired_at);
     expiredDate.setHours(23, 59, 59, 999);
 
@@ -80,9 +76,6 @@ exports.createJob = async (req, res) => {
         });
       }
     }
-
-    /* ========== 2️⃣ CHECK EMPLOYER ========== */
-
     const [employerRows] = await connection.query(
       "SELECT id, address FROM employer WHERE user_id = ?",
       [userId]
@@ -96,11 +89,10 @@ exports.createJob = async (req, res) => {
 
     const employerId = employerRows[0].id;
 
-    /* ========== 3️⃣ XÁC ĐỊNH LOCATION (QUAN TRỌNG) ========== */
 
     let finalLocation = location;
 
-    // Nếu FE không gửi location → lấy từ address công ty
+ 
     if (!finalLocation || finalLocation.trim() === "") {
       if (!employerRows[0].address) {
         return res.status(400).json({
@@ -110,7 +102,7 @@ exports.createJob = async (req, res) => {
       finalLocation = employerRows[0].address;
     }
 
-    /* ========== 4️⃣ CHECK SKILLS ========== */
+   
 
     const [skillRows] = await connection.query(
       "SELECT id FROM skill WHERE id IN (?)",
@@ -123,7 +115,7 @@ exports.createJob = async (req, res) => {
       });
     }
 
-    /* ========== 5️⃣ TRANSACTION ========== */
+  
 
     await connection.beginTransaction();
     transactionStarted = true;
@@ -159,7 +151,7 @@ exports.createJob = async (req, res) => {
         isNegotiable ? 1 : 0,
         hiring_quantity,
         expired_at,
-        finalLocation,          // 🔥 DÙNG LOCATION CUỐI
+        finalLocation,          
         employment_type,
         category_id || null,
       ]
@@ -193,46 +185,75 @@ exports.createJob = async (req, res) => {
 };
 
 
-/**
- * ================================
- * GET ALL JOBS (HOMEPAGE)
- * 👉 dùng cho JobList / JobCard
- * ================================
- */
+//Lấy danh sách job
 exports.getAllJobs = async (req, res) => {
   try {
-    // 1️⃣ lấy job cơ bản
-    const [jobs] = await db.execute(
-      `
+    const { keyword, city } = req.query;
+    const user = req.user; // 👈 THÊM
+
+    let sql = `
       SELECT
         j.id,
         j.title,
-        j.location,              
+        j.location,
         j.employment_type,
         j.min_salary,
         j.max_salary,
         j.created_at,
 
         e.company_name,
-        e.logo
+        e.logo,
+
+        ${
+          user && user.role === "candidate"
+            ? "CASE WHEN a.id IS NULL THEN 0 ELSE 1 END AS is_applied"
+            : "0 AS is_applied"
+        }
+
       FROM job j
       JOIN employer e ON j.employer_id = e.id
-      ORDER BY j.created_at DESC
-      `
-    );
+    `;
+
+    const params = [];
+
+    // 👇 THÊM JOIN để check đã apply chưa
+    if (user && user.role === "candidate") {
+      sql += `
+        LEFT JOIN application a
+          ON j.id = a.job_id
+          AND a.candidate_id = ?
+      `;
+      params.push(user.id);
+    }
+
+    sql += ` WHERE 1 = 1 `;
+
+    // 🔍 tìm theo tên công việc
+    if (keyword && keyword.trim() !== "") {
+      sql += " AND j.title LIKE ?";
+      params.push(`%${keyword}%`);
+    }
+
+    // 📍 lọc theo địa điểm
+    if (city && city.trim() !== "") {
+      sql += " AND j.location = ?";
+      params.push(city);
+    }
+
+    sql += " ORDER BY j.created_at DESC";
+
+    const [jobs] = await db.execute(sql, params);
 
     if (jobs.length === 0) {
       return res.json([]);
     }
 
-    // 2️⃣ lấy skills
     const jobIds = jobs.map((job) => job.id);
 
     const [skills] = await db.execute(
       `
       SELECT
         js.job_id,
-        s.id,
         s.name
       FROM job_skill js
       JOIN skill s ON js.skill_id = s.id
@@ -241,7 +262,6 @@ exports.getAllJobs = async (req, res) => {
       jobIds
     );
 
-    // 3️⃣ map skill vào job
     const jobMap = {};
 
     jobs.forEach((job) => {
@@ -257,7 +277,6 @@ exports.getAllJobs = async (req, res) => {
       }
     });
 
-    // 4️⃣ FE cần skill dạng string
     const result = Object.values(jobMap).map((job) => ({
       ...job,
       job_skill: job.skills.join(", "),
@@ -272,17 +291,13 @@ exports.getAllJobs = async (req, res) => {
   }
 };
 
-/**
- * ================================
- * GET JOB DETAIL
- * 👉 dùng cho JobDetailPage
- * ================================
- */
+
+
+//Lấy thông tin chi tiết của tin tuyển dụnng
 exports.getJobDetail = async (req, res) => {
   try {
     const jobId = req.params.id;
 
-    // 1️⃣ job + employer (địa chỉ chi tiết)
     const [rows] = await db.execute(
       `
       SELECT 
@@ -320,7 +335,6 @@ exports.getJobDetail = async (req, res) => {
 
     const job = rows[0];
 
-    // 2️⃣ skills
     const [skills] = await db.execute(
       `
       SELECT 
@@ -333,7 +347,6 @@ exports.getJobDetail = async (req, res) => {
       [jobId]
     );
 
-    // 3️⃣ format cho FE
     res.json({
       id: job.id,
       title: job.title,
@@ -344,7 +357,7 @@ exports.getJobDetail = async (req, res) => {
       max_salary: job.max_salary,
       is_salary_negotiable: job.is_salary_negotiable,
       hiring_quantity: job.hiring_quantity,
-      location: job.location,         // 👉 hiển thị ngắn
+      location: job.location,     
       employment_type: job.employment_type,
       expired_at: job.expired_at,
       created_at: job.created_at,

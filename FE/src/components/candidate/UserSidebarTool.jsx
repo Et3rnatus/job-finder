@@ -17,7 +17,6 @@ function UserSidebarTool({ onEditProfile }) {
 
       <ul className="space-y-2 text-sm">
 
-        {/* ✅ ACTIVE FEATURE */}
         <li
           onClick={onEditProfile}
           className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100 font-medium"
@@ -25,7 +24,6 @@ function UserSidebarTool({ onEditProfile }) {
           Cập nhật hồ sơ
         </li>
 
-        {/* ⏸ FUTURE FEATURES */}
         <li className="px-3 py-2 rounded text-gray-400 cursor-not-allowed">
           Đổi mật khẩu
           <span className="block text-xs">
@@ -47,7 +45,6 @@ function UserSidebarTool({ onEditProfile }) {
           </span>
         </li>
 
-        {/* 🔴 LOGOUT */}
         <li
           onClick={handleLogout}
           className="px-3 py-2 rounded cursor-pointer text-red-600 hover:bg-red-50 font-medium"

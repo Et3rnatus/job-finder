@@ -15,26 +15,27 @@ function UserProfileInfo({ profile }) {
     experiences,
   } = profile;
 
+  // ✅ format ngày sinh cho UI (vi-VN)
+  const formattedDob = date_of_birth
+    ? new Date(date_of_birth).toLocaleDateString("vi-VN")
+    : "Chưa cập nhật";
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
-      {/* HEADER */}
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
         Hồ sơ cá nhân
       </h2>
 
-      {/* BASIC INFO */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-gray-700">
-
-        {/* LEFT */}
         <div className="space-y-4">
           <Info label="Họ và tên" value={full_name} />
           <Info label="Số điện thoại" value={contact_number} />
           <Info label="Địa chỉ" value={address} />
           <Info label="Giới tính" value={gender} />
-          <Info label="Ngày sinh" value={date_of_birth} />
+          <Info label="Email" value={profile.email} />
+          <Info label="Ngày sinh" value={formattedDob} />
         </div>
 
-        {/* RIGHT */}
         <div className="space-y-4">
           <Info
             label="Kỹ năng"
@@ -52,7 +53,6 @@ function UserProfileInfo({ profile }) {
         </div>
       </div>
 
-      {/* EDUCATION */}
       <Section title="Học vấn">
         {education && education.length > 0 ? (
           education.map((edu, index) => (
@@ -68,7 +68,6 @@ function UserProfileInfo({ profile }) {
         )}
       </Section>
 
-      {/* EXPERIENCE */}
       <Section title="Kinh nghiệm làm việc">
         {experiences && experiences.length > 0 ? (
           experiences.map((exp, index) => (
@@ -90,8 +89,6 @@ function UserProfileInfo({ profile }) {
     </div>
   );
 }
-
-/* ===== HELPER COMPONENTS ===== */
 
 function Info({ label, value }) {
   return (

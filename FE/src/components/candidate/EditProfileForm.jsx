@@ -18,7 +18,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [allSkills, setAllSkills] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  // ================= INIT DATA =================
+  /* ===== LOAD PROFILE ===== */
   useEffect(() => {
     if (profile) {
       setForm({
@@ -27,31 +27,37 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
         address: profile.address || "",
         bio: profile.bio || "",
         gender: profile.gender || "",
-        date_of_birth: profile.date_of_birth || "",
-        skills: profile.skills ? profile.skills.map((s) => s.id) : [],
+        date_of_birth: profile.date_of_birth
+          ? profile.date_of_birth.slice(0, 10)
+          : "",
+        skills: Array.isArray(profile.skills)
+          ? profile.skills.map((s) => s.id)
+          : [],
         education: profile.education || [],
         experiences: profile.experiences || [],
       });
     }
-
-    loadSkills();
   }, [profile]);
 
-  const loadSkills = async () => {
-    try {
-      const res = await axios.get("http://127.0.0.1:3001/api/skills");
-      setAllSkills(res.data);
-    } catch (error) {
-      console.error("LOAD SKILLS ERROR:", error);
-    }
-  };
+  /* ===== LOAD SKILLS ===== */
+  useEffect(() => {
+    const loadSkills = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:3001/api/skills");
+        setAllSkills(res.data);
+      } catch (error) {
+        console.error("LOAD SKILLS ERROR:", error);
+      }
+    };
 
-  // ================= BASIC INPUT =================
+    loadSkills();
+  }, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ================= SKILLS =================
+  /* ===== SKILLS ===== */
   const toggleSkill = (skillId) => {
     setForm((prev) => ({
       ...prev,
@@ -61,7 +67,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     }));
   };
 
-  // ================= EDUCATION =================
+  /* ===== EDUCATION ===== */
   const addEducation = () => {
     setForm((prev) => ({
       ...prev,
@@ -82,7 +88,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     });
   };
 
-  // ================= EXPERIENCE =================
+  /* ===== EXPERIENCE ===== */
   const addExperience = () => {
     setForm((prev) => ({
       ...prev,
@@ -106,26 +112,40 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     });
   };
 
-  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.full_name || !form.contact_number || !form.date_of_birth) {
+      alert("Vui lòng nhập đầy đủ họ tên, số điện thoại và ngày sinh");
+      return;
+    }
+
+    if (!Array.isArray(form.skills) || form.skills.length === 0) {
+      alert("Vui lòng chọn ít nhất một kỹ năng");
+      return;
+    }
+
     try {
       setSaving(true);
-      const res = await candidateService.updateProfile(form);
+
+      await candidateService.updateProfile({
+        ...form,
+        date_of_birth: form.date_of_birth || null,
+      });
 
       alert("Cập nhật hồ sơ thành công");
 
-      // báo cho CandidatePage reload profile
-      onUpdated(res.is_profile_completed);
+      onUpdated();
     } catch (error) {
       console.error("UPDATE PROFILE ERROR:", error);
-      alert("Cập nhật thất bại");
+      alert(
+        error.response?.data?.message || "Cập nhật hồ sơ thất bại"
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  // ================= UI =================
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <h3 className="text-xl font-semibold text-gray-800 mb-6">
@@ -133,7 +153,6 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-
         {/* ===== THÔNG TIN CÁ NHÂN ===== */}
         <section>
           <h4 className="font-semibold text-gray-700 mb-3">
@@ -163,7 +182,12 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               onChange={handleChange}
               placeholder="Địa chỉ"
               className="border p-2 rounded md:col-span-2"
-              required
+            />
+            <input
+              value={profile.email || ""}
+              disabled
+              className="border p-2 rounded bg-gray-100 cursor-not-allowed"
+              placeholder="Email (không thể thay đổi)"
             />
           </div>
 
@@ -183,9 +207,9 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               className="border p-2 rounded"
             >
               <option value="">-- Giới tính --</option>
-              <option value="male">Nam</option>
-              <option value="female">Nữ</option>
-              <option value="other">Khác</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
             </select>
 
             <input
@@ -194,6 +218,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               value={form.date_of_birth}
               onChange={handleChange}
               className="border p-2 rounded"
+              required
             />
           </div>
         </section>
@@ -230,7 +255,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
             >
               <input
                 placeholder="Trường"
-                value={edu.school}
+                value={edu.school || ""}
                 onChange={(e) =>
                   updateEducation(index, "school", e.target.value)
                 }
@@ -238,7 +263,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               />
               <input
                 placeholder="Bằng cấp"
-                value={edu.degree}
+                value={edu.degree || ""}
                 onChange={(e) =>
                   updateEducation(index, "degree", e.target.value)
                 }
@@ -246,7 +271,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               />
               <input
                 placeholder="Chuyên ngành"
-                value={edu.major}
+                value={edu.major || ""}
                 onChange={(e) =>
                   updateEducation(index, "major", e.target.value)
                 }
@@ -284,7 +309,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
             >
               <input
                 placeholder="Công ty"
-                value={exp.company}
+                value={exp.company || ""}
                 onChange={(e) =>
                   updateExperience(index, "company", e.target.value)
                 }
@@ -292,7 +317,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               />
               <input
                 placeholder="Vị trí"
-                value={exp.position}
+                value={exp.position || ""}
                 onChange={(e) =>
                   updateExperience(index, "position", e.target.value)
                 }
@@ -300,7 +325,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               />
               <textarea
                 placeholder="Mô tả công việc"
-                value={exp.description}
+                value={exp.description || ""}
                 onChange={(e) =>
                   updateExperience(index, "description", e.target.value)
                 }

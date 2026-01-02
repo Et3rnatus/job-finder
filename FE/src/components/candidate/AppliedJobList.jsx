@@ -27,6 +27,7 @@ const statusMap = {
 function AppliedJobList() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => {
     fetchAppliedJobs();
@@ -51,22 +52,31 @@ function AppliedJobList() {
     const ok = window.confirm("Bạn có chắc muốn hủy ứng tuyển?");
     if (!ok) return;
 
-    await cancelApplication(applicationId);
-    fetchAppliedJobs();
+    try {
+      setProcessingId(applicationId);
+      await cancelApplication(applicationId);
+      fetchAppliedJobs();
+    } catch (error) {
+      alert("Hủy ứng tuyển thất bại");
+    } finally {
+      setProcessingId(null);
+    }
   };
 
-  // 🔥 ỨNG TUYỂN LẠI
   const handleReApply = async (jobId) => {
     const ok = window.confirm("Bạn có muốn ứng tuyển lại công việc này?");
     if (!ok) return;
 
     try {
-      await applyJob({ job_id: jobId });
+      setProcessingId(jobId);
+      await applyJob({ job_id: jobId }); // cover_letter optional
       fetchAppliedJobs();
     } catch (error) {
       alert(
         error?.response?.data?.message || "Ứng tuyển lại thất bại"
       );
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -94,7 +104,11 @@ function AppliedJobList() {
 
           <div className="divide-y">
             {jobs.map((job) => {
-              const status = statusMap[job.status];
+              const status =
+                statusMap[job.status] || {
+                  text: job.status,
+                  className: "text-gray-500",
+                };
 
               return (
                 <div
@@ -114,8 +128,9 @@ function AppliedJobList() {
                   <div className="space-y-1">
                     {job.status === "pending" && (
                       <button
+                        disabled={processingId === job.id}
                         onClick={() => handleCancel(job.id)}
-                        className="text-red-600 text-xs hover:underline"
+                        className="text-red-600 text-xs hover:underline disabled:opacity-50"
                       >
                         Hủy ứng tuyển
                       </button>
@@ -123,8 +138,9 @@ function AppliedJobList() {
 
                     {job.status === "cancelled" && (
                       <button
+                        disabled={processingId === job.job_id}
                         onClick={() => handleReApply(job.job_id)}
-                        className="text-blue-600 text-xs hover:underline"
+                        className="text-blue-600 text-xs hover:underline disabled:opacity-50"
                       >
                         Ứng tuyển lại
                       </button>

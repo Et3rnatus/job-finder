@@ -1,8 +1,9 @@
 const db = require('../config/db');
 
+//Lưu công việc của ứng viên
 exports.saveJob = async (req, res) => {
   try {
-    const candidateId = req.user.id; // lấy từ JWT
+    const candidateId = req.user.id;
     const { job_id } = req.body;
 
     if (!job_id) {

@@ -1,13 +1,23 @@
 import JobCard from "../jobs/JobCard";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getJobs } from "../../services/jobService";
 
 function JobList() {
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    getJobs()
-      .then((data) => {
+    const fetchJobs = async () => {
+      setLoading(true);
+      try {
+        const keyword = searchParams.get("keyword") || "";
+        const city = searchParams.get("city") || "";
+
+        const data = await getJobs({ keyword, city });
+
         if (!Array.isArray(data)) {
           console.error("API getJobs trả sai định dạng:", data);
           setJobs([]);
@@ -26,19 +36,21 @@ function JobList() {
           location: job.location || "Chưa cập nhật",
           company: job.company_name || "Chưa cập nhật",
 
-          // 🔥 QUAN TRỌNG: để chuỗi rỗng nếu không có skill
-          skills: Array.isArray(job.skills)
-            ? job.skills.map((s) => s.name).join(", ")
-            : "",
+          // backend đã trả job_skill là string
+          skills: job.job_skill || "",
         }));
 
         setJobs(mappedJobs);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Lỗi gọi getJobs:", err);
         setJobs([]);
-      });
-  }, []);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, [searchParams]); // 👈 rất quan trọng
 
   return (
     <section className="bg-white rounded-lg border border-gray-200">
@@ -52,10 +64,13 @@ function JobList() {
       </div>
 
       <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {jobs.length > 0 ? (
-          jobs.map((job) => <JobCard key={job.id} {...job} />)
-        ) : (
-          <p className="text-gray-500">Chưa có công việc nào.</p>
+        {loading && <p className="text-gray-500">Đang tải dữ liệu...</p>}
+
+        {!loading && jobs.length > 0 &&
+          jobs.map((job) => <JobCard key={job.id} {...job} />)}
+
+        {!loading && jobs.length === 0 && (
+          <p className="text-gray-500">Không tìm thấy công việc phù hợp.</p>
         )}
       </div>
     </section>

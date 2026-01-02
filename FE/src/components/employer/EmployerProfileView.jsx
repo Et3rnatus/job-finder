@@ -63,7 +63,6 @@ function EmployerProfileView({ onEdit }) {
         </div>
       </div>
 
-      {/* ACTION */}
       <div className="mt-8">
         <button
           onClick={onEdit}

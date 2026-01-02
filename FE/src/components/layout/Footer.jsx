@@ -21,7 +21,7 @@ function Footer() {
     <footer className="bg-gray-900 text-gray-300 pt-14 px-6">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
 
-        {/* ===== GIỚI THIỆU CÔNG TY ===== */}
+       
         <div>
           <h3 className="text-white text-lg font-semibold mb-4">
             JobFinder Việt Nam
@@ -37,7 +37,7 @@ function Footer() {
             <p>✉️ support@jobfinder.vn</p>
           </div>
 
-          {/* SOCIAL ICONS */}
+    
           <div className="flex gap-3 mt-4">
             <a
               href="https://facebook.com"
@@ -59,7 +59,7 @@ function Footer() {
           </div>
         </div>
 
-        {/* ===== DÀNH CHO ỨNG VIÊN ===== */}
+   
         <div>
           <h3 className="text-white text-lg font-semibold mb-4">
             Dành cho ứng viên
@@ -88,7 +88,6 @@ function Footer() {
           </ul>
         </div>
 
-        {/* ===== NHÀ TUYỂN DỤNG ===== */}
         <div>
           <h3 className="text-white text-lg font-semibold mb-4">
             Nhà tuyển dụng
@@ -117,7 +116,6 @@ function Footer() {
           </ul>
         </div>
 
-        {/* ===== HỖ TRỢ & PHÁP LÝ ===== */}
         <div>
           <h3 className="text-white text-lg font-semibold mb-4">
             Hỗ trợ & Pháp lý
@@ -147,7 +145,7 @@ function Footer() {
         </div>
       </div>
 
-      {/* ===== COPYRIGHT ===== */}
+
       <div className="border-t border-gray-700 py-4 text-center text-sm text-gray-500">
         © 2025 JobFinder Việt Nam. All rights reserved.
       </div>

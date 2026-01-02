@@ -9,12 +9,10 @@ exports.register = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    // 1. validate
     if (!email || !password || !role) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // 2. kiểm tra email tồn tại
     const [exists] = await db.execute(
       'SELECT id FROM users WHERE email = ?',
       [email]
@@ -24,10 +22,8 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    // 3. hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. tạo user
     const [result] = await db.execute(
       'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
       [email, hashedPassword, role]
@@ -35,7 +31,6 @@ exports.register = async (req, res) => {
 
     const userId = result.insertId;
 
-    // 5. nếu là employer → tạo hồ sơ employer (chưa hoàn thiện)
     if (role === 'employer') {
       await db.execute(
         `

@@ -4,9 +4,9 @@ function JobCard({ id, title, salary, location, company, skills }) {
   const navigate = useNavigate();
 
   const handleApply = (e) => {
-    e.stopPropagation();
-    alert("Ứng tuyển (demo)");
-  };
+  e.stopPropagation();
+  navigate(`/jobs/${id}`);
+};
 
   const skillList = skills ? skills.split(",") : [];
 
@@ -20,19 +20,18 @@ function JobCard({ id, title, salary, location, company, skills }) {
         transition cursor-pointer
       "
     >
-      {/* LEFT CONTENT */}
+  
       <div className="flex-1 min-w-0">
-        {/* COMPANY */}
+  
         <p className="text-xs text-gray-500 truncate">
           {company}
         </p>
 
-        {/* TITLE */}
+      
         <h3 className="text-base font-semibold text-gray-800 mt-1 truncate">
           {title}
         </h3>
 
-        {/* META */}
         <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
           <span className="flex items-center gap-1">
             💰 {salary}
@@ -42,7 +41,7 @@ function JobCard({ id, title, salary, location, company, skills }) {
           </span>
         </div>
 
-        {/* SKILLS */}
+
         {skillList.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {skillList.slice(0, 3).map((skill, index) => (
@@ -66,7 +65,7 @@ function JobCard({ id, title, salary, location, company, skills }) {
         )}
       </div>
 
-      {/* RIGHT CTA */}
+
       <div className="flex items-center">
         <button
           onClick={handleApply}

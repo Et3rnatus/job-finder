@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import CandidatePage from "./pages/CandidatePage";
 import JobDetailPage from "./pages/JobDetailPage";
 import EmployerPage from "./pages/EmployerPage";
+import JobsPage from "./pages/JobsPage";
 
 function App() {
   useEffect(() => {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
+          <Route path="/jobs" element={<JobsPage />} />
 
           <Route path="/account">
             <Route path="candidate" element={<CandidatePage />} />

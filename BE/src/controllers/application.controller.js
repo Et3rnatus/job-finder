@@ -1,30 +1,35 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-/**
- * POST /applications
- * Candidate apply job (BẢN CŨ – ỔN ĐỊNH)
- */
+
+// API ứng tuyển công việc
 exports.applyJob = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { job_id, cover_letter } = req.body;
 
+    // 🔐 candidate đã được middleware gán
+    const candidate = req.candidate;
+
     if (!job_id) {
-      return res.status(400).json({ message: 'Job id is required' });
+      return res.status(400).json({ message: "Job id is required" });
     }
 
-    // 1️⃣ lấy candidate
-    const [[candidate]] = await db.execute(
-      'SELECT id, full_name FROM candidate WHERE user_id = ?',
-      [userId]
+    // 1️⃣ Check job tồn tại + lấy employer_user_id
+    const [[job]] = await db.execute(
+      `
+      SELECT j.id, j.title, e.user_id AS employer_user_id
+      FROM job j
+      JOIN employer e ON j.employer_id = e.id
+      WHERE j.id = ?
+      `,
+      [job_id]
     );
 
-    if (!candidate) {
-      return res.status(403).json({ message: 'Candidate not found' });
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
     }
 
-    // 2️⃣ check đã apply chưa (trừ cancelled)
+    // 2️⃣ Check đã apply chưa (trừ cancelled)
     const [[existed]] = await db.execute(
       `
       SELECT id
@@ -38,22 +43,17 @@ exports.applyJob = async (req, res) => {
 
     if (existed) {
       return res.status(400).json({
-        message: 'You have already applied for this job'
+        message: "Bạn đã ứng tuyển công việc này",
       });
     }
 
-    // 3️⃣ insert application
+    // 3️⃣ Insert application
     const applicationId = uuidv4();
 
     await db.execute(
       `
       INSERT INTO application (
-        id,
-        job_id,
-        candidate_id,
-        cover_letter,
-        status,
-        applied_at
+        id, job_id, candidate_id, cover_letter, status, applied_at
       )
       VALUES (?, ?, ?, ?, 'pending', NOW())
       `,
@@ -61,38 +61,45 @@ exports.applyJob = async (req, res) => {
         applicationId,
         job_id,
         candidate.id,
-        cover_letter?.trim() || null
+        cover_letter || null,
       ]
     );
 
-    // 4️⃣ 🔔 notification ĐƠN GIẢN (FAIL KHÔNG ẢNH HƯỞNG APPLY)
-    try {
-      await db.execute(
-        `
-        INSERT INTO notification (user_id, title, message)
-        VALUES (?, ?, ?)
-        `,
-        [
-          userId,
-          'Ứng tuyển thành công',
-          'Bạn đã ứng tuyển thành công một công việc'
-        ]
-      );
-    } catch (e) {
-      console.error('NOTIFICATION ERROR (IGNORED):', e);
+    // 4️⃣ Notification cho employer (KHÔNG ĐƯỢC LÀM FAIL APPLY)
+    if (job.employer_user_id) {
+      try {
+        await db.execute(
+          `
+          INSERT INTO notification (user_id, type, title, message)
+          VALUES (?, ?, ?, ?)
+          `,
+          [
+            Number(job.employer_user_id),
+            "apply_job",
+            job.title,
+            "Có ứng viên mới",
+          ]
+        );
+      } catch (e) {
+        console.error("NOTIFICATION ERROR (IGNORED):", e);
+      }
     }
 
-    res.status(201).json({ message: 'Applied successfully' });
+    return res.status(201).json({
+      message: "Ứng tuyển thành công",
+    });
   } catch (error) {
-    console.error('APPLY JOB ERROR:', error);
-    res.status(500).json({ message: 'Apply job failed' });
+    console.error("APPLY JOB ERROR:", error);
+    return res.status(500).json({
+      message: "Apply job failed",
+    });
   }
 };
 
-/**
- * GET /applications/me
- * Candidate xem job đã ứng tuyển
- */
+
+
+
+// API xem job đã ứng tuyển của ứng viên
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -108,7 +115,7 @@ exports.getMyApplications = async (req, res) => {
       `
       SELECT
         a.id,
-        a.job_id,              -- 🔥 BẮT BUỘC PHẢI CÓ
+        a.job_id,          
         a.status,
         a.applied_at,
         j.title AS job_title,
@@ -130,14 +137,11 @@ exports.getMyApplications = async (req, res) => {
 };
 
 
-/**
- * PATCH /applications/:id/cancel
- * Candidate hủy ứng tuyển (BẢN CŨ – THEO application.id)
- */
+ // API hủy ứng tuyển
 exports.cancelApplication = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { id } = req.params; // application.id
+    const { id } = req.params;
 
     const [[candidate]] = await db.execute(
       'SELECT id FROM candidate WHERE user_id = ?',
@@ -186,10 +190,9 @@ exports.cancelApplication = async (req, res) => {
   }
 };
 
-/**
- * GET /applications/job/:jobId
- * Employer xem danh sách ứng viên
- */
+
+ // API nhà tuyển dụng xem danh sách ứng viên
+
 exports.getApplicantsByJob = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -208,6 +211,7 @@ exports.getApplicantsByJob = async (req, res) => {
       JOIN employer e ON j.employer_id = e.id
       WHERE j.id = ?
         AND e.user_id = ?
+        AND a.status != 'cancelled'
       ORDER BY a.applied_at DESC
       `,
       [jobId, userId]
@@ -220,10 +224,10 @@ exports.getApplicantsByJob = async (req, res) => {
   }
 };
 
-/**
- * PATCH /applications/:id/status
- * Employer duyệt / từ chối hồ sơ
- */
+
+
+ // nhà tuyển dụng duyệt / từ chối hồ sơ
+
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -267,10 +271,7 @@ exports.updateApplicationStatus = async (req, res) => {
 };
 
 
-/**
- * GET /applications/check/:jobId
- * Check candidate đã apply job này chưa (trừ cancelled)
- */
+// API check ứng tuyển
 exports.checkApplied = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -280,7 +281,6 @@ exports.checkApplied = async (req, res) => {
       return res.json({ applied: false });
     }
 
-    // lấy candidate
     const [[candidate]] = await db.execute(
       'SELECT id FROM candidate WHERE user_id = ?',
       [userId]
@@ -290,7 +290,6 @@ exports.checkApplied = async (req, res) => {
       return res.json({ applied: false });
     }
 
-    // check application còn hiệu lực
     const [[row]] = await db.execute(
       `
       SELECT id

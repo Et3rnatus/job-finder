@@ -8,12 +8,11 @@ import CreateJobForm from "../components/employer/CreateJobForm";
 import employerService from "../services/employerService";
 
 function EmployerPage() {
-  const [mode, setMode] = useState("profile"); // profile | create
-  const [profileMode, setProfileMode] = useState("view"); // view | edit
+  const [mode, setMode] = useState("profile"); 
+  const [profileMode, setProfileMode] = useState("view"); 
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
 
-  // 🔹 check hồ sơ khi vào trang
   useEffect(() => {
     const checkProfile = async () => {
       try {
@@ -31,7 +30,7 @@ function EmployerPage() {
     checkProfile();
   }, []);
 
-  // 🔹 đổi mode + chặn tạo job khi hồ sơ chưa hoàn thiện
+
   const handleChangeMode = (newMode) => {
     if (newMode === "create" && !profileCompleted) {
       alert(
@@ -41,7 +40,7 @@ function EmployerPage() {
       return;
     }
 
-    // rời profile thì reset về view
+  
     if (newMode !== "profile") {
       setProfileMode("view");
     }
@@ -52,7 +51,7 @@ function EmployerPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* LEFT SIDEBAR */}
+    
         <div className="space-y-6">
           <UserAvatar />
           <EmployerSideBarTool
@@ -61,9 +60,9 @@ function EmployerPage() {
           />
         </div>
 
-        {/* RIGHT CONTENT */}
+   
         <div className="md:col-span-3 space-y-6">
-          {/* 🔔 CẢNH BÁO HỒ SƠ */}
+        
           {showWarning && !profileCompleted && (
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
               Hồ sơ công ty của bạn chưa hoàn tất. Vui lòng hoàn thiện hồ sơ để
@@ -71,10 +70,9 @@ function EmployerPage() {
             </div>
           )}
 
-          {/* ===== PROFILE + JOB LIST ===== */}
           {mode === "profile" && (
             <>
-              {/* PROFILE */}
+           
               {profileMode === "view" ? (
                 <EmployerProfileView
                   onEdit={() => setProfileMode("edit")}
@@ -89,12 +87,12 @@ function EmployerPage() {
                 />
               )}
 
-              {/* JOB LIST – LUÔN HIỂN THỊ DƯỚI PROFILE */}
+           
               <EmployerJobList />
             </>
           )}
 
-          {/* ===== CREATE JOB ===== */}
+   
           {mode === "create" && profileCompleted && <CreateJobForm />}
         </div>
       </div>

@@ -14,7 +14,7 @@ router.post(
   jobController.createJob
 );
 
-// public: lấy tất cả job
+// lấy tất cả job
 router.get('/', jobController.getAllJobs);
 
 // public: xem chi tiết job

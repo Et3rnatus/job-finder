@@ -8,12 +8,6 @@ const {
 
 const candidateController = require('../controllers/candidate.controller');
 
-/**
- * Candidate Profile
- * - Bắt buộc đăng nhập
- * - Bắt buộc role = candidate
- */
-
 // Lấy hồ sơ ứng viên
 router.get(
   '/profile',
@@ -30,7 +24,7 @@ router.put(
   candidateController.updateProfile
 );
 
-// Check trạng thái hồ sơ (dùng cho frontend guard)
+// Check trạng thái hồ sơ
 router.get(
   '/check-profile',
   verifyToken,

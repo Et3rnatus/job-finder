@@ -15,18 +15,17 @@ function HomePage() {
   useEffect(() => {
     const role = localStorage.getItem("role");
 
-    // 🔹 chỉ áp dụng cho nhà tuyển dụng
+ 
     if (role !== "employer") return;
 
-    // 🔹 modal đã hiện trong phiên này rồi thì bỏ qua
+
     const modalShown = sessionStorage.getItem("employerProfileModalShown");
     if (modalShown === "true") return;
 
-    // 🔹 check trạng thái hồ sơ
     employerService.checkProfile().then((res) => {
       if (!res.completed) {
         setShowEmployerModal(true);
-        // đánh dấu đã hiện modal trong phiên
+     
         sessionStorage.setItem("employerProfileModalShown", "true");
       }
     });
@@ -34,27 +33,27 @@ function HomePage() {
 
   return (
     <>
-      {/* HERO + SEARCH */}
+     
       <HeroSection />
 
       <main className="max-w-6xl mx-auto px-4 py-10 space-y-14">
-        {/* JOB LIST */}
+ 
         <section>
           <JobList />
         </section>
 
-        {/* KEY INDUSTRIES */}
+  
         <section>
           <KeyIndustries />
         </section>
 
-        {/* TOP COMPANIES */}
+      
         <section>
           <TopCompanies />
         </section>
       </main>
 
-      {/* 🔔 MODAL NHẮC HOÀN THIỆN HỒ SƠ (1 LẦN / PHIÊN) */}
+  
       {showEmployerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

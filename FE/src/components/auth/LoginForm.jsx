@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef } from "react";
 import { login } from "../../services/authService";
 
-// 🔹 decode JWT để lấy role
+// Lấy token
 const decodeToken = (token) => {
   try {
     const payload = token.split(".")[1];
@@ -65,7 +65,6 @@ function LoginForm() {
         password: password.trim(),
       });
 
-      // ✅ ĐÚNG: authService đã return response.data
       const token = response.token;
       localStorage.setItem("token", token);
 
@@ -73,7 +72,6 @@ function LoginForm() {
       const role = decoded?.role;
       localStorage.setItem("role", role);
 
-      // redirect theo role
       if (role === "candidate") {
         navigate("/");
       } else if (role === "employer") {
@@ -171,7 +169,7 @@ function LoginForm() {
         </div>
       </form>
 
-      {/* MODAL LOGIN FAIL */}
+      {/* LOGIN FAIL */}
       {errorMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm text-center">

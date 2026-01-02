@@ -19,13 +19,12 @@ function Navbar() {
   return (
     <nav className="bg-white shadow-md py-4 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-
-        {/* LOGO */}
+ 
         <Link to="/" className="text-2xl font-bold text-blue-600">
           JobFinder
         </Link>
 
-        {/* MENU */}
+    
         <div className="hidden md:flex gap-6 text-gray-700 font-medium">
           <Link to="/" className="hover:text-blue-600">Trang chủ</Link>
           <Link to="/jobs" className="hover:text-blue-600">Việc làm</Link>
@@ -34,7 +33,7 @@ function Navbar() {
           <Link to="/docs" className="hover:text-blue-600">Tài liệu</Link>
         </div>
 
-        {/* RIGHT ACTIONS */}
+
         <div className="flex items-center gap-4">
           {!role ? (
             <>
@@ -54,8 +53,8 @@ function Navbar() {
             </>
           ) : (
             <>
-              {/* 🔔 NOTIFICATION BELL */}
-              {token && <NotificationBell />}
+      
+              {token && role === "employer" && <NotificationBell />}
 
               <button
                 onClick={handleAccountClick}

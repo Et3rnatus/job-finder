@@ -2,12 +2,6 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = 'secret_key_luan_van';
 
-/**
- * Middleware: verify JWT token
- * - Check Authorization header
- * - Decode token
- * - Inject req.user
- */
 exports.verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -17,7 +11,7 @@ exports.verifyToken = (req, res, next) => {
     });
   }
 
-  // Expect: Bearer <token>
+
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
     return res.status(401).json({
@@ -30,16 +24,9 @@ exports.verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    /**
-     * decoded PHẢI có:
-     * {
-     *   id: user_id (UUID),
-     *   role: 'candidate' | 'employer' | 'admin',
-     *   email
-     * }
-     */
+    
     req.user = {
-      id: decoded.id,       // UUID (users.id)
+      id: decoded.id,       
       role: decoded.role,
       email: decoded.email
     };
@@ -52,9 +39,7 @@ exports.verifyToken = (req, res, next) => {
   }
 };
 
-/**
- * Middleware: require specific role
- */
+//Xác thực role
 exports.requireRole = (role) => {
   return (req, res, next) => {
     if (!req.user) {

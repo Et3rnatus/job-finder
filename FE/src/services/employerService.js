@@ -9,19 +9,15 @@ const getAuthHeader = () => {
   };
 };
 
-/**
- * 1️⃣ Check hồ sơ đã hoàn thiện hay chưa
- */
+
 const checkProfile = async () => {
   const res = await axios.get(`${API_URL}/check-profile`, {
     headers: getAuthHeader(),
   });
-  return res.data; // { completed: true/false }
+  return res.data;
 };
 
-/**
- * 2️⃣ Lấy hồ sơ công ty (đổ form)
- */
+
 const getProfile = async () => {
   const res = await axios.get(`${API_URL}/profile`, {
     headers: getAuthHeader(),
@@ -29,9 +25,7 @@ const getProfile = async () => {
   return res.data;
 };
 
-/**
- * 3️⃣ Cập nhật hồ sơ công ty
- */
+
 const updateProfile = async (data) => {
   const res = await axios.put(`${API_URL}/profile`, data, {
     headers: getAuthHeader(),
@@ -39,14 +33,12 @@ const updateProfile = async (data) => {
   return res.data;
 };
 
-/**
- * 4️⃣ Lấy danh sách công việc đã đăng của employer
- */
+
 const getMyJobs = async () => {
   const res = await axios.get(`${API_URL}/jobs`, {
     headers: getAuthHeader(),
   });
-  return res.data; // []
+  return res.data; 
 };
 
 export default {

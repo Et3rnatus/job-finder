@@ -1,5 +1,9 @@
 const db = require("../config/db");
 
+/**
+ * GET /api/notifications
+ * Employer lấy danh sách thông báo của mình
+ */
 exports.getMyNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -28,12 +32,17 @@ exports.getMyNotifications = async (req, res) => {
   }
 };
 
+
+/**
+ * PATCH /api/notifications/:id/read
+ * Đánh dấu đã đọc
+ */
 exports.markAsRead = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
 
-    await db.execute(
+    const [result] = await db.execute(
       `
       UPDATE notification
       SET is_read = 1
@@ -42,9 +51,16 @@ exports.markAsRead = async (req, res) => {
       [id, userId]
     );
 
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Notification not found"
+      });
+    }
+
     res.json({ message: "Marked as read" });
   } catch (error) {
     console.error("MARK AS READ ERROR:", error);
     res.status(500).json({ message: "Update failed" });
   }
 };
+

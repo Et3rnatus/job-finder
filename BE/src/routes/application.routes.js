@@ -8,12 +8,7 @@ const {
   requireCompletedCandidateProfile
 } = require('../middlewares/candidateProfile.middleware');
 
-/**
- * =========================
- * CANDIDATE APPLY JOB
- * POST /applications
- * =========================
- */
+//apply job
 router.post(
   '/',
   verifyToken,
@@ -23,10 +18,6 @@ router.post(
 );
 
 
-/**
- * CANDIDATE CHECK ĐÃ APPLY JOB CHƯA
- * GET /applications/check/:jobId
- */
 router.get(
   '/check/:jobId',
   verifyToken,
@@ -34,12 +25,7 @@ router.get(
   applicationController.checkApplied
 );
 
-/**
- * =========================
- * CANDIDATE XEM JOB ĐÃ ỨNG TUYỂN
- * GET /applications/me
- * =========================
- */
+
 router.get(
   '/me',
   verifyToken,
@@ -47,12 +33,6 @@ router.get(
   applicationController.getMyApplications
 );
 
-/**
- * =========================
- * CANDIDATE HỦY ỨNG TUYỂN (THEO application.id)
- * PATCH /applications/:id/cancel
- * =========================
- */
 router.patch(
   '/:id/cancel',
   verifyToken,
@@ -60,12 +40,7 @@ router.patch(
   applicationController.cancelApplication
 );
 
-/**
- * =========================
- * EMPLOYER XEM ỨNG VIÊN THEO JOB
- * GET /applications/job/:jobId
- * =========================
- */
+
 router.get(
   '/job/:jobId',
   verifyToken,
@@ -73,12 +48,7 @@ router.get(
   applicationController.getApplicantsByJob
 );
 
-/**
- * =========================
- * EMPLOYER DUYỆT / TỪ CHỐI HỒ SƠ
- * PATCH /applications/:id/status
- * =========================
- */
+
 router.patch(
   '/:id/status',
   verifyToken,

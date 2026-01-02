@@ -13,7 +13,7 @@ function EmployerSidebarTool({ setMode, setProfileMode }) {
   const handleProfileClick = () => {
     setMode("profile");
     if (setProfileMode) {
-      setProfileMode("view"); // 🔥 luôn quay về VIEW
+      setProfileMode("view"); 
     }
   };
 
