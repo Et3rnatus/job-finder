@@ -39,8 +39,19 @@ const updateProfile = async (data) => {
   return res.data;
 };
 
+/**
+ * 4️⃣ Lấy danh sách công việc đã đăng của employer
+ */
+const getMyJobs = async () => {
+  const res = await axios.get(`${API_URL}/jobs`, {
+    headers: getAuthHeader(),
+  });
+  return res.data; // []
+};
+
 export default {
   checkProfile,
   getProfile,
   updateProfile,
+  getMyJobs,
 };

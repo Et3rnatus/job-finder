@@ -1,30 +1,23 @@
 const db = require('../config/db');
 
 /**
- * Middleware 1:
- * - Kiểm tra user đã đăng nhập
+ * Middleware:
+ * - Kiểm tra user đăng nhập
  * - Kiểm tra role = candidate
- * - Load candidate profile theo user_id
+ * - Load candidate theo user_id
  * - Inject req.candidate
  */
 exports.requireCandidate = async (req, res, next) => {
   try {
-    // 1. kiểm tra đăng nhập
     if (!req.user) {
-      return res.status(401).json({
-        message: 'Unauthorized'
-      });
+      return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // 2. kiểm tra role
     if (req.user.role !== 'candidate') {
-      return res.status(403).json({
-        message: 'Candidate access only'
-      });
+      return res.status(403).json({ message: 'Candidate access only' });
     }
 
-    // 3. load candidate theo user_id
-    const [rows] = await db.execute(
+    const [[candidate]] = await db.execute(
       `
       SELECT *
       FROM candidate
@@ -33,15 +26,13 @@ exports.requireCandidate = async (req, res, next) => {
       [req.user.id]
     );
 
-    if (rows.length === 0) {
+    if (!candidate) {
       return res.status(404).json({
         message: 'Candidate profile not found'
       });
     }
 
-    // 4. inject candidate vào request
-    req.candidate = rows[0];
-
+    req.candidate = candidate;
     next();
   } catch (error) {
     console.error('REQUIRE CANDIDATE ERROR:', error);
@@ -52,8 +43,8 @@ exports.requireCandidate = async (req, res, next) => {
 };
 
 /**
- * Middleware 2:
- * - Kiểm tra hồ sơ ứng viên đã hoàn thiện chưa
+ * Middleware:
+ * - Kiểm tra hồ sơ ứng viên đã hoàn thiện
  * - Kiểm tra có ít nhất 1 skill
  * - Dùng cho APPLY JOB
  */
@@ -61,15 +52,13 @@ exports.requireCompletedCandidateProfile = async (req, res, next) => {
   try {
     const candidate = req.candidate;
 
-    // 1. kiểm tra cờ hoàn thiện hồ sơ
     if (!candidate.is_profile_completed) {
       return res.status(403).json({
         message: 'Please complete your profile before applying'
       });
     }
 
-    // 2. kiểm tra có ít nhất 1 skill
-    const [skillRows] = await db.execute(
+    const [[skill]] = await db.execute(
       `
       SELECT 1
       FROM candidate_skill
@@ -79,7 +68,7 @@ exports.requireCompletedCandidateProfile = async (req, res, next) => {
       [candidate.id]
     );
 
-    if (skillRows.length === 0) {
+    if (!skill) {
       return res.status(403).json({
         message: 'Please add at least one skill before applying'
       });

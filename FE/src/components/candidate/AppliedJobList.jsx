@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getMyApplications,
   cancelApplication,
+  applyJob,
 } from "../../services/applicationService";
 
 const statusMap = {
@@ -17,6 +18,10 @@ const statusMap = {
     text: "Bị từ chối",
     className: "text-red-600",
   },
+  cancelled: {
+    text: "Đã hủy ứng tuyển",
+    className: "text-gray-400",
+  },
 };
 
 function AppliedJobList() {
@@ -30,7 +35,10 @@ function AppliedJobList() {
   const fetchAppliedJobs = async () => {
     try {
       const data = await getMyApplications();
-      setJobs(data);
+      const safeData = Array.isArray(data)
+        ? data.filter((item) => item && item.id && item.job_id)
+        : [];
+      setJobs(safeData);
     } catch (error) {
       console.error("LOAD APPLIED JOBS ERROR:", error);
       setJobs([]);
@@ -39,81 +47,86 @@ function AppliedJobList() {
     }
   };
 
-  const handleCancel = async (id) => {
-    const ok = window.confirm("Bạn có chắc muốn hủy ứng tuyển công việc này?");
+  const handleCancel = async (applicationId) => {
+    const ok = window.confirm("Bạn có chắc muốn hủy ứng tuyển?");
+    if (!ok) return;
+
+    await cancelApplication(applicationId);
+    fetchAppliedJobs();
+  };
+
+  // 🔥 ỨNG TUYỂN LẠI
+  const handleReApply = async (jobId) => {
+    const ok = window.confirm("Bạn có muốn ứng tuyển lại công việc này?");
     if (!ok) return;
 
     try {
-      await cancelApplication(id);
-      setJobs((prev) => prev.filter((job) => job.id !== id));
+      await applyJob({ job_id: jobId });
+      fetchAppliedJobs();
     } catch (error) {
       alert(
-        error?.response?.data?.message || "Hủy ứng tuyển thất bại"
+        error?.response?.data?.message || "Ứng tuyển lại thất bại"
       );
     }
   };
 
   if (loading) {
-    return (
-      <div className="bg-white border rounded-lg p-6 mt-6">
-        Đang tải danh sách công việc đã ứng tuyển...
-      </div>
-    );
+    return <div>Đang tải danh sách công việc đã ứng tuyển...</div>;
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
-      {/* HEADER */}
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className="bg-white border rounded-lg p-6 mt-6">
+      <h3 className="text-lg font-semibold mb-4">
         Công việc đã ứng tuyển
       </h3>
 
       {jobs.length === 0 ? (
-        <p className="text-sm text-gray-500">
-          Bạn chưa ứng tuyển công việc nào.
-        </p>
+        <p>Bạn chưa ứng tuyển công việc nào.</p>
       ) : (
         <>
-          {/* TABLE HEADER */}
-          <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-600 border-b pb-2">
+          <div className="grid grid-cols-5 gap-4 text-sm font-medium border-b pb-2">
             <div>Công việc</div>
             <div>Công ty</div>
             <div>Ngày ứng tuyển</div>
             <div>Trạng thái</div>
+            <div>Hành động</div>
           </div>
 
-          {/* TABLE BODY */}
           <div className="divide-y">
             {jobs.map((job) => {
-              const status = statusMap[job.status] || statusMap.pending;
+              const status = statusMap[job.status];
 
               return (
                 <div
                   key={job.id}
-                  className="grid grid-cols-4 gap-4 py-3 text-sm text-gray-700"
+                  className="grid grid-cols-5 gap-4 py-3 text-sm"
                 >
-                  <div className="font-medium text-gray-800">
-                    {job.job_title}
-                  </div>
-
+                  <div>{job.job_title}</div>
                   <div>{job.company_name}</div>
-
                   <div>
-                    {job.applied_at
-                      ? new Date(job.applied_at).toLocaleDateString("vi-VN")
-                      : "-"}
+                    {new Date(job.applied_at).toLocaleDateString("vi-VN")}
                   </div>
 
-                  <div className={`${status.className} font-medium`}>
+                  <div className={status.className}>
                     {status.text}
+                  </div>
 
-                    {/* 🔴 HỦY ỨNG TUYỂN (CHỈ KHI PENDING) */}
+                  <div className="space-y-1">
                     {job.status === "pending" && (
                       <button
                         onClick={() => handleCancel(job.id)}
-                        className="block text-xs text-red-600 hover:underline mt-1"
+                        className="text-red-600 text-xs hover:underline"
                       >
                         Hủy ứng tuyển
+                      </button>
+                    )}
+
+                    {job.status === "cancelled" && (
+                      <button
+                        onClick={() => handleReApply(job.job_id)}
+                        className="text-blue-600 text-xs hover:underline"
+                      >
+                        Ứng tuyển lại
                       </button>
                     )}
                   </div>

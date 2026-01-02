@@ -9,7 +9,10 @@ const {
 } = require('../middlewares/candidateProfile.middleware');
 
 /**
- * Candidate apply job
+ * =========================
+ * CANDIDATE APPLY JOB
+ * POST /applications
+ * =========================
  */
 router.post(
   '/',
@@ -19,8 +22,49 @@ router.post(
   applicationController.applyJob
 );
 
+
 /**
- * Employer xem danh sách ứng viên của 1 job
+ * CANDIDATE CHECK ĐÃ APPLY JOB CHƯA
+ * GET /applications/check/:jobId
+ */
+router.get(
+  '/check/:jobId',
+  verifyToken,
+  requireCandidate,
+  applicationController.checkApplied
+);
+
+/**
+ * =========================
+ * CANDIDATE XEM JOB ĐÃ ỨNG TUYỂN
+ * GET /applications/me
+ * =========================
+ */
+router.get(
+  '/me',
+  verifyToken,
+  requireCandidate,
+  applicationController.getMyApplications
+);
+
+/**
+ * =========================
+ * CANDIDATE HỦY ỨNG TUYỂN (THEO application.id)
+ * PATCH /applications/:id/cancel
+ * =========================
+ */
+router.patch(
+  '/:id/cancel',
+  verifyToken,
+  requireCandidate,
+  applicationController.cancelApplication
+);
+
+/**
+ * =========================
+ * EMPLOYER XEM ỨNG VIÊN THEO JOB
+ * GET /applications/job/:jobId
+ * =========================
  */
 router.get(
   '/job/:jobId',
@@ -29,20 +73,17 @@ router.get(
   applicationController.getApplicantsByJob
 );
 
-router.get(
-  '/me',
+/**
+ * =========================
+ * EMPLOYER DUYỆT / TỪ CHỐI HỒ SƠ
+ * PATCH /applications/:id/status
+ * =========================
+ */
+router.patch(
+  '/:id/status',
   verifyToken,
-  requireRole('candidate'),
-  applicationController.getMyApplications
+  requireRole('employer'),
+  applicationController.updateApplicationStatus
 );
-
-router.delete(
-  '/:id',
-  verifyToken,
-  requireRole('candidate'),
-  applicationController.cancelApplication
-);
-
 
 module.exports = router;
-

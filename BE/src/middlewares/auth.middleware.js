@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET ='secret_key_luan_van';
+const JWT_SECRET = 'secret_key_luan_van';
 
 /**
  * Middleware: verify JWT token
@@ -31,11 +31,15 @@ exports.verifyToken = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     /**
-     * Chuẩn hoá user object
-     * decoded nên chứa: { id, role, email }
+     * decoded PHẢI có:
+     * {
+     *   id: user_id (UUID),
+     *   role: 'candidate' | 'employer' | 'admin',
+     *   email
+     * }
      */
     req.user = {
-      id: decoded.id,
+      id: decoded.id,       // UUID (users.id)
       role: decoded.role,
       email: decoded.email
     };
@@ -50,7 +54,6 @@ exports.verifyToken = (req, res, next) => {
 
 /**
  * Middleware: require specific role
- * @param {string} role
  */
 exports.requireRole = (role) => {
   return (req, res, next) => {

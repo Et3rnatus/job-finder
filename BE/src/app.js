@@ -8,6 +8,7 @@ const applicationRoutes = require('./routes/application.routes');
 const employerRoutes = require('./routes/employer.routes');
 const skillRoutes = require('./routes/skill.routes');
 const candidateRoutes = require('./routes/candidate.routes');
+const notificationRoutes= require('./routes/notification.routes');
 
 console.log('APP.JS LOADED');
 
@@ -25,6 +26,8 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/employer', employerRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/candidate', candidateRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 // Health check
 app.get('/health', (req, res) => {

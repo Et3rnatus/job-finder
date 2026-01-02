@@ -145,3 +145,41 @@ exports.getProfile = async (req, res) => {
     });
   }
 };
+
+exports.getMyJobs = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await db.execute(
+      `
+      SELECT 
+        j.id,
+        j.title,
+        j.created_at,
+        j.expired_at,
+
+        COUNT(a.id) AS total_applications,
+        SUM(a.status = 'pending') AS pending_count,
+        SUM(a.status = 'approved') AS approved_count,
+        SUM(a.status = 'rejected') AS rejected_count
+
+      FROM job j
+      JOIN employer e ON e.id = j.employer_id
+      LEFT JOIN application a ON a.job_id = j.id
+      WHERE e.user_id = ?
+      GROUP BY j.id
+      ORDER BY j.created_at DESC
+      `,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("GET EMPLOYER JOBS ERROR:", error);
+    res.status(500).json({
+      message: "Get employer jobs failed"
+    });
+  }
+};
+
+

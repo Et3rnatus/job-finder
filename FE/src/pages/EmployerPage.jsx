@@ -8,7 +8,7 @@ import CreateJobForm from "../components/employer/CreateJobForm";
 import employerService from "../services/employerService";
 
 function EmployerPage() {
-  const [mode, setMode] = useState("profile"); // profile | jobs | create
+  const [mode, setMode] = useState("profile"); // profile | create
   const [profileMode, setProfileMode] = useState("view"); // view | edit
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
@@ -55,7 +55,10 @@ function EmployerPage() {
         {/* LEFT SIDEBAR */}
         <div className="space-y-6">
           <UserAvatar />
-          <EmployerSideBarTool setMode={handleChangeMode}   setProfileMode={setProfileMode} />
+          <EmployerSideBarTool
+            setMode={handleChangeMode}
+            setProfileMode={setProfileMode}
+          />
         </div>
 
         {/* RIGHT CONTENT */}
@@ -68,25 +71,30 @@ function EmployerPage() {
             </div>
           )}
 
-          {/* CONTENT */}
+          {/* ===== PROFILE + JOB LIST ===== */}
           {mode === "profile" && (
-            profileMode === "view" ? (
-              <EmployerProfileView
-                onEdit={() => setProfileMode("edit")}
-              />
-            ) : (
-              <EmployerProfileForm
-                onProfileCompleted={() => {
-                  setProfileCompleted(true);
-                  setShowWarning(false);
-                  setProfileMode("view"); // lưu xong quay lại xem
-                }}
-              />
-            )
+            <>
+              {/* PROFILE */}
+              {profileMode === "view" ? (
+                <EmployerProfileView
+                  onEdit={() => setProfileMode("edit")}
+                />
+              ) : (
+                <EmployerProfileForm
+                  onProfileCompleted={() => {
+                    setProfileCompleted(true);
+                    setShowWarning(false);
+                    setProfileMode("view");
+                  }}
+                />
+              )}
+
+              {/* JOB LIST – LUÔN HIỂN THỊ DƯỚI PROFILE */}
+              <EmployerJobList />
+            </>
           )}
 
-          {mode === "jobs" && <EmployerJobList />}
-
+          {/* ===== CREATE JOB ===== */}
           {mode === "create" && profileCompleted && <CreateJobForm />}
         </div>
       </div>
