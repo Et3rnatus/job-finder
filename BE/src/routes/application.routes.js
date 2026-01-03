@@ -22,7 +22,7 @@ router.get(
   '/check/:jobId',
   verifyToken,
   requireCandidate,
-  applicationController.checkApplied
+  applicationController.checkAppliedJob
 );
 
 
@@ -42,9 +42,9 @@ router.patch(
 
 
 router.get(
-  '/job/:jobId',
+  "/jobs/:jobId/applicants",
   verifyToken,
-  requireRole('employer'),
+  requireRole("employer"),
   applicationController.getApplicantsByJob
 );
 
@@ -55,5 +55,13 @@ router.patch(
   requireRole('employer'),
   applicationController.updateApplicationStatus
 );
+
+router.get(
+  "/:applicationId",
+  verifyToken,
+  requireRole("employer"),
+  applicationController.getApplicationDetail
+);
+
 
 module.exports = router;

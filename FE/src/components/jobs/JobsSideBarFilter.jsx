@@ -1,24 +1,47 @@
 function JobFilterSidebar() {
   return (
-    <div className="bg-white p-4 rounded-lg border">
-      <h3 className="font-semibold mb-3">Lọc nâng cao</h3>
+    <aside className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+      {/* ===== TITLE ===== */}
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        Lọc nâng cao
+      </h3>
 
-      <div className="space-y-2 text-sm text-gray-600">
-        <label className="block">
-          <input type="checkbox" /> IT / Phần mềm
+      {/* ===== FILTER GROUP ===== */}
+      <div className="space-y-3 text-sm text-gray-700">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="accent-green-600"
+          />
+          <span>IT / Phần mềm</span>
         </label>
-        <label className="block">
-          <input type="checkbox" /> Backend
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="accent-green-600"
+          />
+          <span>Backend</span>
         </label>
-        <label className="block">
-          <input type="checkbox" /> Frontend
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="accent-green-600"
+          />
+          <span>Frontend</span>
         </label>
       </div>
 
-      <p className="text-xs text-gray-400 mt-4">
-        * Demo UI, chưa áp dụng filter
+      {/* ===== DIVIDER ===== */}
+      <div className="border-t my-4" />
+
+      {/* ===== NOTE ===== */}
+      <p className="text-xs text-gray-400 italic">
+        * Demo giao diện, chức năng lọc sẽ được phát triển
+        trong giai đoạn tiếp theo
       </p>
-    </div>
+    </aside>
   );
 }
 

@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import vnAddress from "../../data/vn-address.json";
 import { createJob } from "../../services/jobService";
 import { getSkills } from "../../services/skillService";
 
 function CreateJobForm() {
+  const navigate = useNavigate();
+
   const [useCompanyAddress, setUseCompanyAddress] = useState(true);
   const [districts, setDistricts] = useState([]);
   const [salaryNegotiable, setSalaryNegotiable] = useState(true);
 
   const [skills, setSkills] = useState([]);
+  const [success, setSuccess] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -30,22 +34,24 @@ function CreateJobForm() {
     skill_ids: [],
   });
 
-
+  /* =====================
+     LOAD SKILLS
+  ===================== */
   useEffect(() => {
     const loadSkills = async () => {
       try {
         const data = await getSkills();
         setSkills(data);
-      } catch (err) {
-        console.error("LOAD SKILLS ERROR", err);
+      } catch {
         alert("Không thể tải danh sách kỹ năng");
       }
     };
-
     loadSkills();
   }, []);
 
-
+  /* =====================
+     HANDLERS
+  ===================== */
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -54,19 +60,15 @@ function CreateJobForm() {
     const cityId = e.target.value;
     const cityData = vnAddress.find((c) => c.Id === cityId);
 
-    setForm({
-      ...form,
-      city: cityId,
-      district: "",
-    });
-
+    setForm({ ...form, city: cityId, district: "" });
     setDistricts(cityData ? cityData.Districts : []);
   };
 
-
+  /* =====================
+     SUBMIT
+  ===================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
 
     if (
       !form.title ||
@@ -86,9 +88,7 @@ function CreateJobForm() {
       return;
     }
 
-  
-    let location = "";
-
+    let location = null;
     if (!useCompanyAddress) {
       if (!form.city || !form.district || !form.address_detail) {
         alert("Vui lòng nhập đầy đủ địa chỉ làm việc");
@@ -97,12 +97,12 @@ function CreateJobForm() {
 
       const cityName =
         vnAddress.find((c) => c.Id === form.city)?.Name || "";
-
       const districtName =
         districts.find((d) => d.Id === form.district)?.Name || "";
 
       location = `${form.address_detail}, ${districtName}, ${cityName}`;
-    }   
+    }
+
     if (
       !salaryNegotiable &&
       Number(form.min_salary) > Number(form.max_salary)
@@ -116,186 +116,116 @@ function CreateJobForm() {
       description: form.description,
       job_requirements: form.job_requirements,
       benefits: form.benefits,
-
-      location, 
-
+      location,
       employment_type: form.employment_type,
       hiring_quantity: Number(form.hiring_quantity),
       expired_at: form.expired_at,
-
       min_salary: salaryNegotiable ? null : Number(form.min_salary),
       max_salary: salaryNegotiable ? null : Number(form.max_salary),
       is_salary_negotiable: salaryNegotiable ? 1 : 0,
-
       category_id: null,
       skill_ids: form.skill_ids,
     };
 
     try {
       await createJob(payload);
-      alert("Tạo tin tuyển dụng thành công");
+      setSuccess(true);
     } catch (err) {
-      console.error("CREATE JOB ERROR 👉", err);
       alert(err.response?.data?.message || "Tạo tin thất bại");
     }
   };
 
+  /* =====================
+     SUCCESS
+  ===================== */
+  if (success) {
+    return (
+      <div className="bg-white border rounded-xl p-12 text-center">
+        <h2 className="text-2xl font-semibold text-green-600 mb-4">
+          🎉 Đăng tin tuyển dụng thành công
+        </h2>
+        <p className="text-gray-600 mb-8">
+          Tin tuyển dụng đã được hiển thị cho ứng viên
+        </p>
+        <button
+          onClick={() => navigate("/account/employer")}
+          className="px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700"
+        >
+          Quay về trang quản lý
+        </button>
+      </div>
+    );
+  }
+
+  /* =====================
+     FORM
+  ===================== */
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+    <div className="bg-white border rounded-xl p-8">
+      <h2 className="text-2xl font-semibold mb-8">
         Đăng tin tuyển dụng
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-
-
-        <section>
-          <h3 className="font-semibold mb-3">Thông tin công việc</h3>
-
-          <input
-            name="title"
-            placeholder="Tên công việc"
-            value={form.title}
-            onChange={handleChange}
-            className="w-full border p-3 rounded mb-3"
-          />
-
-          <select
-            name="employment_type"
-            value={form.employment_type}
-            onChange={handleChange}
-            className="w-full border p-3 rounded mb-3"
-          >
-            <option value="">Chọn hình thức làm việc</option>
-            <option value="fulltime">Full-time</option>
-            <option value="parttime">Part-time</option>
+      <form onSubmit={handleSubmit} className="space-y-10">
+        {/* JOB INFO */}
+        <FormSection title="Thông tin công việc">
+          <Input name="title" value={form.title} onChange={handleChange} placeholder="Tên công việc" />
+          <Select name="employment_type" value={form.employment_type} onChange={handleChange}>
+            <option value="">Hình thức làm việc</option>
+            <option value="fulltime">Toàn thời gian</option>
+            <option value="parttime">Bán thời gian</option>
             <option value="intern">Thực tập</option>
-          </select>
+          </Select>
 
-          <input
-            name="hiring_quantity"
-            type="number"
-            min={1}
-            placeholder="Số lượng tuyển"
-            value={form.hiring_quantity}
-            onChange={handleChange}
-            className="w-full border p-3 rounded mb-3"
-          />
-
-          <input
-            name="expired_at"
-            type="date"
-            value={form.expired_at}
-            onChange={handleChange}
-            className="w-full border p-3 rounded"
-          />
-        </section>
-
-        <section>
-          <h3 className="font-semibold mb-3">Địa điểm làm việc</h3>
-
-          <div className="flex gap-6 mb-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                checked={useCompanyAddress}
-                onChange={() => setUseCompanyAddress(true)}
-              />
-              Sử dụng địa chỉ công ty
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                checked={!useCompanyAddress}
-                onChange={() => setUseCompanyAddress(false)}
-              />
-              Nhập địa chỉ khác
-            </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              name="hiring_quantity"
+              type="number"
+              min={1}
+              value={form.hiring_quantity}
+              onChange={handleChange}
+              placeholder="Số lượng tuyển"
+            />
+            <Input
+              name="expired_at"
+              type="date"
+              min={new Date().toISOString().split("T")[0]}
+              value={form.expired_at}
+              onChange={handleChange}
+            />
           </div>
+        </FormSection>
 
-          {!useCompanyAddress && (
-            <div className="space-y-3">
-              <select
-                value={form.city}
-                onChange={handleCityChange}
-                className="w-full border p-3 rounded"
-              >
-                <option value="">Chọn tỉnh / thành phố</option>
-                {vnAddress.map((c) => (
-                  <option key={c.Id} value={c.Id}>
-                    {c.Name}
-                  </option>
-                ))}
-              </select>
+        {/* DESCRIPTION */}
+        <FormSection title="Mô tả & yêu cầu">
+          <Textarea name="description" value={form.description} onChange={handleChange} placeholder="Mô tả công việc" />
+          <Textarea name="job_requirements" value={form.job_requirements} onChange={handleChange} placeholder="Yêu cầu ứng viên" />
+        </FormSection>
 
-              <select
-                name="district"
-                value={form.district}
-                onChange={handleChange}
-                disabled={!form.city}
-                className="w-full border p-3 rounded"
-              >
-                <option value="">Chọn quận / huyện</option>
-                {districts.map((d) => (
-                  <option key={d.Id} value={d.Id}>
-                    {d.Name}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                name="address_detail"
-                placeholder="Số nhà, tên đường"
-                value={form.address_detail}
-                onChange={handleChange}
-                className="w-full border p-3 rounded"
-              />
-            </div>
-          )}
-        </section>
-
-        <section>
-          <h3 className="font-semibold mb-3">Mô tả & yêu cầu</h3>
-
-          <textarea
-            name="description"
-            placeholder="Mô tả công việc"
-            value={form.description}
-            onChange={handleChange}
-            rows="4"
-            className="w-full border p-3 rounded mb-3"
-          />
-
-          <textarea
-            name="job_requirements"
-            placeholder="Yêu cầu ứng viên"
-            value={form.job_requirements}
-            onChange={handleChange}
-            rows="4"
-            className="w-full border p-3 rounded"
-          />
-        </section>
-
-        {/* ===== KỸ NĂNG ===== */}
-        <section>
-          <h3 className="font-semibold mb-3">Kỹ năng yêu cầu</h3>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {/* SKILLS */}
+        <FormSection title="Kỹ năng yêu cầu">
+          <div className="flex flex-wrap gap-2">
             {skills.map((skill) => (
-              <label key={skill.id} className="flex items-center gap-2">
+              <label
+                key={skill.id}
+                className={`px-3 py-1 rounded-full border text-sm cursor-pointer
+                  ${
+                    form.skill_ids.includes(skill.id)
+                      ? "bg-green-100 border-green-500 text-green-700"
+                      : "bg-white"
+                  }`}
+              >
                 <input
                   type="checkbox"
-                  value={skill.id}
+                  className="hidden"
                   checked={form.skill_ids.includes(skill.id)}
                   onChange={(e) => {
-                    const skillId = Number(e.target.value);
-
+                    const id = skill.id;
                     setForm((prev) => ({
                       ...prev,
                       skill_ids: e.target.checked
-                        ? [...prev.skill_ids, skillId]
-                        : prev.skill_ids.filter((id) => id !== skillId),
+                        ? [...prev.skill_ids, id]
+                        : prev.skill_ids.filter((x) => x !== id),
                     }));
                   }}
                 />
@@ -303,73 +233,64 @@ function CreateJobForm() {
               </label>
             ))}
           </div>
-        </section>
+        </FormSection>
 
-        <section>
-          <h3 className="font-semibold mb-3">Quyền lợi</h3>
+        {/* BENEFITS */}
+        <FormSection title="Quyền lợi">
+          <Textarea name="benefits" value={form.benefits} onChange={handleChange} placeholder="Quyền lợi dành cho ứng viên" />
+        </FormSection>
 
-          <textarea
-            name="benefits"
-            placeholder="Quyền lợi dành cho ứng viên"
-            value={form.benefits}
-            onChange={handleChange}
-            rows="3"
-            className="w-full border p-3 rounded"
-          />
-        </section>
-
-        <section>
-          <h3 className="font-semibold mb-3">Mức lương</h3>
-
-          <div className="flex gap-6 mb-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                checked={salaryNegotiable}
-                onChange={() => setSalaryNegotiable(true)}
-              />
-              Thỏa thuận
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                checked={!salaryNegotiable}
-                onChange={() => setSalaryNegotiable(false)}
-              />
-              Nhập mức lương
-            </label>
+        {/* SALARY */}
+        <FormSection title="Mức lương">
+          <div className="flex gap-6">
+            <Radio checked={salaryNegotiable} onChange={() => setSalaryNegotiable(true)} label="Thỏa thuận" />
+            <Radio checked={!salaryNegotiable} onChange={() => setSalaryNegotiable(false)} label="Nhập mức lương" />
           </div>
 
           {!salaryNegotiable && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                name="min_salary"
-                placeholder="Lương tối thiểu (VNĐ)"
-                value={form.min_salary}
-                onChange={handleChange}
-                className="w-full border p-3 rounded"
-              />
-              <input
-                name="max_salary"
-                placeholder="Lương tối đa (VNĐ)"
-                value={form.max_salary}
-                onChange={handleChange}
-                className="w-full border p-3 rounded"
-              />
+              <Input name="min_salary" value={form.min_salary} onChange={handleChange} placeholder="Lương tối thiểu" />
+              <Input name="max_salary" value={form.max_salary} onChange={handleChange} placeholder="Lương tối đa" />
             </div>
           )}
-        </section>
+        </FormSection>
 
-        <button
-          type="submit"
-          className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 font-medium"
-        >
+        <button className="w-full bg-green-600 text-white py-3 rounded-full hover:bg-green-700 font-medium">
           Đăng tin tuyển dụng
         </button>
       </form>
     </div>
   );
 }
+
+/* ===== UI COMPONENTS ===== */
+
+const FormSection = ({ title, children }) => (
+  <section>
+    <h3 className="text-lg font-semibold mb-4">{title}</h3>
+    <div className="space-y-4">{children}</div>
+  </section>
+);
+
+const Input = (props) => (
+  <input {...props} className="w-full border p-3 rounded-lg" />
+);
+
+const Textarea = (props) => (
+  <textarea {...props} rows={4} className="w-full border p-3 rounded-lg" />
+);
+
+const Select = ({ children, ...props }) => (
+  <select {...props} className="w-full border p-3 rounded-lg">
+    {children}
+  </select>
+);
+
+const Radio = ({ checked, onChange, label }) => (
+  <label className="flex items-center gap-2 cursor-pointer">
+    <input type="radio" checked={checked} onChange={onChange} />
+    {label}
+  </label>
+);
 
 export default CreateJobForm;

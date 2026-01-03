@@ -9,6 +9,9 @@ const getAuthHeader = () => {
   };
 };
 
+// ======================
+// PROFILE
+// ======================
 
 const checkProfile = async () => {
   const res = await axios.get(`${API_URL}/check-profile`, {
@@ -17,14 +20,12 @@ const checkProfile = async () => {
   return res.data;
 };
 
-
 const getProfile = async () => {
   const res = await axios.get(`${API_URL}/profile`, {
     headers: getAuthHeader(),
   });
   return res.data;
 };
-
 
 const updateProfile = async (data) => {
   const res = await axios.put(`${API_URL}/profile`, data, {
@@ -33,12 +34,36 @@ const updateProfile = async (data) => {
   return res.data;
 };
 
+// ======================
+// JOBS (EMPLOYER)
+// ======================
 
 const getMyJobs = async () => {
   const res = await axios.get(`${API_URL}/jobs`, {
     headers: getAuthHeader(),
   });
-  return res.data; 
+  return res.data;
+};
+
+// ✅ THÊM HÀM ĐÓNG TUYỂN DỤNG
+const closeJob = async (jobId) => {
+  const res = await axios.patch(
+    `http://127.0.0.1:3001/api/jobs/${jobId}/close`,
+    {},
+    {
+      headers: getAuthHeader(),
+    }
+  );
+  return res.data;
+};
+
+const reopenJob = async (jobId) => {
+  const res = await axios.patch(
+    `http://127.0.0.1:3001/api/jobs/${jobId}/reopen`,
+    {},
+    { headers: getAuthHeader() }
+  );
+  return res.data;
 };
 
 export default {
@@ -46,4 +71,6 @@ export default {
   getProfile,
   updateProfile,
   getMyJobs,
+  closeJob,
+  reopenJob // 👈 QUAN TRỌNG
 };

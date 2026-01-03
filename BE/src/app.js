@@ -21,7 +21,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
-app.use('/api/save-jobs', saveJobRoutes);
+app.use('/api/saved-jobs', saveJobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/employer', employerRoutes);
 app.use('/api/skills', skillRoutes);

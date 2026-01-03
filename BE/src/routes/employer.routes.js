@@ -14,4 +14,13 @@ const employerController = require('../controllers/employer.controller');
     // lấy công việc đã đăng của nhà tuyển dụng
     router.get("/jobs", verifyToken, requireRole("employer"), employerController.getMyJobs);
 
+
+    router.get(
+  "/applications/:applicationId",
+  verifyToken,
+  requireRole("employer"),
+  employerController.getApplicationDetailForEmployer
+);
+
+
 module.exports = router;

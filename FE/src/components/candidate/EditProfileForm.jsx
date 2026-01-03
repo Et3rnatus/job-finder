@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
 import candidateService from "../../services/candidateService";
 import axios from "axios";
+import {
+  User,
+  Phone,
+  Calendar,
+  Wrench,
+  GraduationCap,
+  Briefcase,
+  Plus,
+  Trash2,
+  Save,
+  X,
+} from "lucide-react";
 
 function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [form, setForm] = useState({
@@ -49,7 +61,6 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
         console.error("LOAD SKILLS ERROR:", error);
       }
     };
-
     loadSkills();
   }, []);
 
@@ -120,45 +131,45 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
       return;
     }
 
-    if (!Array.isArray(form.skills) || form.skills.length === 0) {
+    if (!form.skills.length) {
       alert("Vui lòng chọn ít nhất một kỹ năng");
       return;
     }
 
     try {
       setSaving(true);
-
       await candidateService.updateProfile({
         ...form,
         date_of_birth: form.date_of_birth || null,
       });
-
       alert("Cập nhật hồ sơ thành công");
-
       onUpdated();
     } catch (error) {
-      console.error("UPDATE PROFILE ERROR:", error);
-      alert(
-        error.response?.data?.message || "Cập nhật hồ sơ thất bại"
-      );
+      alert(error.response?.data?.message || "Cập nhật thất bại");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-6">
+    <div className="max-w-5xl mx-auto bg-white border rounded-xl shadow-sm p-8">
+      {/* ===== TITLE ===== */}
+      <h3 className="text-2xl font-semibold text-gray-800 mb-2">
         Cập nhật hồ sơ ứng viên
       </h3>
+      <p className="text-sm text-gray-500 mb-6">
+        Thông tin này sẽ được sử dụng khi bạn ứng tuyển việc làm
+      </p>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-10">
         {/* ===== THÔNG TIN CÁ NHÂN ===== */}
         <section>
-          <h4 className="font-semibold text-gray-700 mb-3">
-            Thông tin cá nhân
-          </h4>
+          <div className="flex items-center gap-2 mb-4 text-gray-800">
+            <User size={18} />
+            <h4 className="font-semibold">Thông tin cá nhân</h4>
+          </div>
 
+          {/* ⚠️ FORM GIỮ NGUYÊN */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               name="full_name"
@@ -187,7 +198,6 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               value={profile.email || ""}
               disabled
               className="border p-2 rounded bg-gray-100 cursor-not-allowed"
-              placeholder="Email (không thể thay đổi)"
             />
           </div>
 
@@ -196,10 +206,10 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
             value={form.bio}
             onChange={handleChange}
             placeholder="Giới thiệu ngắn gọn về bản thân"
-            className="w-full border p-2 rounded mt-3"
+            className="w-full border p-2 rounded mt-4"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <select
               name="gender"
               value={form.gender}
@@ -212,23 +222,28 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               <option value="Khác">Khác</option>
             </select>
 
-            <input
-              type="date"
-              name="date_of_birth"
-              value={form.date_of_birth}
-              onChange={handleChange}
-              className="border p-2 rounded"
-              required
-            />
+            <div className="relative">
+              <Calendar size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="date"
+                name="date_of_birth"
+                value={form.date_of_birth}
+                onChange={handleChange}
+                className="border p-2 rounded w-full pr-10"
+                required
+              />
+            </div>
           </div>
         </section>
 
         {/* ===== SKILLS ===== */}
         <section>
-          <h4 className="font-semibold text-gray-700 mb-3">
-            Kỹ năng (bắt buộc chọn ít nhất 1)
-          </h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+          <div className="flex items-center gap-2 mb-4 text-gray-800">
+            <Wrench size={18} />
+            <h4 className="font-semibold">Kỹ năng</h4>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
             {allSkills.map((skill) => (
               <label key={skill.id} className="flex items-center gap-2">
                 <input
@@ -244,15 +259,13 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
 
         {/* ===== EDUCATION ===== */}
         <section>
-          <h4 className="font-semibold text-gray-700 mb-3">
-            Học vấn (không bắt buộc)
-          </h4>
+          <div className="flex items-center gap-2 mb-4 text-gray-800">
+            <GraduationCap size={18} />
+            <h4 className="font-semibold">Học vấn</h4>
+          </div>
 
           {form.education.map((edu, index) => (
-            <div
-              key={index}
-              className="border border-gray-200 rounded p-3 mb-3"
-            >
+            <div key={index} className="border rounded p-4 mb-4 bg-gray-50">
               <input
                 placeholder="Trường"
                 value={edu.school || ""}
@@ -280,9 +293,9 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               <button
                 type="button"
                 onClick={() => removeEducation(index)}
-                className="text-red-600 text-sm mt-2"
+                className="flex items-center gap-1 text-red-600 text-sm mt-2"
               >
-                Xóa
+                <Trash2 size={14} /> Xóa
               </button>
             </div>
           ))}
@@ -290,23 +303,21 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
           <button
             type="button"
             onClick={addEducation}
-            className="text-green-600 text-sm"
+            className="flex items-center gap-1 text-green-600 text-sm"
           >
-            + Thêm học vấn
+            <Plus size={14} /> Thêm học vấn
           </button>
         </section>
 
         {/* ===== EXPERIENCE ===== */}
         <section>
-          <h4 className="font-semibold text-gray-700 mb-3">
-            Kinh nghiệm làm việc (không bắt buộc)
-          </h4>
+          <div className="flex items-center gap-2 mb-4 text-gray-800">
+            <Briefcase size={18} />
+            <h4 className="font-semibold">Kinh nghiệm làm việc</h4>
+          </div>
 
           {form.experiences.map((exp, index) => (
-            <div
-              key={index}
-              className="border border-gray-200 rounded p-3 mb-3"
-            >
+            <div key={index} className="border rounded p-4 mb-4 bg-gray-50">
               <input
                 placeholder="Công ty"
                 value={exp.company || ""}
@@ -334,9 +345,9 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
               <button
                 type="button"
                 onClick={() => removeExperience(index)}
-                className="text-red-600 text-sm mt-2"
+                className="flex items-center gap-1 text-red-600 text-sm mt-2"
               >
-                Xóa
+                <Trash2 size={14} /> Xóa
               </button>
             </div>
           ))}
@@ -344,26 +355,27 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
           <button
             type="button"
             onClick={addExperience}
-            className="text-green-600 text-sm"
+            className="flex items-center gap-1 text-green-600 text-sm"
           >
-            + Thêm kinh nghiệm
+            <Plus size={14} /> Thêm kinh nghiệm
           </button>
         </section>
 
-        {/* ===== BUTTON ===== */}
-        <div className="flex gap-3">
+        {/* ===== ACTIONS ===== */}
+        <div className="flex gap-3 pt-4 border-t">
           <button
             disabled={saving}
-            className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50"
+            className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded disabled:opacity-50"
           >
+            <Save size={16} />
             {saving ? "Đang lưu..." : "Lưu hồ sơ"}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="bg-gray-300 text-gray-700 px-5 py-2 rounded"
+            className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-2 rounded"
           >
-            Hủy
+            <X size={16} /> Hủy
           </button>
         </div>
       </form>

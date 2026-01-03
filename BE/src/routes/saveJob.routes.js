@@ -20,4 +20,20 @@ router.post(
   saveJobController.saveJob
 );
 
+//bỏ lưu job
+router.delete(
+  '/:jobId',
+  verifyToken,
+  requireRole('candidate'),
+  saveJobController.unsaveJob
+);
+
+router.get(
+  "/check/:jobId",
+  verifyToken,
+  requireRole("candidate"),
+  saveJobController.checkSavedJob
+);
+
+
 module.exports = router;

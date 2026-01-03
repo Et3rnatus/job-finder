@@ -18,58 +18,119 @@ function EmployerProfileView({ onEdit }) {
       });
   }, []);
 
+  /* =====================
+     LOADING
+  ===================== */
   if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return (
+      <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
+        Đang tải hồ sơ doanh nghiệp...
+      </div>
+    );
   }
 
   if (!profile) {
-    return <div className="text-gray-500">Chưa có dữ liệu hồ sơ</div>;
+    return (
+      <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
+        Chưa có dữ liệu hồ sơ công ty
+      </div>
+    );
   }
 
+  const fullAddress = profile.address_detail
+    ? `${profile.address_detail}, ${profile.district}, ${profile.city}`
+    : "—";
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-6">
-        Hồ sơ công ty
-      </h3>
-
-      <div className="space-y-4 text-sm text-gray-700">
+    <div className="bg-white border rounded-xl p-8">
+      {/* HEADER */}
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <span className="font-medium">Tên công ty:</span>{" "}
-          {profile.company_name || "—"}
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {profile.company_name || "Tên công ty"}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Hồ sơ doanh nghiệp
+          </p>
         </div>
 
-        <div>
-          <span className="font-medium">Website:</span>{" "}
-          {profile.website || "—"}
-        </div>
+        <button
+          onClick={onEdit}
+          className="
+            px-5 py-2 text-sm font-medium
+            bg-green-600 text-white rounded-full
+            hover:bg-green-700 transition
+          "
+        >
+          ✏️ Cập nhật hồ sơ
+        </button>
+      </div>
 
-        <div>
-          <span className="font-medium">Địa chỉ:</span>{" "}
-          {profile.address_detail
-            ? `${profile.address_detail}, ${profile.district}, ${profile.city}`
-            : "—"}
-        </div>
+      {/* INFO GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <InfoItem
+          icon="🌐"
+          label="Website"
+          value={
+            profile.website ? (
+              <a
+                href={profile.website}
+                target="_blank"
+                rel="noreferrer"
+                className="text-green-600 hover:underline break-all"
+              >
+                {profile.website}
+              </a>
+            ) : (
+              "—"
+            )
+          }
+        />
 
-        <div>
-          <span className="font-medium">Giấy phép kinh doanh:</span>{" "}
-          {profile.business_license || "—"}
-        </div>
+        <InfoItem
+          icon="📍"
+          label="Địa chỉ"
+          value={fullAddress}
+        />
 
-        <div>
-          <span className="font-medium">Giới thiệu:</span>
-          <p className="mt-1 whitespace-pre-line text-gray-600">
+        <InfoItem
+          icon="📄"
+          label="Giấy phép kinh doanh"
+          value={profile.business_license || "—"}
+        />
+      </div>
+
+      {/* DESCRIPTION */}
+      <div className="mt-10">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          Giới thiệu công ty
+        </h3>
+
+        <div className="bg-gray-50 border rounded-lg p-4">
+          <p className="text-gray-700 whitespace-pre-line leading-relaxed">
             {profile.description || "—"}
           </p>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-8">
-        <button
-          onClick={onEdit}
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium"
-        >
-          Cập nhật hồ sơ
-        </button>
+/* =====================
+   SUB COMPONENT
+===================== */
+
+function InfoItem({ icon, label, value }) {
+  return (
+    <div className="flex gap-4">
+      <div className="text-2xl">{icon}</div>
+      <div>
+        <p className="text-xs text-gray-500 mb-1">
+          {label}
+        </p>
+        <p className="text-gray-800 font-medium break-words">
+          {value}
+        </p>
       </div>
     </div>
   );

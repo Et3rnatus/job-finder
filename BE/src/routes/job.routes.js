@@ -14,10 +14,26 @@ router.post(
   jobController.createJob
 );
 
-// lấy tất cả job
+// employer đóng job ✅ (THÊM)
+router.patch(
+  '/:id/close',
+  verifyToken,
+  requireRole('employer'),
+  jobController.closeJob
+);
+
+// lấy tất cả job (public)
 router.get('/', jobController.getAllJobs);
 
 // public: xem chi tiết job
 router.get('/:id', jobController.getJobDetail);
+
+router.patch(
+  "/:id/reopen",
+  verifyToken,
+  requireRole("employer"),
+  jobController.reopenJob
+);
+
 
 module.exports = router;

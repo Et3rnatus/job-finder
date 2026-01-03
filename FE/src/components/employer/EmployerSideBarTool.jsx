@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 
-function EmployerSidebarTool({ setMode, setProfileMode }) {
+function EmployerSideBarTool({
+  setMode,
+  setProfileMode,
+  currentMode,
+}) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -10,47 +14,70 @@ function EmployerSidebarTool({ setMode, setProfileMode }) {
     navigate("/login");
   };
 
-  const handleProfileClick = () => {
-    setMode("profile");
-    if (setProfileMode) {
-      setProfileMode("view"); 
-    }
-  };
+  const menuClass = (mode) =>
+    `
+      flex items-center gap-3
+      px-4 py-3 rounded-lg cursor-pointer
+      transition font-medium
+      ${
+        currentMode === mode
+          ? "bg-green-100 text-green-700"
+          : "text-gray-700 hover:bg-gray-100"
+      }
+    `;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
-      <h3 className="text-base font-semibold text-gray-800 mb-4">
+    <div className="bg-white border rounded-xl p-6 mt-6">
+      {/* HEADER */}
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
         Quản lý tuyển dụng
       </h3>
 
-      <ul className="space-y-2 text-sm">
+      <ul className="space-y-1 text-sm">
+        {/* ===== PROFILE ===== */}
         <li
-          onClick={handleProfileClick}
-          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
+          onClick={() => {
+            setMode("profile");
+            setProfileMode?.("view");
+          }}
+          className={menuClass("profile")}
         >
+          <span className="text-lg">🏢</span>
           Hồ sơ công ty
         </li>
 
+        {/* ===== JOBS ===== */}
         <li
           onClick={() => setMode("jobs")}
-          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
+          className={menuClass("jobs")}
         >
+          <span className="text-lg">📄</span>
           Việc làm đã đăng
         </li>
 
+        {/* ===== CREATE JOB ===== */}
         <li
           onClick={() => setMode("create")}
-          className="px-3 py-2 rounded cursor-pointer text-gray-700 hover:bg-gray-100"
+          className={menuClass("create")}
         >
+          <span className="text-lg">➕</span>
           Đăng tuyển mới
         </li>
 
-        <hr className="my-3" />
+        {/* DIVIDER */}
+        <div className="my-3 border-t" />
 
+        {/* ===== LOGOUT ===== */}
         <li
           onClick={handleLogout}
-          className="px-3 py-2 rounded cursor-pointer text-red-600 hover:bg-red-50 font-medium"
+          className="
+            flex items-center gap-3
+            px-4 py-3 rounded-lg cursor-pointer
+            text-red-600 hover:bg-red-50
+            font-medium transition
+          "
         >
+          <span className="text-lg">🚪</span>
           Đăng xuất
         </li>
       </ul>
@@ -58,4 +85,4 @@ function EmployerSidebarTool({ setMode, setProfileMode }) {
   );
 }
 
-export default EmployerSidebarTool;
+export default EmployerSideBarTool;

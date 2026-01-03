@@ -27,16 +27,12 @@ function JobList() {
         const mappedJobs = data.map((job) => ({
           id: job.id,
           title: job.title,
-
           salary:
             job.min_salary != null && job.max_salary != null
               ? `${job.min_salary} - ${job.max_salary}`
               : "Thỏa thuận",
-
           location: job.location || "Chưa cập nhật",
           company: job.company_name || "Chưa cập nhật",
-
-          // backend đã trả job_skill là string
           skills: job.job_skill || "",
         }));
 
@@ -50,27 +46,51 @@ function JobList() {
     };
 
     fetchJobs();
-  }, [searchParams]); // 👈 rất quan trọng
+  }, [searchParams]);
 
   return (
-    <section className="bg-white rounded-lg border border-gray-200">
+    <section className="bg-white border rounded-xl overflow-hidden">
+      {/* HEADER */}
       <div className="px-6 py-5 border-b">
         <h2 className="text-xl font-semibold text-gray-800">
-          Danh sách công việc đang tuyển dụng
+          Việc làm đang tuyển dụng
         </h2>
         <p className="text-sm text-gray-600 mt-1">
-          Tất cả các công việc hiện có trên hệ thống
+          {jobs.length > 0
+            ? `Tìm thấy ${jobs.length} công việc phù hợp`
+            : "Danh sách các công việc hiện có trên hệ thống"}
         </p>
       </div>
 
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {loading && <p className="text-gray-500">Đang tải dữ liệu...</p>}
+      {/* CONTENT */}
+      <div className="p-6">
+        {/* LOADING */}
+        {loading && (
+          <div className="py-10 text-center text-gray-500">
+            Đang tải dữ liệu công việc...
+          </div>
+        )}
 
-        {!loading && jobs.length > 0 &&
-          jobs.map((job) => <JobCard key={job.id} {...job} />)}
+        {/* LIST */}
+        {!loading && jobs.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {jobs.map((job) => (
+              <JobCard key={job.id} {...job} />
+            ))}
+          </div>
+        )}
 
+        {/* EMPTY */}
         {!loading && jobs.length === 0 && (
-          <p className="text-gray-500">Không tìm thấy công việc phù hợp.</p>
+          <div className="py-16 text-center text-gray-500">
+            <div className="text-5xl mb-4">🔍</div>
+            <p className="text-lg font-medium mb-1">
+              Không tìm thấy công việc phù hợp
+            </p>
+            <p className="text-sm">
+              Hãy thử thay đổi từ khóa hoặc khu vực tìm kiếm
+            </p>
+          </div>
         )}
       </div>
     </section>

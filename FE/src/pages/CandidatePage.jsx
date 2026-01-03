@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import UserAvatar from "../components/candidate/UserAvatar";
 import UserSidebarTool from "../components/candidate/UserSidebarTool";
-import AppliedJobList from "../components/candidate/AppliedJobList";
 import EditProfileForm from "../components/candidate/EditProfileForm";
 import UserProfileInfo from "../components/candidate/UserProfileInfo";
 import candidateService from "../services/candidateService";
 
 function CandidatePage() {
-  const [mode, setMode] = useState("view");
+  const [mode, setMode] = useState("view"); // view | edit
   const [profile, setProfile] = useState(null);
 
-  // 🔑 trạng thái nghiệp vụ
+  // 🔑 nghiệp vụ
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [missingFields, setMissingFields] = useState([]);
 
-  /* ===== LOAD ALL DATA ===== */
+  /* =====================
+     LOAD DATA
+  ===================== */
   const loadCandidateData = async () => {
     try {
       const profileRes = await candidateService.getProfile();
@@ -34,72 +35,95 @@ function CandidatePage() {
 
   if (!profile) {
     return (
-      <div className="text-center py-10 text-gray-600">
+      <div className="text-center py-16 text-gray-500">
         Đang tải hồ sơ ứng viên...
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      {/* =====================
+          HEADER
+      ===================== */}
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          Hồ sơ ứng viên
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Quản lý thông tin cá nhân và hồ sơ ứng tuyển của bạn
+        </p>
+      </div>
+
+      {/* =====================
+          MAIN LAYOUT
+      ===================== */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* LEFT */}
+        {/* =====================
+            LEFT SIDEBAR
+        ===================== */}
         <div className="space-y-6">
           <UserAvatar
             fullName={profile.full_name}
             isProfileCompleted={profileCompleted}
           />
 
-          <UserSidebarTool onEditProfile={() => setMode("edit")} />
+          <UserSidebarTool
+            onEditProfile={() => setMode("edit")}
+          />
         </div>
 
-        {/* RIGHT */}
+        {/* =====================
+            RIGHT CONTENT
+        ===================== */}
         <div className="md:col-span-3 space-y-6">
-          {/* 🔔 CẢNH BÁO */}
+          {/* 🔔 PROFILE WARNING */}
           {!profileCompleted && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
-              <p className="font-semibold">
+            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+              <p className="font-semibold text-yellow-800">
                 Hồ sơ của bạn chưa hoàn thiện
               </p>
-              <p className="text-sm mt-1">
-                Vui lòng cập nhật hồ sơ để có thể ứng tuyển công việc.
+              <p className="text-sm text-yellow-700 mt-1">
+                Bạn cần hoàn thiện hồ sơ trước khi có thể ứng tuyển
+                công việc.
               </p>
-            </div>
-          )}
 
-          {/* 🔍 THIẾU GÌ */}
-          {!profileCompleted && missingFields.length > 0 && (
-            <div className="bg-white border rounded p-4">
-              <p className="text-sm font-semibold text-gray-700 mb-2">
-                Thông tin còn thiếu:
-              </p>
-              <ul className="list-disc list-inside text-sm text-gray-600">
-                {missingFields.map((field, index) => (
-                  <li key={index}>{field}</li>
-                ))}
-              </ul>
+              {missingFields.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-yellow-800 mb-1">
+                    Thông tin còn thiếu:
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-yellow-700">
+                    {missingFields.map((field, idx) => (
+                      <li key={idx}>{field}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <button
-                className="mt-3 text-green-600 text-sm font-medium hover:underline"
                 onClick={() => setMode("edit")}
+                className="mt-4 inline-block text-sm font-medium text-green-600 hover:underline"
               >
-                Cập nhật hồ sơ
+                Cập nhật hồ sơ ngay →
               </button>
             </div>
           )}
 
+          {/* =====================
+              VIEW MODE
+          ===================== */}
           {mode === "view" && (
-            <>
-              <UserProfileInfo profile={profile} />
-              {profileCompleted && <AppliedJobList />}
-            </>
+            <UserProfileInfo profile={profile} />
           )}
 
+          {/* =====================
+              EDIT MODE
+          ===================== */}
           {mode === "edit" && (
             <EditProfileForm
               profile={profile}
               onUpdated={async () => {
-                // 🔥 reload toàn bộ dữ liệu từ BE
                 await loadCandidateData();
                 setMode("view");
               }}

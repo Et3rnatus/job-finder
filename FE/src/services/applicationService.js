@@ -56,8 +56,8 @@ export const cancelApplication = async (applicationId) => {
   return res.data;
 };
 
-// Check đã ứng tuyển chưa
-export const checkApplied = async (jobId) => {
+// Check đã ứng tuyển chưa (backend)
+export const checkAppliedJob = async (jobId) => {
   if (!jobId) {
     return { applied: false };
   }
@@ -68,20 +68,37 @@ export const checkApplied = async (jobId) => {
       { headers: getAuthHeader() }
     );
     return res.data;
-  } catch (error) {
-    // 👉 chưa đăng nhập thì coi như chưa apply
+  } catch {
     return { applied: false };
   }
 };
 
+// 🔥 Candidate xem chi tiết hồ sơ ĐÃ ỨNG TUYỂN (SNAPSHOT)
+export const getMyApplicationDetail = async (applicationId) => {
+  if (!applicationId) {
+    throw new Error("applicationId is required");
+  }
+
+  const res = await axios.get(
+    `${API_URL}/candidate/${applicationId}`,
+    {
+      headers: getAuthHeader(),
+    }
+  );
+
+  return res.data;
+};
+
 /* ================== EMPLOYER ================== */
 
-// Nhà tuyển dụng xem ứng viên
+// Nhà tuyển dụng xem danh sách ứng viên
 export const getApplicantsByJob = async (jobId) => {
-  const res = await axios.get(`${API_URL}/job/${jobId}`, {
-    headers: getAuthHeader(),
-  });
-  return res.data;
+  return axios
+    .get(
+      `${API_URL}/jobs/${jobId}/applicants`,
+      { headers: getAuthHeader() }
+    )
+    .then((res) => res.data);
 };
 
 // Duyệt / từ chối hồ sơ
@@ -98,6 +115,22 @@ export const updateApplicationStatus = async (id, status) => {
         ...getAuthHeader(),
         "Content-Type": "application/json",
       },
+    }
+  );
+
+  return res.data;
+};
+
+// Employer xem chi tiết 1 hồ sơ (SNAPSHOT)
+export const getApplicationDetail = async (applicationId) => {
+  if (!applicationId) {
+    throw new Error("applicationId is required");
+  }
+
+  const res = await axios.get(
+    `${API_URL}/${applicationId}`,
+    {
+      headers: getAuthHeader(),
     }
   );
 

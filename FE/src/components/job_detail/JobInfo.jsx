@@ -1,38 +1,47 @@
 function JobInfo({ title, content }) {
   const isArray = Array.isArray(content);
-  const isEmpty =
-    !content || (isArray && content.length === 0);
+  const isEmpty = !content || (isArray && content.length === 0);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      {/* TITLE */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">
-        {title}
-      </h2>
+    <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+      {/* ===== SECTION TITLE ===== */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="w-1.5 h-6 bg-green-600 rounded-full" />
+        <h2 className="text-lg font-semibold text-gray-900">
+          {title}
+        </h2>
+      </div>
 
-      {/* CONTENT */}
+      {/* ===== CONTENT ===== */}
       <div className="text-gray-700 leading-relaxed text-sm">
+        {/* EMPTY */}
         {isEmpty && (
-          <p className="italic text-gray-400">
-            Chưa cập nhật
-          </p>
+          <div className="flex items-center gap-2 text-gray-400 italic">
+            <span>—</span>
+            <span>Chưa cập nhật</span>
+          </div>
         )}
 
+        {/* ARRAY */}
         {!isEmpty && isArray && (
-          <ul className="list-disc pl-5 space-y-1">
+          <ul className="space-y-2 pl-1">
             {content.map((item, index) => (
-              <li key={index}>{item}</li>
+              <li key={index} className="flex gap-3">
+                <span className="mt-1 w-2 h-2 rounded-full bg-green-600 flex-shrink-0" />
+                <span>{item}</span>
+              </li>
             ))}
           </ul>
         )}
 
+        {/* TEXT */}
         {!isEmpty && !isArray && (
           <p className="whitespace-pre-line">
             {content}
           </p>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 

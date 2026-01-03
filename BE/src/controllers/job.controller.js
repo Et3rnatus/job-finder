@@ -189,7 +189,7 @@ exports.createJob = async (req, res) => {
 exports.getAllJobs = async (req, res) => {
   try {
     const { keyword, city } = req.query;
-    const user = req.user; // 👈 THÊM
+    const user = req.user;
 
     let sql = `
       SELECT
@@ -216,7 +216,7 @@ exports.getAllJobs = async (req, res) => {
 
     const params = [];
 
-    // 👇 THÊM JOIN để check đã apply chưa
+    // 👇 Join để check candidate đã apply chưa
     if (user && user.role === "candidate") {
       sql += `
         LEFT JOIN application a
@@ -226,7 +226,10 @@ exports.getAllJobs = async (req, res) => {
       params.push(user.id);
     }
 
-    sql += ` WHERE 1 = 1 `;
+    // 🔒 LUẬT NGHIỆP VỤ: chỉ show job đang tuyển
+    sql += `
+      WHERE j.status = 'active'
+    `;
 
     // 🔍 tìm theo tên công việc
     if (keyword && keyword.trim() !== "") {
@@ -282,14 +285,15 @@ exports.getAllJobs = async (req, res) => {
       job_skill: job.skills.join(", "),
     }));
 
-    res.json(result);
+    return res.json(result);
   } catch (error) {
     console.error("GET ALL JOBS ERROR:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Get jobs failed",
     });
   }
 };
+
 
 
 
@@ -310,16 +314,17 @@ exports.getJobDetail = async (req, res) => {
         j.max_salary,
         j.is_salary_negotiable,
         j.hiring_quantity,
-        j.location,            
+        j.location,
         j.employment_type,
         j.expired_at,
         j.created_at,
+        j.status,
 
         e.company_name,
         e.description AS company_description,
         e.logo,
         e.website,
-        e.address              
+        e.address
       FROM job j
       JOIN employer e ON j.employer_id = e.id
       WHERE j.id = ?
@@ -335,6 +340,26 @@ exports.getJobDetail = async (req, res) => {
 
     const job = rows[0];
 
+    // ❗ CHECK 1: Job phải đang active
+    if (job.status !== "active") {
+      return res.status(404).json({
+        message: "Công việc không còn tồn tại",
+      });
+    }
+
+    // ❗ CHECK 2: Job hết hạn
+    if (job.expired_at && new Date(job.expired_at) < new Date()) {
+      // update status cho đúng vòng đời
+      await db.execute(
+        `UPDATE job SET status = 'expired' WHERE id = ?`,
+        [job.id]
+      );
+
+      return res.status(404).json({
+        message: "Công việc đã hết hạn",
+      });
+    }
+
     const [skills] = await db.execute(
       `
       SELECT 
@@ -347,7 +372,7 @@ exports.getJobDetail = async (req, res) => {
       [jobId]
     );
 
-    res.json({
+    return res.json({
       id: job.id,
       title: job.title,
       description: job.description,
@@ -357,7 +382,7 @@ exports.getJobDetail = async (req, res) => {
       max_salary: job.max_salary,
       is_salary_negotiable: job.is_salary_negotiable,
       hiring_quantity: job.hiring_quantity,
-      location: job.location,     
+      location: job.location,
       employment_type: job.employment_type,
       expired_at: job.expired_at,
       created_at: job.created_at,
@@ -369,13 +394,82 @@ exports.getJobDetail = async (req, res) => {
         description: job.company_description,
         logo: job.logo,
         website: job.website,
-        address: job.address,       
+        address: job.address,
       },
     });
   } catch (error) {
     console.error("GET JOB DETAIL ERROR:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Get job detail failed",
     });
+  }
+};
+
+
+exports.closeJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const userId = req.user.id;
+
+    const [[job]] = await db.execute(
+      `
+      SELECT j.id
+      FROM job j
+      JOIN employer e ON e.id = j.employer_id
+      WHERE j.id = ? AND e.user_id = ?
+      `,
+      [jobId, userId]
+    );
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    await db.execute(
+      `UPDATE job SET status = 'closed' WHERE id = ?`,
+      [jobId]
+    );
+
+    res.json({ message: "Job closed successfully" });
+  } catch (error) {
+    console.error("CLOSE JOB ERROR:", error);
+    res.status(500).json({ message: "Close job failed" });
+  }
+};
+
+exports.reopenJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const userId = req.user.id;
+
+    const [[job]] = await db.execute(
+      `
+      SELECT j.id, j.expired_at
+      FROM job j
+      JOIN employer e ON e.id = j.employer_id
+      WHERE j.id = ? AND e.user_id = ?
+      `,
+      [jobId, userId]
+    );
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    if (new Date(job.expired_at) <= new Date()) {
+      return res.status(400).json({
+        message: "Job đã hết hạn, không thể mở lại",
+      });
+    }
+
+    await db.execute(
+      `UPDATE job SET status = 'active' WHERE id = ?`,
+      [jobId]
+    );
+
+    res.json({ message: "Job reopened successfully" });
+  } catch (error) {
+    console.error("REOPEN JOB ERROR:", error);
+    res.status(500).json({ message: "Reopen job failed" });
   }
 };

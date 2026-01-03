@@ -8,7 +8,6 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!agree || loading) return;
 
     try {
@@ -19,10 +18,6 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
         cover_letter: coverLetter,
       });
 
-      alert("Ứng tuyển thành công");
-
-      // 🔑 chỉ cần gọi onSuccess
-      // ApplyButton sẽ tự disable + đóng modal
       onSuccess && onSuccess();
     } catch (err) {
       alert(err.response?.data?.message || "Ứng tuyển thất bại");
@@ -32,83 +27,105 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
   };
 
   return (
-    <div className="p-6 relative">
-      {/* ❌ CLOSE */}
+    <div className="relative">
+      {/* ===== CLOSE BUTTON ===== */}
       <button
         type="button"
         onClick={onClose}
         disabled={loading}
         className="
-          absolute top-4 right-4
+          absolute top-3 right-4
           text-gray-400 hover:text-gray-600
-          text-xl font-bold
+          text-2xl font-bold
           disabled:opacity-50
         "
       >
         ×
       </button>
 
-      {/* HEADER */}
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        Ứng tuyển <span className="text-green-600">{jobTitle}</span>
-      </h2>
+      {/* ===== HEADER ===== */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">
+          Ứng tuyển vị trí
+        </h2>
+        <p className="text-green-600 font-medium mt-1 truncate">
+          {jobTitle}
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* CV */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            CV sử dụng
+        {/* ===== CV INFO ===== */}
+        <div className="rounded-xl border bg-gray-50 p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Hồ sơ sử dụng
           </label>
-          <select
-            disabled
-            className="w-full border rounded px-4 py-2 bg-gray-100"
-          >
-            <option>CV Online</option>
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            Sử dụng hồ sơ trực tuyến trên hệ thống
-          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-800 font-medium">
+              CV Online
+            </span>
+            <span className="text-xs text-gray-500">
+              Hồ sơ trên hệ thống
+            </span>
+          </div>
         </div>
 
-        {/* COVER LETTER */}
+        {/* ===== COVER LETTER ===== */}
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Thư giới thiệu
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Thư giới thiệu <span className="text-gray-400">(không bắt buộc)</span>
           </label>
           <textarea
             rows={5}
             value={coverLetter}
             onChange={(e) => setCoverLetter(e.target.value)}
-            className="w-full border rounded px-4 py-2 focus:ring-2 focus:ring-green-500"
-            placeholder="Giới thiệu ngắn gọn về bản thân và lý do ứng tuyển"
+            placeholder="Giới thiệu ngắn gọn về bản thân, kinh nghiệm phù hợp và lý do bạn ứng tuyển vị trí này..."
+            className="
+              w-full rounded-xl border px-4 py-3
+              text-sm
+              focus:outline-none focus:ring-2 focus:ring-green-500
+            "
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Gợi ý: 2–3 đoạn ngắn, tập trung vào giá trị bạn mang lại
+          </p>
         </div>
 
-        {/* AGREEMENT */}
-        <label className="flex items-center gap-2 text-sm">
+        {/* ===== AGREEMENT ===== */}
+        <label className="flex items-start gap-3 text-sm text-gray-600">
           <input
             type="checkbox"
             checked={agree}
             onChange={(e) => setAgree(e.target.checked)}
+            className="mt-1 accent-green-600"
           />
-          Tôi đồng ý với điều khoản sử dụng dữ liệu cá nhân
+          <span>
+            Tôi đồng ý cho phép hệ thống sử dụng thông tin cá nhân
+            nhằm mục đích tuyển dụng theo{" "}
+            <span className="text-green-600 font-medium cursor-pointer">
+              điều khoản sử dụng
+            </span>
+          </span>
         </label>
 
-        {/* SUBMIT */}
-        <button
-          type="submit"
-          disabled={!agree || loading}
-          className="
-            w-full py-3 rounded-full font-semibold
-            bg-green-600 text-white
-            hover:bg-green-700
-            disabled:bg-gray-300
-            disabled:text-gray-600
-            disabled:cursor-not-allowed
-          "
-        >
-          {loading ? "Đang gửi..." : "Nộp hồ sơ ứng tuyển"}
-        </button>
+        {/* ===== ACTION BUTTON ===== */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={!agree || loading}
+            className="
+              w-full h-12 rounded-xl font-semibold
+              bg-green-600 text-white
+              hover:bg-green-700
+              active:scale-[0.98]
+              transition
+              disabled:bg-gray-300
+              disabled:text-gray-600
+              disabled:cursor-not-allowed
+            "
+          >
+            {loading ? "Đang gửi hồ sơ..." : "Nộp hồ sơ ứng tuyển"}
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -1,14 +1,21 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MagnifyingGlassIcon, MapPinIcon } from "@heroicons/react/24/solid";
+import {
+  MagnifyingGlassIcon,
+  MapPinIcon,
+} from "@heroicons/react/24/solid";
 import { JOB_KEYWORDS } from "../../data/jobKeywords";
 
 function Searchbar() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
-  const [city, setCity] = useState(searchParams.get("city") || "");
+  const [keyword, setKeyword] = useState(
+    searchParams.get("keyword") || ""
+  );
+  const [city, setCity] = useState(
+    searchParams.get("city") || ""
+  );
   const [showSuggest, setShowSuggest] = useState(false);
 
   const handleSearch = () => {
@@ -27,67 +34,127 @@ function Searchbar() {
   );
 
   return (
-    <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-6 px-4">
-      {/* INPUT KEYWORD */}
-      <div className="relative w-full md:w-[600px]">
-        <input
-          type="text"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onFocus={() => setShowSuggest(true)}
-          onBlur={() => setTimeout(() => setShowSuggest(false), 200)}
-          placeholder="Nhập công việc cần tìm..."
-          className="w-full pl-4 pr-[140px] py-3 rounded-full border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
+    <div className="mt-8 px-4">
+      <div
+        className="
+          max-w-5xl mx-auto
+          bg-white border border-gray-200
+          rounded-2xl shadow-sm
+          p-4 flex flex-col md:flex-row
+          items-stretch gap-4
+        "
+      >
+        {/* ===== KEYWORD INPUT ===== */}
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
 
-        {/* AUTOCOMPLETE GỢI Ý */}
-        {showSuggest && keyword && filteredSuggestions.length > 0 && (
-          <div className="absolute top-full left-0 w-full bg-white border rounded-xl shadow mt-2 z-50">
-            {filteredSuggestions.map((item, index) => (
+          <input
+            type="text"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onFocus={() => setShowSuggest(true)}
+            onBlur={() =>
+              setTimeout(() => setShowSuggest(false), 200)
+            }
+            placeholder="Tìm kiếm theo vị trí, kỹ năng, công việc..."
+            className="
+              w-full h-12 pl-12 pr-4
+              rounded-xl border border-gray-300
+              text-sm text-gray-800
+              focus:outline-none focus:ring-2 focus:ring-green-500
+            "
+          />
+
+          {/* ===== AUTOCOMPLETE ===== */}
+          {showSuggest &&
+            keyword &&
+            filteredSuggestions.length > 0 && (
               <div
-                key={index}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
-                onClick={() => {
-                  setKeyword(item);
-                  setShowSuggest(false);
-
-                  navigate({
-                    pathname: "/jobs",
-                    search: new URLSearchParams({ keyword: item }).toString(),
-                  });
-                }}
+                className="
+                  absolute top-full left-0 w-full mt-2
+                  bg-white border border-gray-200
+                  rounded-xl shadow-lg z-50
+                  overflow-hidden
+                "
               >
-                <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-                {item}
+                {filteredSuggestions.map((item, index) => (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setKeyword(item);
+                      setShowSuggest(false);
+                      navigate({
+                        pathname: "/jobs",
+                        search: new URLSearchParams({
+                          keyword: item,
+                        }).toString(),
+                      });
+                    }}
+                    className="
+                      px-4 py-3
+                      text-sm text-gray-700
+                      hover:bg-gray-50
+                      cursor-pointer flex items-center gap-2
+                    "
+                  >
+                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">
+                      {item}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
+        </div>
 
-        {/* SELECT CITY */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-gray-200 rounded-full px-2 py-2">
-          <MapPinIcon className="h-5 w-5 text-gray-500" />
+        {/* ===== LOCATION ===== */}
+        <div
+          className="
+            flex items-center gap-2
+            h-12 px-3
+            rounded-xl border border-gray-300
+            bg-gray-50
+          "
+        >
+          <MapPinIcon className="h-5 w-5 text-gray-400" />
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="bg-transparent text-sm text-gray-700 focus:outline-none"
+            className="
+              bg-transparent text-sm text-gray-700
+              focus:outline-none
+            "
           >
-            <option value="">Tất cả địa điểm</option>
-            <option value="Hồ Chí Minh">TP. Hồ Chí Minh</option>
+            <option value="">
+              Tất cả địa điểm
+            </option>
+            <option value="Hồ Chí Minh">
+              TP. Hồ Chí Minh
+            </option>
             <option value="Hà Nội">Hà Nội</option>
-            <option value="Đà Nẵng">Đà Nẵng</option>
+            <option value="Đà Nẵng">
+              Đà Nẵng
+            </option>
           </select>
         </div>
-      </div>
 
-      {/* BUTTON SEARCH */}
-      <button
-        onClick={handleSearch}
-        className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-700"
-      >
-        <MagnifyingGlassIcon className="h-5 w-5" />
-        Tìm kiếm
-      </button>
+        {/* ===== SEARCH BUTTON ===== */}
+        <button
+          onClick={handleSearch}
+          className="
+            h-12 px-8
+            rounded-xl
+            bg-green-600 text-white
+            font-semibold text-sm
+            flex items-center justify-center gap-2
+            hover:bg-green-700
+            transition
+          "
+        >
+          <MagnifyingGlassIcon className="h-5 w-5" />
+          Tìm kiếm
+        </button>
+      </div>
     </div>
   );
 }

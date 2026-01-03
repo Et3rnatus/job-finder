@@ -154,6 +154,7 @@ exports.getMyJobs = async (req, res) => {
         j.title,
         j.created_at,
         j.expired_at,
+        j.status,                -- 👈 BẮT BUỘC PHẢI CÓ
 
         SUM(a.status != 'cancelled') AS total_applications,
         SUM(a.status = 'pending') AS pending_count,
@@ -174,7 +175,86 @@ exports.getMyJobs = async (req, res) => {
   } catch (error) {
     console.error("GET EMPLOYER JOBS ERROR:", error);
     res.status(500).json({
-      message: "Get employer jobs failed"
+      message: "Get employer jobs failed",
     });
+  }
+};
+
+exports.getApplicationDetailForEmployer = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    // 1️⃣ application + snapshot
+    const [[row]] = await db.execute(
+      `
+      SELECT
+        a.id,
+        a.status,
+        a.applied_at,
+        a.cover_letter,
+        s.id AS snapshot_id,
+        s.full_name,
+        s.email,
+        s.phone
+      FROM application a
+      JOIN application_snapshot s
+        ON s.application_id = a.id
+      WHERE a.id = ?
+      `,
+      [applicationId]
+    );
+
+    if (!row) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    const snapshotId = row.snapshot_id;
+
+    // 2️⃣ snapshot details
+    const [skills] = await db.execute(
+      `
+      SELECT skill_name
+      FROM application_snapshot_skill
+      WHERE application_snapshot_id = ?
+      `,
+      [snapshotId]
+    );
+
+    const [experiences] = await db.execute(
+      `
+      SELECT company, position, start_date, end_date, description
+      FROM application_snapshot_experience
+      WHERE application_snapshot_id = ?
+      `,
+      [snapshotId]
+    );
+
+    const [educations] = await db.execute(
+      `
+      SELECT school, degree, major, start_date, end_date
+      FROM application_snapshot_education
+      WHERE application_snapshot_id = ?
+      `,
+      [snapshotId]
+    );
+
+    return res.json({
+      application: {
+        id: row.id,
+        status: row.status,
+        applied_at: row.applied_at,
+        cover_letter: row.cover_letter,
+      },
+      profile: {
+        full_name: row.full_name,
+        email: row.email,
+        phone: row.phone,
+      },
+      skills: skills.map(s => ({ name: s.skill_name })),
+      experiences,
+      educations,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to load application detail" });
   }
 };
