@@ -1,9 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import {
-  MagnifyingGlassIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import ProvinceDropdown from "./ProvinceDropdown";
 import { JOB_KEYWORDS } from "../../data/jobKeywords";
 
 function Searchbar() {
@@ -11,12 +9,18 @@ function Searchbar() {
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
+  /* =====================
+     STATE
+  ===================== */
   const [keyword, setKeyword] = useState(
     searchParams.get("keyword") || ""
   );
-  const [city, setCity] = useState(
-    searchParams.get("city") || ""
+
+  // 🔁 đổi city → province (nhưng vẫn map về location khi search)
+  const [province, setProvince] = useState(
+    searchParams.get("location") || ""
   );
+
   const [showSuggest, setShowSuggest] = useState(false);
   const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
 
@@ -42,8 +46,8 @@ function Searchbar() {
      DISABLE CONDITION
   ===================== */
   const isSearchDisabled = useMemo(() => {
-    return !keyword.trim() && !city.trim();
-  }, [keyword, city]);
+    return !keyword.trim() && !province.trim();
+  }, [keyword, province]);
 
   /* =====================
      SEARCH HANDLER
@@ -53,7 +57,7 @@ function Searchbar() {
 
     const params = {};
     if (keyword.trim()) params.keyword = keyword.trim();
-    if (city.trim()) params.city = city.trim();
+    if (province.trim()) params.location = province.trim(); // 👈 map về location
 
     navigate({
       pathname: "/jobs",
@@ -177,36 +181,11 @@ function Searchbar() {
             )}
         </div>
 
-        {/* ===== LOCATION ===== */}
-        <div
-          className="
-            flex items-center gap-2
-            h-12 px-3
-            rounded-xl border border-gray-300
-            bg-gray-50
-          "
-        >
-          <MapPinIcon className="h-5 w-5 text-gray-400" />
-          <select
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="
-              bg-transparent text-sm text-gray-700
-              focus:outline-none
-            "
-          >
-            <option value="">
-              Tất cả địa điểm
-            </option>
-            <option value="Hồ Chí Minh">
-              TP. Hồ Chí Minh
-            </option>
-            <option value="Hà Nội">Hà Nội</option>
-            <option value="Đà Nẵng">
-              Đà Nẵng
-            </option>
-          </select>
-        </div>
+        {/* ===== LOCATION (DROPDOWN SEARCH) ===== */}
+        <ProvinceDropdown
+          value={province}
+          onChange={setProvince}
+        />
 
         {/* ===== SEARCH BUTTON ===== */}
         <div
