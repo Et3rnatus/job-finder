@@ -29,7 +29,9 @@ function NotificationBell() {
     }
   };
 
-  /* ===== POLLING ===== */
+  /* =====================
+     POLLING
+  ===================== */
   useEffect(() => {
     if (!token || role !== "employer") return;
 
@@ -45,26 +47,40 @@ function NotificationBell() {
     };
   }, [token, role]);
 
-  /* ===== REFRESH WHEN OPEN ===== */
+  /* =====================
+     REFRESH WHEN OPEN
+  ===================== */
   useEffect(() => {
     if (!open || !token || role !== "employer") return;
     fetchNotifications();
   }, [open, token, role]);
 
-  /* ===== CLICK NOTIFICATION ===== */
+  /* =====================
+     CLICK NOTIFICATION
+  ===================== */
   const handleClickNotification = async (noti) => {
     try {
+      // 1️⃣ mark as read
       if (!noti.is_read) {
         await markAsRead(noti.id);
+
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === noti.id ? { ...n, is_read: 1 } : n
+          )
+        );
       }
 
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === noti.id ? { ...n, is_read: 1 } : n
-        )
-      );
+      // 2️⃣ điều hướng theo type
+      if (noti.type === "NEW_APPLICATION" && noti.related_id) {
+  navigate(
+    `/employer/jobs/${noti.related_id}/applications?tab=pending&highlight=new`
+  );
+}else {
+        // fallback
+        navigate("/account/employer");
+      }
 
-      navigate("/account/employer");
       setOpen(false);
     } catch (error) {
       console.error("CLICK NOTIFICATION ERROR:", error);

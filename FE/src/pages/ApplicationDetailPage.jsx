@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import {
   getApplicationDetail,
   updateApplicationStatus,
@@ -23,7 +27,10 @@ const statusMap = {
 function ApplicationDetailPage() {
   const { applicationId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const role = localStorage.getItem("role");
+
+  const returnTo = location.state?.returnTo; // "jobs"
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +38,17 @@ function ApplicationDetailPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  /* =====================
+     HANDLE BACK
+  ===================== */
+  const handleBack = () => {
+    navigate("/account/employer", {
+      state: {
+        mode: returnTo === "jobs" ? "jobs" : "jobs",
+      },
+    });
+  };
 
   useEffect(() => {
     if (!applicationId) return;
@@ -41,14 +59,14 @@ function ApplicationDetailPage() {
         setData(res);
       } catch {
         alert("Không thể tải hồ sơ ứng viên");
-        navigate(-1);
+        handleBack();
       } finally {
         setLoading(false);
       }
     };
 
     fetchDetail();
-  }, [applicationId, navigate]);
+  }, [applicationId]);
 
   if (loading) return <p className="p-6">Đang tải...</p>;
 
@@ -79,20 +97,25 @@ function ApplicationDetailPage() {
       setSubmitting(true);
       await updateApplicationStatus(applicationId, "approved");
       alert("Đã duyệt hồ sơ");
-      navigate(-1);
+      handleBack();
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleConfirmReject = async () => {
-    if (!rejectReason.trim()) return alert("Vui lòng nhập lý do từ chối");
+    if (!rejectReason.trim())
+      return alert("Vui lòng nhập lý do từ chối");
 
     try {
       setSubmitting(true);
-      await updateApplicationStatus(applicationId, "rejected", rejectReason);
+      await updateApplicationStatus(
+        applicationId,
+        "rejected",
+        rejectReason
+      );
       alert("Đã từ chối hồ sơ");
-      navigate(-1);
+      handleBack();
     } finally {
       setSubmitting(false);
     }
@@ -103,10 +126,14 @@ function ApplicationDetailPage() {
       {/* HEADER */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-semibold">{full_name}</h1>
+          <h1 className="text-2xl font-semibold">
+            {full_name}
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             Nộp ngày{" "}
-            {new Date(applied_at).toLocaleDateString("vi-VN")}
+            {new Date(applied_at).toLocaleDateString(
+              "vi-VN"
+            )}
           </p>
         </div>
 
@@ -120,7 +147,7 @@ function ApplicationDetailPage() {
           </span>
 
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="text-sm text-gray-600 hover:underline"
           >
             ← Quay lại
@@ -132,7 +159,6 @@ function ApplicationDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT */}
         <div className="lg:col-span-2 space-y-6">
-          {/* SKILLS */}
           <Section title="Kỹ năng">
             {skills.length === 0 ? (
               <Empty />
@@ -150,19 +176,21 @@ function ApplicationDetailPage() {
             )}
           </Section>
 
-          {/* EXPERIENCE */}
           <Section title="Kinh nghiệm làm việc">
             {experiences.length === 0 ? (
               <Empty />
             ) : (
               experiences.map((exp, i) => (
                 <div key={i} className="border-l-2 pl-4 mb-4">
-                  <p className="font-medium">{exp.position}</p>
+                  <p className="font-medium">
+                    {exp.position}
+                  </p>
                   <p className="text-sm text-gray-600">
                     {exp.company}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {exp.start_date} – {exp.end_date || "Hiện tại"}
+                    {exp.start_date} –{" "}
+                    {exp.end_date || "Hiện tại"}
                   </p>
                   {exp.description && (
                     <p className="text-sm mt-1">
@@ -174,19 +202,21 @@ function ApplicationDetailPage() {
             )}
           </Section>
 
-          {/* EDUCATION */}
           <Section title="Học vấn">
             {educations.length === 0 ? (
               <Empty />
             ) : (
               educations.map((edu, i) => (
                 <div key={i} className="border-l-2 pl-4 mb-4">
-                  <p className="font-medium">{edu.school}</p>
+                  <p className="font-medium">
+                    {edu.school}
+                  </p>
                   <p className="text-sm text-gray-600">
                     {edu.degree} – {edu.major}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {edu.start_date} – {edu.end_date || "Hiện tại"}
+                    {edu.start_date} –{" "}
+                    {edu.end_date || "Hiện tại"}
                   </p>
                 </div>
               ))
@@ -213,7 +243,9 @@ function ApplicationDetailPage() {
                 Duyệt hồ sơ
               </button>
               <button
-                onClick={() => setShowRejectModal(true)}
+                onClick={() =>
+                  setShowRejectModal(true)
+                }
                 disabled={submitting}
                 className="w-full py-2 bg-red-600 text-white rounded"
               >
@@ -237,12 +269,16 @@ function ApplicationDetailPage() {
               rows={4}
               placeholder="Nhập lý do từ chối..."
               value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
+              onChange={(e) =>
+                setRejectReason(e.target.value)
+              }
             />
 
             <div className="flex justify-end gap-3 mt-4">
               <button
-                onClick={() => setShowRejectModal(false)}
+                onClick={() =>
+                  setShowRejectModal(false)
+                }
                 className="px-4 py-2 border rounded"
               >
                 Hủy

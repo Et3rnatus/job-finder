@@ -216,7 +216,7 @@ exports.getAllJobs = async (req, res) => {
 
     const params = [];
 
-    // 👇 Join để check candidate đã apply chưa
+    // 👇 check candidate đã apply chưa
     if (user && user.role === "candidate") {
       sql += `
         LEFT JOIN application a
@@ -226,18 +226,17 @@ exports.getAllJobs = async (req, res) => {
       params.push(user.id);
     }
 
-    // 🔒 LUẬT NGHIỆP VỤ: chỉ show job đang tuyển
+    // ✅ NGHIỆP VỤ CHUẨN
     sql += `
-      WHERE j.status = 'active'
+      WHERE j.status = 'approved'
+        AND (j.expired_at IS NULL OR j.expired_at > NOW())
     `;
 
-    // 🔍 tìm theo tên công việc
     if (keyword && keyword.trim() !== "") {
       sql += " AND j.title LIKE ?";
       params.push(`%${keyword}%`);
     }
 
-    // 📍 lọc theo địa điểm
     if (city && city.trim() !== "") {
       sql += " AND j.location = ?";
       params.push(city);
@@ -266,18 +265,12 @@ exports.getAllJobs = async (req, res) => {
     );
 
     const jobMap = {};
-
     jobs.forEach((job) => {
-      jobMap[job.id] = {
-        ...job,
-        skills: [],
-      };
+      jobMap[job.id] = { ...job, skills: [] };
     });
 
     skills.forEach((skill) => {
-      if (jobMap[skill.job_id]) {
-        jobMap[skill.job_id].skills.push(skill.name);
-      }
+      jobMap[skill.job_id]?.skills.push(skill.name);
     });
 
     const result = Object.values(jobMap).map((job) => ({
@@ -288,11 +281,10 @@ exports.getAllJobs = async (req, res) => {
     return res.json(result);
   } catch (error) {
     console.error("GET ALL JOBS ERROR:", error);
-    return res.status(500).json({
-      message: "Get jobs failed",
-    });
+    return res.status(500).json({ message: "Get jobs failed" });
   }
 };
+
 
 
 
@@ -302,6 +294,9 @@ exports.getJobDetail = async (req, res) => {
   try {
     const jobId = req.params.id;
 
+    /* =====================
+       GET JOB + COMPANY
+    ===================== */
     const [rows] = await db.execute(
       `
       SELECT 
@@ -316,15 +311,21 @@ exports.getJobDetail = async (req, res) => {
         j.hiring_quantity,
         j.location,
         j.employment_type,
+        j.experience,
         j.expired_at,
         j.created_at,
         j.status,
 
-        e.company_name,
-        e.description AS company_description,
-        e.logo,
-        e.website,
-        e.address
+        e.id            AS company_id,
+        e.company_name  AS company_name,
+        e.description   AS company_description,
+        e.logo          AS company_logo,
+        e.website       AS company_website,
+        CONCAT_WS(', ',
+          e.address_detail,
+          e.district,
+          e.city
+        )               AS company_address
       FROM job j
       JOIN employer e ON j.employer_id = e.id
       WHERE j.id = ?
@@ -333,38 +334,32 @@ exports.getJobDetail = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({
-        message: "Job not found",
-      });
+      return res.status(404).json({ message: "Job not found" });
     }
 
     const job = rows[0];
 
-    // ❗ CHECK 1: Job phải đang active
-    if (job.status !== "active") {
+    /* =====================
+       CHECK STATUS
+    ===================== */
+    if (job.status !== "approved") {
       return res.status(404).json({
         message: "Công việc không còn tồn tại",
       });
     }
 
-    // ❗ CHECK 2: Job hết hạn
     if (job.expired_at && new Date(job.expired_at) < new Date()) {
-      // update status cho đúng vòng đời
-      await db.execute(
-        `UPDATE job SET status = 'expired' WHERE id = ?`,
-        [job.id]
-      );
-
       return res.status(404).json({
         message: "Công việc đã hết hạn",
       });
     }
 
+    /* =====================
+       GET SKILLS
+    ===================== */
     const [skills] = await db.execute(
       `
-      SELECT 
-        s.id,
-        s.name
+      SELECT s.id, s.name
       FROM job_skill js
       JOIN skill s ON js.skill_id = s.id
       WHERE js.job_id = ?
@@ -372,6 +367,9 @@ exports.getJobDetail = async (req, res) => {
       [jobId]
     );
 
+    /* =====================
+       RESPONSE
+    ===================== */
     return res.json({
       id: job.id,
       title: job.title,
@@ -384,18 +382,19 @@ exports.getJobDetail = async (req, res) => {
       hiring_quantity: job.hiring_quantity,
       location: job.location,
       employment_type: job.employment_type,
+      experience: job.experience, // ✅ NEW
       expired_at: job.expired_at,
       created_at: job.created_at,
 
-      job_skill: skills.map((s) => s.name).join(", "),
+      skills: skills, // [{id, name}]
 
-      company: {
-        name: job.company_name,
-        description: job.company_description,
-        logo: job.logo,
-        website: job.website,
-        address: job.address,
-      },
+      // 👉 COMPANY (MAP ĐÚNG FE)
+      company_id: job.company_id,
+      company_name: job.company_name,
+      company_logo: job.company_logo,
+      company_website: job.company_website,
+      company_address: job.company_address,
+      company_description: job.company_description,
     });
   } catch (error) {
     console.error("GET JOB DETAIL ERROR:", error);
@@ -404,7 +403,6 @@ exports.getJobDetail = async (req, res) => {
     });
   }
 };
-
 
 exports.closeJob = async (req, res) => {
   try {

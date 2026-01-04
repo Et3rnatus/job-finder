@@ -38,6 +38,7 @@ const updateProfile = async (data) => {
 // JOBS (EMPLOYER)
 // ======================
 
+// GET /api/employer/jobs
 const getMyJobs = async () => {
   const res = await axios.get(`${API_URL}/jobs`, {
     headers: getAuthHeader(),
@@ -45,21 +46,30 @@ const getMyJobs = async () => {
   return res.data;
 };
 
-// ✅ THÊM HÀM ĐÓNG TUYỂN DỤNG
+// PATCH /api/employer/jobs/:id/close
 const closeJob = async (jobId) => {
   const res = await axios.patch(
-    `http://127.0.0.1:3001/api/jobs/${jobId}/close`,
+    `${API_URL}/jobs/${jobId}/close`,
     {},
-    {
-      headers: getAuthHeader(),
-    }
+    { headers: getAuthHeader() }
   );
   return res.data;
 };
 
+// PATCH /api/employer/jobs/:id/reopen
 const reopenJob = async (jobId) => {
   const res = await axios.patch(
-    `http://127.0.0.1:3001/api/jobs/${jobId}/reopen`,
+    `${API_URL}/jobs/${jobId}/reopen`,
+    {},
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};
+
+// PATCH /api/employer/jobs/:id/resubmit  ✅ NEW (TOPCV FLOW)
+const resubmitJob = async (jobId) => {
+  const res = await axios.patch(
+    `${API_URL}/jobs/${jobId}/resubmit`,
     {},
     { headers: getAuthHeader() }
   );
@@ -67,10 +77,14 @@ const reopenJob = async (jobId) => {
 };
 
 export default {
+  // profile
   checkProfile,
   getProfile,
   updateProfile,
+
+  // jobs
   getMyJobs,
   closeJob,
-  reopenJob // 👈 QUAN TRỌNG
+  reopenJob,
+  resubmitJob, // ⭐ QUAN TRỌNG: re-submit job sau reject
 };

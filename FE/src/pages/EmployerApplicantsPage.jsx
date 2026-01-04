@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { getApplicantsByJob } from "../services/applicationService";
 
 const FILTERS = {
@@ -27,19 +31,34 @@ const statusConfig = {
 function EmployerApplicantsPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabFromUrl = searchParams.get("tab");
+  const highlight = searchParams.get("highlight");
 
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState(FILTERS.ALL);
+  const [error, setError] = useState(null);
 
+  const [filter, setFilter] = useState(
+    tabFromUrl && FILTERS[tabFromUrl.toUpperCase()]
+      ? tabFromUrl
+      : FILTERS.ALL
+  );
+
+  /* =====================
+     FETCH DATA
+  ===================== */
   useEffect(() => {
     const fetchApplicants = async () => {
       try {
+        setLoading(true);
         const res = await getApplicantsByJob(jobId);
         setApplicants(Array.isArray(res) ? res : []);
+        setError(null);
       } catch (e) {
         console.error(e);
-        alert("Không thể tải danh sách ứng viên");
+        setError("Không thể tải danh sách ứng viên");
       } finally {
         setLoading(false);
       }
@@ -47,6 +66,32 @@ function EmployerApplicantsPage() {
 
     fetchApplicants();
   }, [jobId]);
+
+  /* =====================
+     SYNC TAB FROM URL
+  ===================== */
+  useEffect(() => {
+    if (
+      tabFromUrl &&
+      Object.values(FILTERS).includes(tabFromUrl)
+    ) {
+      setFilter(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
+  /* =====================
+     AUTO REMOVE HIGHLIGHT
+  ===================== */
+  useEffect(() => {
+    if (!highlight) return;
+
+    const timer = setTimeout(() => {
+      searchParams.delete("highlight");
+      setSearchParams(searchParams, { replace: true });
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [highlight, searchParams, setSearchParams]);
 
   /* =====================
      DERIVED DATA
@@ -110,11 +155,19 @@ function EmployerApplicantsPage() {
         ].map(([label, key, count]) => (
           <button
             key={key}
-            onClick={() => setFilter(key)}
-            className={`px-4 py-2 text-sm border-b-2 ${
+            disabled={count === 0}
+            onClick={() => {
+              if (count === 0) return;
+              setFilter(key);
+              searchParams.set("tab", key);
+              setSearchParams(searchParams);
+            }}
+            className={`px-4 py-2 text-sm border-b-2 transition ${
               filter === key
                 ? "border-green-600 text-green-600 font-medium"
                 : "border-transparent text-gray-500 hover:text-gray-700"
+            } ${
+              count === 0 ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
             {label} ({count})
@@ -123,60 +176,97 @@ function EmployerApplicantsPage() {
       </div>
 
       {/* =====================
+          ERROR STATE
+      ===================== */}
+      {error && (
+        <div className="p-10 text-center text-red-600 space-y-2 bg-white border rounded-lg">
+          <p className="font-medium">
+            Không thể tải danh sách ứng viên
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* =====================
           LIST
       ===================== */}
-      <div className="bg-white border rounded-lg divide-y">
-        {loading && (
-          <p className="p-6 text-sm text-gray-500">Đang tải...</p>
-        )}
+      {!error && (
+        <div className="bg-white border rounded-lg divide-y">
+          {loading && (
+            <p className="p-6 text-sm text-gray-500">
+              Đang tải...
+            </p>
+          )}
 
-        {!loading && filteredApplicants.length === 0 && (
-          <p className="p-6 text-sm text-gray-500">
-            Không có ứng viên phù hợp
-          </p>
-        )}
+          {!loading && filteredApplicants.length === 0 && (
+            <div className="p-10 text-center text-gray-500 space-y-2">
+              <p className="text-base font-medium">
+                Chưa có ứng viên cho công việc này
+              </p>
+              <p className="text-sm">
+                Khi có ứng viên mới, danh sách sẽ hiển thị tại đây.
+              </p>
+            </div>
+          )}
 
-        {!loading &&
-          filteredApplicants.map((app) => (
-            <div
-              key={app.application_id}
-              className="flex justify-between items-center p-4 hover:bg-gray-50"
-            >
-              <div>
-                <p className="font-medium text-gray-800">
-                  {app.full_name}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Nộp ngày{" "}
-                  {new Date(app.applied_at).toLocaleDateString(
-                    "vi-VN"
-                  )}
-                </p>
-              </div>
+          {!loading &&
+            filteredApplicants.map((app, index) => {
+              const shouldHighlight =
+                highlight === "new" &&
+                filter === FILTERS.PENDING &&
+                index === 0;
 
-              <div className="flex items-center gap-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    statusConfig[app.status]?.className
+              return (
+                <div
+                  key={app.application_id}
+                  className={`flex justify-between items-center p-4 transition ${
+                    shouldHighlight
+                      ? "bg-green-50 border-l-4 border-green-500 animate-pulse"
+                      : "hover:bg-gray-50"
                   }`}
                 >
-                  {statusConfig[app.status]?.label}
-                </span>
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {app.full_name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Nộp ngày{" "}
+                      {new Date(app.applied_at).toLocaleDateString(
+                        "vi-VN"
+                      )}
+                    </p>
+                  </div>
 
-                <button
-                  onClick={() =>
-                    navigate(
-                      `/employer/applications/${app.application_id}`
-                    )
-                  }
-                  className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                >
-                  Xem hồ sơ
-                </button>
-              </div>
-            </div>
-          ))}
-      </div>
+                  <div className="flex items-center gap-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        statusConfig[app.status]?.className
+                      }`}
+                    >
+                      {statusConfig[app.status]?.label}
+                    </span>
+
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/employer/applications/${app.application_id}`
+                        )
+                      }
+                      className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                    >
+                      Xem hồ sơ
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      )}
     </div>
   );
 }

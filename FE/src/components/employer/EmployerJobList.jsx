@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import employerService from "../../services/employerService";
 
 const JOB_STATUS = {
@@ -7,9 +7,17 @@ const JOB_STATUS = {
     text: "Đang tuyển",
     badge: "bg-green-100 text-green-700",
   },
+  pending: {
+    text: "Chờ duyệt",
+    badge: "bg-yellow-100 text-yellow-700",
+  },
+  rejected: {
+    text: "Bị từ chối",
+    badge: "bg-red-100 text-red-700",
+  },
   closed: {
     text: "Đã đóng",
-    badge: "bg-red-100 text-red-700",
+    badge: "bg-gray-100 text-gray-600",
   },
   expired: {
     text: "Hết hạn",
@@ -21,6 +29,7 @@ function EmployerJobList() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   /* =====================
      FETCH JOBS
@@ -54,7 +63,10 @@ function EmployerJobList() {
         )
       );
     } catch (e) {
-      alert(e.response?.data?.message || "Không thể đóng tuyển dụng");
+      alert(
+        e.response?.data?.message ||
+          "Không thể đóng tuyển dụng"
+      );
     }
   };
 
@@ -69,7 +81,29 @@ function EmployerJobList() {
         )
       );
     } catch (e) {
-      alert(e.response?.data?.message || "Không thể mở lại tuyển dụng");
+      alert(
+        e.response?.data?.message ||
+          "Không thể mở lại tuyển dụng"
+      );
+    }
+  };
+
+  // ⭐ RE-SUBMIT JOB (SAU KHI BỊ REJECT)
+  const handleResubmitJob = async (jobId) => {
+    if (!window.confirm("Gửi lại job để admin duyệt?")) return;
+
+    try {
+      await employerService.resubmitJob(jobId);
+
+      // 🔑 reload để UI cập nhật pending + ẩn admin_note
+      await fetchJobs();
+
+      alert("Job đã được gửi lại để admin duyệt");
+    } catch (e) {
+      alert(
+        e.response?.data?.message ||
+          "Không thể gửi lại job"
+      );
     }
   };
 
@@ -106,12 +140,18 @@ function EmployerJobList() {
       </h3>
 
       {loading && (
-        <p className="text-sm text-gray-500">Đang tải dữ liệu...</p>
+        <p className="text-sm text-gray-500">
+          Đang tải dữ liệu...
+        </p>
       )}
 
       <div className="space-y-4">
         {jobs.map((job) => {
-          const status = JOB_STATUS[job.status] || JOB_STATUS.active;
+          const status =
+            JOB_STATUS[job.status] || JOB_STATUS.active;
+
+          const totalApplicants =
+            job.total_applications || 0;
 
           return (
             <div
@@ -135,11 +175,31 @@ function EmployerJobList() {
                     {status.text}
                   </span>
 
+                  {/* 🔴 ADMIN REJECT NOTE */}
+                  {job.status === "rejected" &&
+                    job.admin_note && (
+                      <div className="mt-3 bg-red-50 border border-red-300 p-3 rounded">
+                        <p className="text-sm font-semibold text-red-600">
+                          Lý do bị từ chối
+                        </p>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {job.admin_note}
+                        </p>
+                      </div>
+                    )}
+
+                  {/* 🟡 PENDING MESSAGE */}
+                  {job.status === "pending" && (
+                    <p className="text-sm text-yellow-700 mt-3">
+                      Job đang chờ admin duyệt lại
+                    </p>
+                  )}
+
                   {/* STATS */}
                   <div className="flex flex-wrap gap-3 mt-4 text-sm">
                     <Stat
                       label="Tổng"
-                      value={job.total_applications || 0}
+                      value={totalApplicants}
                     />
                     <Stat
                       label="Chờ"
@@ -160,23 +220,59 @@ function EmployerJobList() {
                 </div>
 
                 {/* ACTIONS */}
-                <div className="flex flex-col gap-2 min-w-[160px]">
+                <div className="flex flex-col gap-2 min-w-[170px]">
                   <button
-                    onClick={() =>
-                      navigate(`/employer/jobs/${job.id}/applications`)
+                    disabled={totalApplicants === 0}
+                    title={
+                      totalApplicants === 0
+                        ? "Chưa có ứng viên cho công việc này"
+                        : ""
                     }
-                    className="
-                      w-full px-4 py-2 text-sm
-                      bg-green-600 text-white rounded
-                      hover:bg-green-700
-                    "
+                    onClick={() =>
+                      navigate(
+                        `/employer/jobs/${job.id}/applications`,
+                        {
+                          state: {
+                            from:
+                              location.pathname +
+                              location.search,
+                          },
+                        }
+                      )
+                    }
+                    className={`
+                      w-full px-4 py-2 text-sm rounded transition
+                      ${
+                        totalApplicants === 0
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-green-600 text-white hover:bg-green-700"
+                      }
+                    `}
                   >
                     Xem ứng viên
                   </button>
 
+                  {/* RE-SUBMIT */}
+                  {job.status === "rejected" && (
+                    <button
+                      onClick={() =>
+                        handleResubmitJob(job.id)
+                      }
+                      className="
+                        w-full px-4 py-2 text-sm
+                        bg-blue-600 text-white rounded
+                        hover:bg-blue-700
+                      "
+                    >
+                      Re-submit Job
+                    </button>
+                  )}
+
                   {job.status === "active" && (
                     <button
-                      onClick={() => handleCloseJob(job.id)}
+                      onClick={() =>
+                        handleCloseJob(job.id)
+                      }
                       className="
                         w-full px-4 py-2 text-sm
                         bg-red-100 text-red-600 rounded
@@ -189,7 +285,9 @@ function EmployerJobList() {
 
                   {job.status === "closed" && (
                     <button
-                      onClick={() => handleReopenJob(job.id)}
+                      onClick={() =>
+                        handleReopenJob(job.id)
+                      }
                       className="
                         w-full px-4 py-2 text-sm
                         bg-blue-100 text-blue-600 rounded
@@ -212,7 +310,6 @@ function EmployerJobList() {
 /* =====================
    SUB COMPONENT
 ===================== */
-
 function Stat({ label, value, color = "gray" }) {
   const colorMap = {
     gray: "bg-gray-100 text-gray-700",

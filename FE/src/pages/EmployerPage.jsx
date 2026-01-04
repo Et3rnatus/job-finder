@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import UserAvatar from "../components/employer/UserAvatar";
 import EmployerSideBarTool from "../components/employer/EmployerSideBarTool";
 import EmployerProfileForm from "../components/employer/EmployerProfileForm";
@@ -8,12 +9,23 @@ import CreateJobForm from "../components/employer/CreateJobForm";
 import employerService from "../services/employerService";
 
 function EmployerPage() {
+  const location = useLocation();
+
   const [mode, setMode] = useState("profile"); // profile | jobs | create
   const [profileMode, setProfileMode] = useState("view"); // view | edit
 
   // 🔑 nghiệp vụ
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
+
+  /* =====================
+     SYNC MODE FROM ROUTE STATE  ✅ FIX QUAN TRỌNG
+  ===================== */
+  useEffect(() => {
+    if (location.state?.mode) {
+      setMode(location.state.mode);
+    }
+  }, [location.state]);
 
   /* =====================
      CHECK PROFILE STATUS

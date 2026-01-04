@@ -258,3 +258,46 @@ exports.getApplicationDetailForEmployer = async (req, res) => {
     return res.status(500).json({ message: "Failed to load application detail" });
   }
 };
+
+// PATCH /api/employer/jobs/:id/resubmit
+exports.resubmitJob = async (req, res) => {
+  const { id } = req.params;
+  const employerId = req.user.id;
+
+  try {
+    // kiểm tra job thuộc employer & đang bị reject
+    const [[job]] = await db.execute(
+      `
+      SELECT j.id
+      FROM job j
+      JOIN employer e ON j.employer_id = e.id
+      WHERE j.id = ?
+        AND e.user_id = ?
+        AND j.status = 'rejected'
+      `,
+      [id, employerId]
+    );
+
+    if (!job) {
+      return res.status(400).json({
+        message: "Job not found or cannot resubmit",
+      });
+    }
+
+    // resubmit
+    await db.execute(
+      `
+      UPDATE job
+      SET status = 'pending',
+          admin_note = NULL
+      WHERE id = ?
+      `,
+      [id]
+    );
+
+    res.json({ message: "Job resubmitted successfully" });
+  } catch (err) {
+    console.error("RESUBMIT JOB ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

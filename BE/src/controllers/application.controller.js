@@ -1,7 +1,7 @@
 
 // API ứng tuyển công việc
-const db = require("../config/db");
 const { v4: uuidv4 } = require("uuid");
+const db = require("../config/db");
 
 exports.applyJob = async (req, res) => {
   const connection = await db.getConnection();
@@ -38,11 +38,16 @@ exports.applyJob = async (req, res) => {
       [job_id]
     );
 
-    if (!job) throw new Error("Job not found");
-    if (job.status !== "active") {
-      throw new Error("Công việc không còn nhận hồ sơ");
+    if (!job) {
+      throw new Error("Job not found");
     }
 
+    // ✅ CHỈ APPLY JOB ĐÃ ĐƯỢC DUYỆT
+    if (job.status !== "approved") {
+      throw new Error("Công việc chưa được phê duyệt hoặc không còn nhận hồ sơ");
+    }
+
+    // ✅ CHECK HẾT HẠN
     if (job.expired_at && new Date(job.expired_at) < new Date()) {
       await connection.execute(
         `UPDATE job SET status = 'expired' WHERE id = ?`,
@@ -91,180 +96,174 @@ exports.applyJob = async (req, res) => {
     );
 
     /* =====================
-       4️⃣ SNAPSHOT – PROFILE
-       👉 bảng application_snapshot
+       4️⃣ SNAPSHOT CANDIDATE PROFILE
     ===================== */
-    /* =====================
-   SNAPSHOT CANDIDATE PROFILE
-===================== */
+    const [[candidateInfo]] = await connection.execute(
+      `
+      SELECT
+        c.full_name,
+        c.contact_number AS phone,
+        u.email
+      FROM candidate c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = ?
+      `,
+      [candidate.id]
+    );
 
-const [[candidateInfo]] = await connection.execute(
-  `
-  SELECT
-    c.full_name,
-    c.contact_number AS phone,
-    u.email
-  FROM candidate c
-  JOIN users u ON c.user_id = u.id
-  WHERE c.id = ?
-  `,
-  [candidate.id]
-);
+    if (!candidateInfo) {
+      throw new Error("Candidate profile not found");
+    }
 
-if (!candidateInfo) {
-  throw new Error("Candidate profile not found");
-}
+    const [snapshotResult] = await connection.execute(
+      `
+      INSERT INTO application_snapshot (
+        application_id,
+        full_name,
+        email,
+        phone,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, NOW())
+      `,
+      [
+        applicationId,
+        candidateInfo.full_name,
+        candidateInfo.email,
+        candidateInfo.phone || null,
+      ]
+    );
 
-/* ===== BASIC INFO ===== */
-const [snapshotResult] = await connection.execute(
-  `
-  INSERT INTO application_snapshot (
-    application_id,
-    full_name,
-    email,
-    phone,
-    created_at
-  )
-  VALUES (?, ?, ?, ?, NOW())
-  `,
-  [
-    applicationId,
-    candidateInfo.full_name,
-    candidateInfo.email,
-    candidateInfo.phone || null,
-  ]
-);
+    const applicationSnapshotId = snapshotResult.insertId;
 
-const applicationSnapshotId = snapshotResult.insertId;
+    /* ===== SKILLS ===== */
+    const [skills] = await connection.execute(
+      `
+      SELECT s.name
+      FROM candidate_skill cs
+      JOIN skill s ON cs.skill_id = s.id
+      WHERE cs.candidate_id = ?
+      `,
+      [candidate.id]
+    );
 
-/* ===== SKILLS ===== */
-const [skills] = await connection.execute(
-  `
-  SELECT s.name
-  FROM candidate_skill cs
-  JOIN skill s ON cs.skill_id = s.id
-  WHERE cs.candidate_id = ?
-  `,
-  [candidate.id]
-);
-
-for (const skill of skills) {
-  await connection.execute(
-    `
-    INSERT INTO application_snapshot_skill (
-      application_snapshot_id,
-      skill_name
-    )
-    VALUES (?, ?)
-    `,
-    [applicationSnapshotId, skill.name]
-  );
-}
-
-/* ===== EXPERIENCE ===== */
-const [experiences] = await connection.execute(
-  `
-  SELECT
-    company,
-    position,
-    start_date,
-    end_date,
-    description
-  FROM work_experience
-  WHERE candidate_id = ?
-  `,
-  [candidate.id]
-);
-
-for (const exp of experiences) {
-  await connection.execute(
-    `
-    INSERT INTO application_snapshot_experience (
-      application_snapshot_id,
-      company,
-      position,
-      start_date,
-      end_date,
-      description
-    )
-    VALUES (?, ?, ?, ?, ?, ?)
-    `,
-    [
-      applicationSnapshotId,
-      exp.company || null,
-      exp.position || null,
-      exp.start_date || null,
-      exp.end_date || null,
-      exp.description || null,
-    ]
-  );
-}
-
-/* ===== EDUCATION ===== */
-const [educations] = await connection.execute(
-  `
-  SELECT
-    school,
-    degree,
-    major,
-    start_date,
-    end_date
-  FROM education
-  WHERE candidate_id = ?
-  `,
-  [candidate.id]
-);
-
-for (const edu of educations) {
-  await connection.execute(
-    `
-    INSERT INTO application_snapshot_education (
-      application_snapshot_id,
-      school,
-      degree,
-      major,
-      start_date,
-      end_date
-    )
-    VALUES (?, ?, ?, ?, ?, ?)
-    `,
-    [
-      applicationSnapshotId,
-      edu.school || null,
-      edu.degree || null,
-      edu.major || null,
-      edu.start_date || null,
-      edu.end_date || null,
-    ]
-  );
-}
-
-
-    /* =====================
-       8️⃣ NOTIFICATION
-    ===================== */
-    if (job.employer_user_id) {
-      await db.execute(
+    for (const skill of skills) {
+      await connection.execute(
         `
-        INSERT INTO notification (user_id, type, title, message)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO application_snapshot_skill (
+          application_snapshot_id,
+          skill_name
+        )
+        VALUES (?, ?)
+        `,
+        [applicationSnapshotId, skill.name]
+      );
+    }
+
+    /* ===== EXPERIENCE ===== */
+    const [experiences] = await connection.execute(
+      `
+      SELECT company, position, start_date, end_date, description
+      FROM work_experience
+      WHERE candidate_id = ?
+      `,
+      [candidate.id]
+    );
+
+    for (const exp of experiences) {
+      await connection.execute(
+        `
+        INSERT INTO application_snapshot_experience (
+          application_snapshot_id,
+          company,
+          position,
+          start_date,
+          end_date,
+          description
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
         `,
         [
-          Number(job.employer_user_id),
-          "apply_job",
-          job.title,
-          "Có ứng viên mới",
+          applicationSnapshotId,
+          exp.company || null,
+          exp.position || null,
+          exp.start_date || null,
+          exp.end_date || null,
+          exp.description || null,
         ]
       );
     }
+
+    /* ===== EDUCATION ===== */
+    const [educations] = await connection.execute(
+      `
+      SELECT school, degree, major, start_date, end_date
+      FROM education
+      WHERE candidate_id = ?
+      `,
+      [candidate.id]
+    );
+
+    for (const edu of educations) {
+      await connection.execute(
+        `
+        INSERT INTO application_snapshot_education (
+          application_snapshot_id,
+          school,
+          degree,
+          major,
+          start_date,
+          end_date
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          applicationSnapshotId,
+          edu.school || null,
+          edu.degree || null,
+          edu.major || null,
+          edu.start_date || null,
+          edu.end_date || null,
+        ]
+      );
+    }
+
+    /* =====================
+       5️⃣ NOTIFICATION
+    ===================== */
+    if (job.employer_user_id) {
+      await connection.execute(
+        `
+        INSERT INTO notification (
+          user_id,
+          type,
+          title,
+          message,
+          related_id
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          Number(job.employer_user_id),
+          "NEW_APPLICATION",
+          "Có ứng viên mới",
+          `Có ứng viên mới ứng tuyển vào vị trí ${job.title}`,
+          job.id,
+        ]
+      );
+    }
+
+    await connection.commit();
 
     return res.status(201).json({
       message: "Ứng tuyển thành công",
       application_id: applicationId,
     });
+
   } catch (error) {
     await connection.rollback();
     console.error("APPLY JOB ERROR:", error);
+
     return res.status(400).json({
       message: error.message || "Apply job failed",
     });
@@ -272,11 +271,6 @@ for (const edu of educations) {
     connection.release();
   }
 };
-
-
-
-
-
 
 // API xem job đã ứng tuyển của ứng viên
 exports.getMyApplications = async (req, res) => {

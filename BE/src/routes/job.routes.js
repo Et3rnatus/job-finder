@@ -14,6 +14,7 @@ router.post(
   jobController.createJob
 );
 
+
 // employer đóng job ✅ (THÊM)
 router.patch(
   '/:id/close',

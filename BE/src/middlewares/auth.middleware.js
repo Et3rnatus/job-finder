@@ -11,7 +11,6 @@ exports.verifyToken = (req, res, next) => {
     });
   }
 
-
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
     return res.status(401).json({
@@ -24,10 +23,9 @@ exports.verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    
     req.user = {
-      id: decoded.id,       
-      role: decoded.role,
+      id: decoded.id,
+      role: decoded.role,   // candidate | employer | admin
       email: decoded.email
     };
 
@@ -39,8 +37,14 @@ exports.verifyToken = (req, res, next) => {
   }
 };
 
-//Xác thực role
-exports.requireRole = (role) => {
+/**
+ * Xác thực role
+ * @param {string|string[]} roles
+ * VD:
+ *  requireRole("admin")
+ *  requireRole(["admin", "employer"])
+ */
+exports.requireRole = (roles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -48,7 +52,10 @@ exports.requireRole = (role) => {
       });
     }
 
-    if (req.user.role !== role) {
+    // chuyển role đơn → mảng
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         message: 'Forbidden'
       });

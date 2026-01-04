@@ -5,7 +5,8 @@ import JobInfoSection from "../components/job_detail/JobInfo";
 import JobSidebar from "../components/job_detail/JobSidebar";
 import ApplyButton from "../components/job_detail/ApplyButton";
 import { getJobDetail } from "../services/jobService";
-import { applyJob, getMyApplications} from "../services/applicationService";
+import JobGeneralInfo from "../components/job_detail/JobGeneralInfo";
+import { applyJob, getMyApplications } from "../services/applicationService";
 
 function JobDetailPage() {
   const { id } = useParams();
@@ -29,18 +30,17 @@ function JobDetailPage() {
   useEffect(() => {
     const loadJob = async () => {
       try {
-        const jobData = await getJobDetail(id);
-        setJob(jobData);
+        const data = await getJobDetail(id);
+        setJob(data);
       } catch (err) {
         console.error("LOAD JOB DETAIL ERROR:", err);
       }
     };
-
     loadJob();
   }, [id]);
 
   /* =====================
-     LOAD APPLICATION STATUS
+     LOAD APPLY STATUS
   ===================== */
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -50,15 +50,12 @@ function JobDetailPage() {
     const loadStatus = async () => {
       try {
         const apps = await getMyApplications();
-        const app = apps.find(
+        const found = apps.find(
           (a) => String(a.job_id) === String(id)
         );
-        setApplicationStatus(app ? app.status : null);
+        setApplicationStatus(found?.status || null);
       } catch (e) {
-        console.error(
-          "LOAD APPLICATION STATUS ERROR:",
-          e
-        );
+        console.error("LOAD APPLICATION STATUS ERROR:", e);
       }
     };
 
@@ -66,15 +63,16 @@ function JobDetailPage() {
   }, [id]);
 
   /* =====================
-     APPLY
+     APPLY HANDLER
   ===================== */
   const handleApply = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
     if (!token) {
-      alert("Vui lòng đăng nhập để ứng tuyển");
-      navigate("/login");
+      navigate("/login", {
+        state: { from: `/jobs/${id}` },
+      });
       return;
     }
 
@@ -84,25 +82,16 @@ function JobDetailPage() {
     }
 
     if (isJobExpired(job.expired_at)) {
-      alert("Công việc này đã hết hạn tuyển dụng");
+      alert("Công việc đã hết hạn");
       return;
     }
 
     try {
       setLoadingApply(true);
-
-      await applyJob({
-        job_id: job.id,
-        cover_letter: null,
-      });
-
-      alert("Ứng tuyển thành công");
+      await applyJob({ job_id: job.id, cover_letter: null });
       setApplicationStatus("pending");
-    } catch (error) {
-      alert(
-        error?.response?.data?.message ||
-          "Ứng tuyển thất bại"
-      );
+    } catch (err) {
+      alert(err?.response?.data?.message || "Ứng tuyển thất bại");
     } finally {
       setLoadingApply(false);
     }
@@ -113,18 +102,14 @@ function JobDetailPage() {
   ===================== */
   if (!job) {
     return (
-      <div className="text-center py-16 text-gray-500">
-        Đang tải dữ liệu công việc...
+      <div className="text-center py-20 text-gray-500">
+        Đang tải thông tin công việc...
       </div>
     );
   }
 
   const expired = isJobExpired(job.expired_at);
-
-  const isLocked =
-    applicationStatus === "pending" ||
-    applicationStatus === "approved" ||
-    applicationStatus === "rejected";
+  const applied = ["pending", "approved", "rejected"].includes(applicationStatus);
 
   const buttonText = expired
     ? "Đã hết hạn ứng tuyển"
@@ -140,12 +125,14 @@ function JobDetailPage() {
 
   return (
     <div className="bg-gray-100 py-8">
-      <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* =====================
-            MAIN CONTENT
+            LEFT CONTENT
         ===================== */}
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-white border rounded-xl p-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* HEADER */}
+          <div className="bg-white rounded-xl border p-6">
             <JobHeader job={job} />
           </div>
 
@@ -161,7 +148,8 @@ function JobDetailPage() {
 
           <JobInfoSection
             title="Kỹ năng yêu cầu"
-            content={job.skills?.map((s) => s.name) || []}
+            content={job.skills?.map((s) => s.name)}
+            isList
           />
 
           <JobInfoSection
@@ -171,27 +159,28 @@ function JobDetailPage() {
         </div>
 
         {/* =====================
-            SIDEBAR
+            RIGHT SIDEBAR
         ===================== */}
-        <div className="space-y-6 md:sticky md:top-6 h-fit">
+        <div className="space-y-6 sticky top-6 h-fit">
           {/* APPLY BOX */}
           <div className="bg-white border rounded-xl p-6 space-y-3">
             <ApplyButton
-              job={job}
-              applied={isLocked}
+              applied={applied}
               disabled={expired || loadingApply}
               onApply={handleApply}
               buttonText={buttonText}
             />
 
             {expired && (
-              <p className="text-xs text-red-500 mt-2">
-                Tin tuyển dụng đã hết hạn
+              <p className="text-xs text-red-500">
+                Hạn nộp hồ sơ đã kết thúc
               </p>
             )}
           </div>
 
+          {/* COMPANY */}
           <JobSidebar job={job} />
+          <JobGeneralInfo job={job} />
         </div>
       </div>
     </div>

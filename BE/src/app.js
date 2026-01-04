@@ -9,6 +9,8 @@ const employerRoutes = require('./routes/employer.routes');
 const skillRoutes = require('./routes/skill.routes');
 const candidateRoutes = require('./routes/candidate.routes');
 const notificationRoutes= require('./routes/notification.routes');
+const adminRoutes=require('./routes/admin.routes');
+const categoryRoutes = require('./routes/category.routes');
 
 console.log('APP.JS LOADED');
 
@@ -27,6 +29,8 @@ app.use('/api/employer', employerRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/candidate', candidateRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin',adminRoutes);
+app.use('/api/categories',categoryRoutes);
 
 
 // Health check

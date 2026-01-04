@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   MagnifyingGlassIcon,
@@ -9,6 +9,7 @@ import { JOB_KEYWORDS } from "../../data/jobKeywords";
 function Searchbar() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const inputRef = useRef(null);
 
   const [keyword, setKeyword] = useState(
     searchParams.get("keyword") || ""
@@ -17,21 +18,81 @@ function Searchbar() {
     searchParams.get("city") || ""
   );
   const [showSuggest, setShowSuggest] = useState(false);
+  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
 
+  /* =====================
+     AUTO FOCUS
+  ===================== */
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  /* =====================
+     DEBOUNCE KEYWORD
+  ===================== */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [keyword]);
+
+  /* =====================
+     DISABLE CONDITION
+  ===================== */
+  const isSearchDisabled = useMemo(() => {
+    return !keyword.trim() && !city.trim();
+  }, [keyword, city]);
+
+  /* =====================
+     SEARCH HANDLER
+  ===================== */
   const handleSearch = () => {
+    if (isSearchDisabled) return;
+
     const params = {};
-    if (keyword.trim()) params.keyword = keyword;
-    if (city.trim()) params.city = city;
+    if (keyword.trim()) params.keyword = keyword.trim();
+    if (city.trim()) params.city = city.trim();
 
     navigate({
       pathname: "/jobs",
       search: new URLSearchParams(params).toString(),
     });
+
+    setShowSuggest(false);
   };
 
-  const filteredSuggestions = JOB_KEYWORDS.filter((item) =>
-    item.toLowerCase().includes(keyword.toLowerCase())
-  );
+  /* =====================
+     AUTOCOMPLETE
+  ===================== */
+  const filteredSuggestions = useMemo(() => {
+    if (!debouncedKeyword) return [];
+    return JOB_KEYWORDS.filter((item) =>
+      item.toLowerCase().includes(debouncedKeyword.toLowerCase())
+    );
+  }, [debouncedKeyword]);
+
+  const highlightText = (text, kw) => {
+    if (!kw) return text;
+
+    const parts = text.split(
+      new RegExp(`(${kw})`, "gi")
+    );
+
+    return parts.map((part, i) =>
+      part.toLowerCase() === kw.toLowerCase() ? (
+        <span
+          key={i}
+          className="text-green-600 font-semibold"
+        >
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
 
   return (
     <div className="mt-8 px-4">
@@ -49,6 +110,7 @@ function Searchbar() {
           <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
 
           <input
+            ref={inputRef}
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -56,6 +118,14 @@ function Searchbar() {
             onBlur={() =>
               setTimeout(() => setShowSuggest(false), 200)
             }
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isSearchDisabled) {
+                handleSearch();
+              }
+              if (e.key === "Escape") {
+                setShowSuggest(false);
+              }
+            }}
             placeholder="Tìm kiếm theo vị trí, kỹ năng, công việc..."
             className="
               w-full h-12 pl-12 pr-4
@@ -67,7 +137,7 @@ function Searchbar() {
 
           {/* ===== AUTOCOMPLETE ===== */}
           {showSuggest &&
-            keyword &&
+            debouncedKeyword &&
             filteredSuggestions.length > 0 && (
               <div
                 className="
@@ -99,7 +169,7 @@ function Searchbar() {
                   >
                     <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
                     <span className="truncate">
-                      {item}
+                      {highlightText(item, debouncedKeyword)}
                     </span>
                   </div>
                 ))}
@@ -139,21 +209,33 @@ function Searchbar() {
         </div>
 
         {/* ===== SEARCH BUTTON ===== */}
-        <button
-          onClick={handleSearch}
-          className="
-            h-12 px-8
-            rounded-xl
-            bg-green-600 text-white
-            font-semibold text-sm
-            flex items-center justify-center gap-2
-            hover:bg-green-700
-            transition
-          "
+        <div
+          title={
+            isSearchDisabled
+              ? "Vui lòng nhập từ khóa hoặc chọn địa điểm"
+              : ""
+          }
         >
-          <MagnifyingGlassIcon className="h-5 w-5" />
-          Tìm kiếm
-        </button>
+          <button
+            onClick={handleSearch}
+            disabled={isSearchDisabled}
+            className={`
+              h-12 px-8
+              rounded-xl
+              font-semibold text-sm
+              flex items-center justify-center gap-2
+              transition
+              ${
+                isSearchDisabled
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700"
+              }
+            `}
+          >
+            <MagnifyingGlassIcon className="h-5 w-5" />
+            Tìm kiếm
+          </button>
+        </div>
       </div>
     </div>
   );

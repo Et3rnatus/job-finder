@@ -6,6 +6,8 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
+  Navigate,
+  Outlet,
 } from "react-router-dom";
 import "./App.css";
 
@@ -14,6 +16,7 @@ import "./App.css";
 ===================== */
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import AdminLayout from "./components/layout/AdminLayout";
 
 /* =====================
    PAGES
@@ -31,9 +34,46 @@ import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import SavedJobListPage from "./pages/SavedJobListPage";
 
 /* =====================
+   ADMIN PAGES
+===================== */
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminJobsPage from "./pages/admin/AdminJobsPage";
+import AdminCategoryPage from "./pages/admin/AdminCategoryPage";
+
+
+/* =====================
    CANDIDATE SUB PAGES
 ===================== */
 import AppliedJobList from "./components/candidate/AppliedJobList";
+
+/* =====================
+   USER LAYOUT (Navbar + Footer)
+===================== */
+function UserLayout() {
+  return (
+    <div className="min-h-screen flex flex-col bg-white">
+      <Navbar />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+/* =====================
+   ADMIN GUARD
+===================== */
+function AdminGuard() {
+  const role = localStorage.getItem("role");
+
+  if (role !== "admin") {
+    return <Navigate to="/login" />;
+  }
+
+  return <Outlet />;
+}
 
 function App() {
   /* =====================
@@ -48,55 +88,53 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-white">
-        {/* =====================
-            GLOBAL NAVBAR
-        ===================== */}
-        <Navbar />
+      <Routes>
 
-        {/* =====================
-            ROUTES
-        ===================== */}
-        <main className="flex-1">
-          <Routes>
-            {/* ===== PUBLIC ===== */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+        {/* ===== USER (CÓ NAVBAR + FOOTER) ===== */}
+        <Route element={<UserLayout />}>
+          {/* PUBLIC */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-            {/* ===== JOBS ===== */}
-            <Route path="/jobs" element={<JobsPage />} />
-            <Route path="/jobs/:id" element={<JobDetailPage />} />
+          {/* JOBS */}
+          <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
 
-            {/* ===== CANDIDATE ===== */}
-            <Route path="/account/candidate" element={<CandidatePage />} />
-            <Route
-              path="/candidate/applications"
-              element={<AppliedJobList />}
-            />
-            <Route
-              path="/candidate/saved-jobs"
-              element={<SavedJobListPage />}
-            />
+          {/* CANDIDATE */}
+          <Route path="/account/candidate" element={<CandidatePage />} />
+          <Route
+            path="/candidate/applications"
+            element={<AppliedJobList />}
+          />
+          <Route
+            path="/candidate/saved-jobs"
+            element={<SavedJobListPage />}
+          />
 
-            {/* ===== EMPLOYER ===== */}
-            <Route path="/account/employer" element={<EmployerPage />} />
-            <Route
-              path="/employer/jobs/:jobId/applications"
-              element={<EmployerApplicantsPage />}
-            />
-            <Route
-              path="/employer/applications/:applicationId"
-              element={<ApplicationDetailPage />}
-            />
-          </Routes>
-        </main>
+          {/* EMPLOYER */}
+          <Route path="/account/employer" element={<EmployerPage />} />
+          <Route
+            path="/employer/jobs/:jobId/applications"
+            element={<EmployerApplicantsPage />}
+          />
+          <Route
+            path="/employer/applications/:applicationId"
+            element={<ApplicationDetailPage />}
+          />
+        </Route>
 
-        {/* =====================
-            GLOBAL FOOTER
-        ===================== */}
-        <Footer />
-      </div>
+        {/* ===== ADMIN (KHÔNG NAVBAR / FOOTER) ===== */}
+        <Route element={<AdminGuard />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="jobs" element={<AdminJobsPage />} />
+            <Route path="categories" element={<AdminCategoryPage />}/>
+          </Route>
+        </Route>
+
+      </Routes>
     </Router>
   );
 }

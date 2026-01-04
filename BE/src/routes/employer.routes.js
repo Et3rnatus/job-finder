@@ -22,5 +22,12 @@ const employerController = require('../controllers/employer.controller');
   employerController.getApplicationDetailForEmployer
 );
 
+router.patch(
+  "/jobs/:id/resubmit",
+  verifyToken,
+  requireRole("employer"),
+  employerController.resubmitJob
+);
+
 
 module.exports = router;
