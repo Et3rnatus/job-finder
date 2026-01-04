@@ -3,7 +3,6 @@ import candidateService from "../../services/candidateService";
 import axios from "axios";
 import {
   User,
-  Phone,
   Calendar,
   Wrench,
   GraduationCap,
@@ -13,6 +12,60 @@ import {
   Save,
   X,
 } from "lucide-react";
+
+/* ================= SKILL GROUPS (FE ONLY) ================= */
+const SKILL_GROUPS = {
+  technical: {
+    title: "🔧 Kỹ năng chuyên môn",
+    match: [
+      "JavaScript",
+      "ReactJS",
+      "NodeJS",
+      "HTML",
+      "CSS",
+      "Java",
+      "MySQL",
+      "PostgreSQL",
+      "REST API",
+    ],
+  },
+  tool: {
+    title: "🛠 Công cụ & nền tảng",
+    match: ["Git", "Excel"],
+  },
+  marketing: {
+    title: "📊 Marketing / Kinh doanh",
+    match: [
+      "Digital Marketing",
+      "SEO",
+      "Facebook Ads",
+      "Google Ads",
+      "Bán hàng",
+      "Content Marketing",
+    ],
+  },
+  business: {
+    title: "📁 Nghiệp vụ / Quản lý",
+    match: [
+      "Kế toán tổng hợp",
+      "Kiểm toán",
+      "Thuế",
+      "Quản lý sản xuất",
+      "Lập báo cáo tài chính",
+      "Kiểm soát chất lượng",
+    ],
+  },
+  soft: {
+    title: "🤝 Kỹ năng mềm",
+    match: [
+      "Giao tiếp",
+      "Làm việc nhóm",
+      "Quản lý thời gian",
+      "Đàm phán",
+      "Chăm sóc khách hàng",
+    ],
+  },
+};
 
 function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [form, setForm] = useState({
@@ -30,35 +83,35 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [allSkills, setAllSkills] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  /* ===== LOAD PROFILE ===== */
+  /* ================= LOAD PROFILE ================= */
   useEffect(() => {
-    if (profile) {
-      setForm({
-        full_name: profile.full_name || "",
-        contact_number: profile.contact_number || "",
-        address: profile.address || "",
-        bio: profile.bio || "",
-        gender: profile.gender || "",
-        date_of_birth: profile.date_of_birth
-          ? profile.date_of_birth.slice(0, 10)
-          : "",
-        skills: Array.isArray(profile.skills)
-          ? profile.skills.map((s) => s.id)
-          : [],
-        education: profile.education || [],
-        experiences: profile.experiences || [],
-      });
-    }
+    if (!profile) return;
+
+    setForm({
+      full_name: profile.full_name || "",
+      contact_number: profile.contact_number || "",
+      address: profile.address || "",
+      bio: profile.bio || "",
+      gender: profile.gender || "",
+      date_of_birth: profile.date_of_birth
+        ? profile.date_of_birth.slice(0, 10)
+        : "",
+      skills: Array.isArray(profile.skills)
+        ? profile.skills.map((s) => s.id)
+        : [],
+      education: profile.education || [],
+      experiences: profile.experiences || [],
+    });
   }, [profile]);
 
-  /* ===== LOAD SKILLS ===== */
+  /* ================= LOAD SKILLS ================= */
   useEffect(() => {
     const loadSkills = async () => {
       try {
         const res = await axios.get("http://127.0.0.1:3001/api/skills");
         setAllSkills(res.data);
-      } catch (error) {
-        console.error("LOAD SKILLS ERROR:", error);
+      } catch (err) {
+        console.error("LOAD SKILLS ERROR:", err);
       }
     };
     loadSkills();
@@ -68,7 +121,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  /* ===== SKILLS ===== */
+  /* ================= SKILLS ================= */
   const toggleSkill = (skillId) => {
     setForm((prev) => ({
       ...prev,
@@ -78,11 +131,14 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     }));
   };
 
-  /* ===== EDUCATION ===== */
+  /* ================= EDUCATION ================= */
   const addEducation = () => {
     setForm((prev) => ({
       ...prev,
-      education: [...prev.education, { school: "", degree: "", major: "" }],
+      education: [
+        ...prev.education,
+        { level: "", institution: "", major: "", status: "" },
+      ],
     }));
   };
 
@@ -99,7 +155,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     });
   };
 
-  /* ===== EXPERIENCE ===== */
+  /* ================= EXPERIENCE ================= */
   const addExperience = () => {
     setForm((prev) => ({
       ...prev,
@@ -123,6 +179,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     });
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -144,237 +201,158 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
       });
       alert("Cập nhật hồ sơ thành công");
       onUpdated();
-    } catch (error) {
-      alert(error.response?.data?.message || "Cập nhật thất bại");
+    } catch (err) {
+      alert(err.response?.data?.message || "Cập nhật thất bại");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto bg-white border rounded-xl shadow-sm p-8">
-      {/* ===== TITLE ===== */}
-      <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-        Cập nhật hồ sơ ứng viên
-      </h3>
-      <p className="text-sm text-gray-500 mb-6">
-        Thông tin này sẽ được sử dụng khi bạn ứng tuyển việc làm
-      </p>
+    <div className="max-w-5xl mx-auto bg-white border rounded-2xl shadow-sm p-8">
+      {/* ================= HEADER ================= */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-800">
+          Hồ sơ ứng viên
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Bạn có thể cập nhật hồ sơ bất kỳ lúc nào
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-10">
-        {/* ===== THÔNG TIN CÁ NHÂN ===== */}
-        <section>
-          <div className="flex items-center gap-2 mb-4 text-gray-800">
-            <User size={18} />
-            <h4 className="font-semibold">Thông tin cá nhân</h4>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-12">
+        {/* ================= PERSONAL INFO ================= */}
+        <Section icon={<User size={18} />} title="Thông tin cá nhân">
+          <Grid>
+            <Input label="Họ và tên *" name="full_name" value={form.full_name} onChange={handleChange} />
+            <Input label="Số điện thoại *" name="contact_number" value={form.contact_number} onChange={handleChange} />
+            <Input label="Email" value={profile.email || ""} disabled />
+            <Input label="Địa chỉ" name="address" value={form.address} onChange={handleChange} />
+          </Grid>
 
-          {/* ⚠️ FORM GIỮ NGUYÊN */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              name="full_name"
-              value={form.full_name}
-              onChange={handleChange}
-              placeholder="Họ và tên"
-              className="border p-2 rounded"
-              required
-            />
-            <input
-              name="contact_number"
-              value={form.contact_number}
-              onChange={handleChange}
-              placeholder="Số điện thoại"
-              className="border p-2 rounded"
-              required
-            />
-            <input
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              placeholder="Địa chỉ"
-              className="border p-2 rounded md:col-span-2"
-            />
-            <input
-              value={profile.email || ""}
-              disabled
-              className="border p-2 rounded bg-gray-100 cursor-not-allowed"
-            />
-          </div>
-
-          <textarea
+          <Textarea
+            label="Giới thiệu bản thân"
             name="bio"
             value={form.bio}
             onChange={handleChange}
-            placeholder="Giới thiệu ngắn gọn về bản thân"
-            className="w-full border p-2 rounded mt-4"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <select
+          <Grid>
+            <Select
+              label="Giới tính"
               name="gender"
               value={form.gender}
               onChange={handleChange}
-              className="border p-2 rounded"
-            >
-              <option value="">-- Giới tính --</option>
-              <option value="Nam">Nam</option>
-              <option value="Nữ">Nữ</option>
-              <option value="Khác">Khác</option>
-            </select>
+              options={[
+                { value: "", label: "-- Chọn --" },
+                { value: "Nam", label: "Nam" },
+                { value: "Nữ", label: "Nữ" },
+                { value: "Khác", label: "Khác" },
+              ]}
+            />
+            <Input
+              label="Ngày sinh *"
+              type="date"
+              name="date_of_birth"
+              value={form.date_of_birth}
+              onChange={handleChange}
+              icon={<Calendar size={16} />}
+            />
+          </Grid>
+        </Section>
 
-            <div className="relative">
-              <Calendar size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="date"
-                name="date_of_birth"
-                value={form.date_of_birth}
-                onChange={handleChange}
-                className="border p-2 rounded w-full pr-10"
-                required
-              />
-            </div>
-          </div>
-        </section>
+        {/* ================= SKILLS (FIXED) ================= */}
+        <Section icon={<Wrench size={18} />} title="Kỹ năng">
+          <p className="text-sm text-gray-500 mb-4">
+            Chỉ chọn những kỹ năng bạn thực sự thành thạo
+          </p>
 
-        {/* ===== SKILLS ===== */}
-        <section>
-          <div className="flex items-center gap-2 mb-4 text-gray-800">
-            <Wrench size={18} />
-            <h4 className="font-semibold">Kỹ năng</h4>
-          </div>
+          {Object.values(SKILL_GROUPS).map((group) => {
+            const skills = allSkills.filter((s) =>
+              group.match.includes(s.name)
+            );
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-            {allSkills.map((skill) => (
-              <label key={skill.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.skills.includes(skill.id)}
-                  onChange={() => toggleSkill(skill.id)}
-                />
-                {skill.name}
-              </label>
-            ))}
-          </div>
-        </section>
+            if (!skills.length) return null;
 
-        {/* ===== EDUCATION ===== */}
-        <section>
-          <div className="flex items-center gap-2 mb-4 text-gray-800">
-            <GraduationCap size={18} />
-            <h4 className="font-semibold">Học vấn</h4>
-          </div>
+            return (
+              <div key={group.title} className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-3">
+                  {group.title}
+                </h4>
 
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {skills.map((skill) => {
+                    const checked = form.skills.includes(skill.id);
+
+                    return (
+                      <label
+                        key={skill.id}
+                        className={`border rounded-lg px-3 py-2 flex items-center gap-2 cursor-pointer
+                        ${
+                          checked
+                            ? "border-green-500 bg-green-50"
+                            : "hover:border-gray-400"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleSkill(skill.id)}
+                        />
+                        <span className="text-sm">{skill.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </Section>
+
+        {/* ================= EDUCATION ================= */}
+        <Section icon={<GraduationCap size={18} />} title="Học vấn (không bắt buộc)">
           {form.education.map((edu, index) => (
-            <div key={index} className="border rounded p-4 mb-4 bg-gray-50">
-              <input
-                placeholder="Trường"
-                value={edu.school || ""}
-                onChange={(e) =>
-                  updateEducation(index, "school", e.target.value)
-                }
-                className="w-full border p-2 rounded mb-2"
+            <Card key={index} onRemove={() => removeEducation(index)}>
+              <Select
+                label="Loại học vấn"
+                value={edu.level}
+                onChange={(e) => updateEducation(index, "level", e.target.value)}
+                options={[
+                  { value: "", label: "-- Chọn --" },
+                  { value: "high_school", label: "THPT" },
+                  { value: "vocational", label: "Trung cấp / Nghề" },
+                  { value: "college", label: "Cao đẳng" },
+                  { value: "university", label: "Đại học" },
+                  { value: "certificate", label: "Chứng chỉ" },
+                  { value: "self_taught", label: "Tự học" },
+                ]}
               />
-              <input
-                placeholder="Bằng cấp"
-                value={edu.degree || ""}
-                onChange={(e) =>
-                  updateEducation(index, "degree", e.target.value)
-                }
-                className="w-full border p-2 rounded mb-2"
-              />
-              <input
-                placeholder="Chuyên ngành"
-                value={edu.major || ""}
-                onChange={(e) =>
-                  updateEducation(index, "major", e.target.value)
-                }
-                className="w-full border p-2 rounded"
-              />
-              <button
-                type="button"
-                onClick={() => removeEducation(index)}
-                className="flex items-center gap-1 text-red-600 text-sm mt-2"
-              >
-                <Trash2 size={14} /> Xóa
-              </button>
-            </div>
+              <Input label="Trường / Trung tâm" value={edu.institution} onChange={(e) => updateEducation(index, "institution", e.target.value)} />
+              <Input label="Ngành học" value={edu.major} onChange={(e) => updateEducation(index, "major", e.target.value)} />
+            </Card>
           ))}
+          <AddButton label="Thêm học vấn" onClick={addEducation} />
+        </Section>
 
-          <button
-            type="button"
-            onClick={addEducation}
-            className="flex items-center gap-1 text-green-600 text-sm"
-          >
-            <Plus size={14} /> Thêm học vấn
-          </button>
-        </section>
-
-        {/* ===== EXPERIENCE ===== */}
-        <section>
-          <div className="flex items-center gap-2 mb-4 text-gray-800">
-            <Briefcase size={18} />
-            <h4 className="font-semibold">Kinh nghiệm làm việc</h4>
-          </div>
-
+        {/* ================= EXPERIENCE ================= */}
+        <Section icon={<Briefcase size={18} />} title="Kinh nghiệm làm việc">
           {form.experiences.map((exp, index) => (
-            <div key={index} className="border rounded p-4 mb-4 bg-gray-50">
-              <input
-                placeholder="Công ty"
-                value={exp.company || ""}
-                onChange={(e) =>
-                  updateExperience(index, "company", e.target.value)
-                }
-                className="w-full border p-2 rounded mb-2"
-              />
-              <input
-                placeholder="Vị trí"
-                value={exp.position || ""}
-                onChange={(e) =>
-                  updateExperience(index, "position", e.target.value)
-                }
-                className="w-full border p-2 rounded mb-2"
-              />
-              <textarea
-                placeholder="Mô tả công việc"
-                value={exp.description || ""}
-                onChange={(e) =>
-                  updateExperience(index, "description", e.target.value)
-                }
-                className="w-full border p-2 rounded"
-              />
-              <button
-                type="button"
-                onClick={() => removeExperience(index)}
-                className="flex items-center gap-1 text-red-600 text-sm mt-2"
-              >
-                <Trash2 size={14} /> Xóa
-              </button>
-            </div>
+            <Card key={index} onRemove={() => removeExperience(index)}>
+              <Input label="Công ty" value={exp.company} onChange={(e) => updateExperience(index, "company", e.target.value)} />
+              <Input label="Vị trí" value={exp.position} onChange={(e) => updateExperience(index, "position", e.target.value)} />
+              <Textarea label="Mô tả công việc" value={exp.description} onChange={(e) => updateExperience(index, "description", e.target.value)} />
+            </Card>
           ))}
+          <AddButton label="Thêm kinh nghiệm" onClick={addExperience} />
+        </Section>
 
-          <button
-            type="button"
-            onClick={addExperience}
-            className="flex items-center gap-1 text-green-600 text-sm"
-          >
-            <Plus size={14} /> Thêm kinh nghiệm
-          </button>
-        </section>
-
-        {/* ===== ACTIONS ===== */}
-        <div className="flex gap-3 pt-4 border-t">
-          <button
-            disabled={saving}
-            className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded disabled:opacity-50"
-          >
+        {/* ================= ACTIONS ================= */}
+        <div className="flex gap-3 pt-6 border-t">
+          <button disabled={saving} className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg">
             <Save size={16} />
             {saving ? "Đang lưu..." : "Lưu hồ sơ"}
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-2 rounded"
-          >
+          <button type="button" onClick={onCancel} className="flex items-center gap-2 bg-gray-200 px-6 py-2 rounded-lg">
             <X size={16} /> Hủy
           </button>
         </div>
@@ -382,5 +360,70 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
     </div>
   );
 }
+
+/* ================= UI HELPERS ================= */
+
+const Section = ({ icon, title, children }) => (
+  <section>
+    <div className="flex items-center gap-2 mb-4 text-gray-800">
+      {icon}
+      <h3 className="font-semibold">{title}</h3>
+    </div>
+    {children}
+  </section>
+);
+
+const Grid = ({ children }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {children}
+  </div>
+);
+
+const Input = ({ label, icon, ...props }) => (
+  <div>
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="relative">
+      {icon && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {icon}
+        </span>
+      )}
+      <input {...props} className="w-full border rounded-lg px-3 py-2 mt-1" />
+    </div>
+  </div>
+);
+
+const Textarea = ({ label, ...props }) => (
+  <div>
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <textarea {...props} className="w-full border rounded-lg px-3 py-2 mt-1" rows={4} />
+  </div>
+);
+
+const Select = ({ label, options, ...props }) => (
+  <div>
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <select {...props} className="w-full border rounded-lg px-3 py-2 mt-1">
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  </div>
+);
+
+const Card = ({ children, onRemove }) => (
+  <div className="border rounded-xl p-4 mb-4 bg-gray-50 relative">
+    <button type="button" onClick={onRemove} className="absolute top-3 right-3 text-red-500">
+      <Trash2 size={16} />
+    </button>
+    <div className="space-y-3">{children}</div>
+  </div>
+);
+
+const AddButton = ({ label, onClick }) => (
+  <button type="button" onClick={onClick} className="flex items-center gap-1 text-green-600 text-sm">
+    <Plus size={14} /> {label}
+  </button>
+);
 
 export default EditProfileForm;

@@ -31,7 +31,10 @@ function SavedJobList() {
 
     try {
       await unsaveJob(jobId);
-      fetchSavedJobs();
+      // ✅ update UI ngay, không cần chờ refetch
+      setJobs((prev) =>
+        prev.filter((j) => j.job_id !== jobId)
+      );
     } catch {
       alert("Không thể bỏ lưu công việc");
     }
@@ -100,9 +103,12 @@ function SavedJobList() {
             {/* HEADER */}
             <div className="flex justify-between gap-4">
               <div className="min-w-0">
+                {/* TITLE → ĐI SANG DETAIL + TRUYỀN FROM */}
                 <h3
                   onClick={() =>
-                    navigate(`/jobs/${job.job_id}`)
+                    navigate(`/jobs/${job.job_id}`, {
+                      state: { from: "/account/saved-jobs" },
+                    })
                   }
                   className="
                     text-lg font-semibold text-gray-800
@@ -141,7 +147,9 @@ function SavedJobList() {
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() =>
-                  navigate(`/jobs/${job.job_id}`)
+                  navigate(`/jobs/${job.job_id}`, {
+                    state: { from: "/account/saved-jobs" },
+                  })
                 }
                 className="
                   px-5 py-2 text-sm

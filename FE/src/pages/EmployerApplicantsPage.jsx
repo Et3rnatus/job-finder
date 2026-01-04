@@ -3,6 +3,7 @@ import {
   useParams,
   useNavigate,
   useSearchParams,
+  useLocation,
 } from "react-router-dom";
 import { getApplicantsByJob } from "../services/applicationService";
 
@@ -31,7 +32,11 @@ const statusConfig = {
 function EmployerApplicantsPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // 🔑 NGUỒN VÀO (JOB LIST / JOB DETAIL)
+  const from = location.state?.from;
 
   const tabFromUrl = searchParams.get("tab");
   const highlight = searchParams.get("highlight");
@@ -41,7 +46,7 @@ function EmployerApplicantsPage() {
   const [error, setError] = useState(null);
 
   const [filter, setFilter] = useState(
-    tabFromUrl && FILTERS[tabFromUrl.toUpperCase()]
+    tabFromUrl && FILTERS[tabFromUrl?.toUpperCase()]
       ? tabFromUrl
       : FILTERS.ALL
   );
@@ -110,6 +115,18 @@ function EmployerApplicantsPage() {
     return applicants.filter((a) => a.status === filter);
   }, [filter, applicants]);
 
+  /* =====================
+     QUAY LẠI (CHUẨN TOPCV)
+  ===================== */
+  const handleBack = () => {
+    if (from) {
+      navigate(from);
+    } else {
+      // fallback an toàn nếu refresh / mở tab mới
+      navigate("/employer/jobs");
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       {/* =====================
@@ -126,7 +143,7 @@ function EmployerApplicantsPage() {
         </div>
 
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="text-sm text-gray-600 hover:underline"
         >
           ← Quay lại
@@ -254,7 +271,12 @@ function EmployerApplicantsPage() {
                     <button
                       onClick={() =>
                         navigate(
-                          `/employer/applications/${app.application_id}`
+                          `/employer/applications/${app.application_id}`,
+                          {
+                            state: {
+                              from: `/employer/jobs/${jobId}/applicants`,
+                            },
+                          }
                         )
                       }
                       className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"

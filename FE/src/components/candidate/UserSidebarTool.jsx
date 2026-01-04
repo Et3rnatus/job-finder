@@ -40,6 +40,13 @@ function UserSidebarTool({ onEditProfile }) {
           ⭐ Công việc đã lưu
         </SidebarItem>
 
+        {/* Công việc đã xem */}
+        <SidebarItem
+          onClick={() => navigate("/candidate/viewed-jobs")}
+        >
+          👀 Công việc đã xem
+        </SidebarItem>
+
         {/* Divider */}
         <div className="my-3 border-t" />
 

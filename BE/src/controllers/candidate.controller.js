@@ -89,7 +89,10 @@ exports.updateProfile = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    /* ===== 1️⃣ VALIDATE BẮT BUỘC ===== */
+    /* =====================
+       1️⃣ VALIDATE BẮT BUỘC
+    ===================== */
+
     if (!full_name || !contact_number || !date_of_birth) {
       return res.status(400).json({
         message: "Họ tên, số điện thoại và ngày sinh là bắt buộc",
@@ -103,16 +106,38 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
+    /* ===== SKILLS ===== */
     if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
         message: "Vui lòng chọn ít nhất một kỹ năng",
       });
     }
 
-    /* ===== 2️⃣ TRANSACTION ===== */
+    /* ===== EDUCATION (BẮT BUỘC) ===== */
+    if (!Array.isArray(education) || education.length === 0) {
+      return res.status(400).json({
+        message: "Vui lòng nhập ít nhất một học vấn",
+      });
+    }
+
+    const validEducation = education.filter(
+      edu => edu.school && edu.school.trim()
+    );
+
+    if (validEducation.length === 0) {
+      return res.status(400).json({
+        message: "Học vấn phải có ít nhất một trường đào tạo hợp lệ",
+      });
+    }
+
+    /* =====================
+       2️⃣ TRANSACTION
+    ===================== */
     await connection.beginTransaction();
 
-    /* ===== 3️⃣ UPDATE CANDIDATE ===== */
+    /* =====================
+       3️⃣ UPDATE CANDIDATE
+    ===================== */
     await connection.query(
       `
       UPDATE candidate
@@ -137,7 +162,9 @@ exports.updateProfile = async (req, res) => {
       ]
     );
 
-    /* ===== 4️⃣ SKILLS ===== */
+    /* =====================
+       4️⃣ SKILLS
+    ===================== */
     await connection.query(
       "DELETE FROM candidate_skill WHERE candidate_id = ?",
       [candidate.id]
@@ -150,35 +177,35 @@ exports.updateProfile = async (req, res) => {
       );
     }
 
-    /* ===== 5️⃣ EDUCATION ===== */
+    /* =====================
+       5️⃣ EDUCATION
+    ===================== */
     await connection.query(
       "DELETE FROM education WHERE candidate_id = ?",
       [candidate.id]
     );
 
-    if (Array.isArray(education)) {
-      for (const edu of education) {
-        if (!edu.school && !edu.degree && !edu.major) continue;
-
-        await connection.query(
-          `
-          INSERT INTO education
-          (candidate_id, school, degree, major, start_date, end_date)
-          VALUES (?, ?, ?, ?, ?, ?)
-          `,
-          [
-            candidate.id,
-            edu.school || null,
-            edu.degree || null,
-            edu.major || null,
-            edu.start_date || null,
-            edu.end_date || null
-          ]
-        );
-      }
+    for (const edu of validEducation) {
+      await connection.query(
+        `
+        INSERT INTO education
+        (candidate_id, school, degree, major, start_date, end_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          candidate.id,
+          edu.school.trim(),
+          edu.degree || null,
+          edu.major || null,
+          edu.start_date || null,
+          edu.end_date || null
+        ]
+      );
     }
 
-    /* ===== 6️⃣ EXPERIENCE ===== */
+    /* =====================
+       6️⃣ EXPERIENCE (KHÔNG BẮT BUỘC)
+    ===================== */
     await connection.query(
       "DELETE FROM work_experience WHERE candidate_id = ?",
       [candidate.id]
@@ -212,6 +239,7 @@ exports.updateProfile = async (req, res) => {
       message: "Cập nhật hồ sơ thành công",
       is_profile_completed: 1
     });
+
   } catch (error) {
     await connection.rollback();
     console.error("UPDATE PROFILE ERROR:", error);

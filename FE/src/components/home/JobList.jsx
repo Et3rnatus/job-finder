@@ -3,15 +3,20 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getJobs } from "../../services/jobService";
 
+const ITEMS_PER_PAGE = 6;
+
 function JobList() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
+      setCurrentPage(1); // ✅ reset page khi search/filter đổi
+
       try {
         const keyword = searchParams.get("keyword") || "";
         const city = searchParams.get("city") || "";
@@ -48,6 +53,16 @@ function JobList() {
     fetchJobs();
   }, [searchParams]);
 
+  /* =====================
+     PAGINATION LOGIC
+  ===================== */
+  const totalPages = Math.ceil(jobs.length / ITEMS_PER_PAGE);
+
+  const paginatedJobs = jobs.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <section className="bg-white border rounded-xl overflow-hidden">
       {/* HEADER */}
@@ -72,12 +87,51 @@ function JobList() {
         )}
 
         {/* LIST */}
-        {!loading && jobs.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {jobs.map((job) => (
-              <JobCard key={job.id} {...job} />
-            ))}
-          </div>
+        {!loading && paginatedJobs.length > 0 && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {paginatedJobs.map((job) => (
+                <JobCard key={job.id} {...job} />
+              ))}
+            </div>
+
+            {/* PAGINATION */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-10">
+                {/* PREV */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) => Math.max(1, p - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="w-10 h-10 rounded-full border disabled:opacity-40"
+                >
+                  ‹
+                </button>
+
+                {/* PAGE INFO */}
+                <span className="text-sm text-gray-600">
+                  <span className="text-green-600 font-medium">
+                    {currentPage}
+                  </span>{" "}
+                  / {totalPages} trang
+                </span>
+
+                {/* NEXT */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) =>
+                      Math.min(totalPages, p + 1)
+                    )
+                  }
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 rounded-full border disabled:opacity-40"
+                >
+                  ›
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* EMPTY */}

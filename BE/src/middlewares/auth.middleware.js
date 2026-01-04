@@ -1,63 +1,107 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const db = require("../config/db");
 
-const JWT_SECRET = 'secret_key_luan_van';
+const JWT_SECRET = "secret_key_luan_van";
 
-exports.verifyToken = (req, res, next) => {
+/* =========================
+   VERIFY TOKEN + CHECK STATUS
+========================= */
+exports.verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
     return res.status(401).json({
-      message: 'Authorization header missing'
+      message: "Authorization header missing",
     });
   }
 
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
     return res.status(401).json({
-      message: 'Invalid authorization format'
+      message: "Invalid authorization format",
     });
   }
 
   const token = parts[1];
 
   try {
+    /* =====================
+       1️⃣ VERIFY TOKEN
+    ===================== */
     const decoded = jwt.verify(token, JWT_SECRET);
 
+    /* =====================
+       2️⃣ CHECK USER IN DB
+       🔥 QUAN TRỌNG NHẤT
+    ===================== */
+    const [rows] = await db.execute(
+      `
+      SELECT 
+        id,
+        email,
+        role,
+        status
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [decoded.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({
+        message: "User not found",
+      });
+    }
+
+    const user = rows[0];
+
+    /* =====================
+       3️⃣ CHECK STATUS
+    ===================== */
+    if (user.status !== "active") {
+      return res.status(401).json({
+        message: "Tài khoản đã bị khóa",
+      });
+    }
+
+    /* =====================
+       4️⃣ ATTACH USER
+    ===================== */
     req.user = {
-      id: decoded.id,
-      role: decoded.role,   // candidate | employer | admin
-      email: decoded.email
+      id: user.id,
+      email: user.email,
+      role: user.role,
     };
 
     next();
   } catch (error) {
+    console.error("VERIFY TOKEN ERROR:", error);
+
     return res.status(401).json({
-      message: 'Invalid or expired token'
+      message: "Invalid or expired token",
     });
   }
 };
 
-/**
- * Xác thực role
- * @param {string|string[]} roles
- * VD:
- *  requireRole("admin")
- *  requireRole(["admin", "employer"])
- */
+/* =========================
+   REQUIRE ROLE
+========================= */
 exports.requireRole = (roles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
-        message: 'Unauthorized'
+        message: "Unauthorized",
       });
     }
 
-    // chuyển role đơn → mảng
-    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    const allowedRoles = Array.isArray(roles)
+      ? roles
+      : [roles];
 
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
-        message: 'Forbidden'
+        message: "Forbidden",
       });
     }
 

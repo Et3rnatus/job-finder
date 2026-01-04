@@ -42,12 +42,10 @@ exports.applyJob = async (req, res) => {
       throw new Error("Job not found");
     }
 
-    // ✅ CHỈ APPLY JOB ĐÃ ĐƯỢC DUYỆT
     if (job.status !== "approved") {
       throw new Error("Công việc chưa được phê duyệt hoặc không còn nhận hồ sơ");
     }
 
-    // ✅ CHECK HẾT HẠN
     if (job.expired_at && new Date(job.expired_at) < new Date()) {
       await connection.execute(
         `UPDATE job SET status = 'expired' WHERE id = ?`,
@@ -96,7 +94,7 @@ exports.applyJob = async (req, res) => {
     );
 
     /* =====================
-       4️⃣ SNAPSHOT CANDIDATE PROFILE
+       4️⃣ SNAPSHOT BASIC PROFILE
     ===================== */
     const [[candidateInfo]] = await connection.execute(
       `
@@ -136,7 +134,9 @@ exports.applyJob = async (req, res) => {
 
     const applicationSnapshotId = snapshotResult.insertId;
 
-    /* ===== SKILLS ===== */
+    /* =====================
+       5️⃣ SNAPSHOT SKILLS
+    ===================== */
     const [skills] = await connection.execute(
       `
       SELECT s.name
@@ -160,7 +160,9 @@ exports.applyJob = async (req, res) => {
       );
     }
 
-    /* ===== EXPERIENCE ===== */
+    /* =====================
+       6️⃣ SNAPSHOT EXPERIENCE
+    ===================== */
     const [experiences] = await connection.execute(
       `
       SELECT company, position, start_date, end_date, description
@@ -194,10 +196,20 @@ exports.applyJob = async (req, res) => {
       );
     }
 
-    /* ===== EDUCATION ===== */
+    /* =====================
+       7️⃣ SNAPSHOT EDUCATION (UPDATED – CHUẨN NGHIỆP VỤ)
+    ===================== */
     const [educations] = await connection.execute(
       `
-      SELECT school, degree, major, start_date, end_date
+      SELECT
+        level,
+        institution,
+        major,
+        status,
+        school,
+        degree,
+        start_date,
+        end_date
       FROM education
       WHERE candidate_id = ?
       `,
@@ -209,19 +221,33 @@ exports.applyJob = async (req, res) => {
         `
         INSERT INTO application_snapshot_education (
           application_snapshot_id,
+
+          -- NEW SCHEMA (ƯU TIÊN)
+          level,
+          institution,
+          status,
+          major,
+
+          -- LEGACY (GIỮ TƯƠNG THÍCH)
           school,
           degree,
-          major,
           start_date,
           end_date
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           applicationSnapshotId,
-          edu.school || null,
-          edu.degree || null,
+
+          // new
+          edu.level || null,
+          edu.institution || null,
+          edu.status || null,
           edu.major || null,
+
+          // legacy fallback
+          edu.school || edu.institution || null,
+          edu.degree || edu.level || null,
           edu.start_date || null,
           edu.end_date || null,
         ]
@@ -229,7 +255,7 @@ exports.applyJob = async (req, res) => {
     }
 
     /* =====================
-       5️⃣ NOTIFICATION
+       8️⃣ NOTIFICATION
     ===================== */
     if (job.employer_user_id) {
       await connection.execute(
@@ -271,6 +297,7 @@ exports.applyJob = async (req, res) => {
     connection.release();
   }
 };
+
 
 // API xem job đã ứng tuyển của ứng viên
 exports.getMyApplications = async (req, res) => {

@@ -53,34 +53,89 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    /* =====================
+       1️⃣ VALIDATE INPUT
+    ===================== */
     if (!email || !password) {
-      return res.status(400).json({ message: 'Missing email or password' });
+      return res.status(400).json({
+        message: "Missing email or password",
+      });
     }
 
+    /* =====================
+       2️⃣ FIND USER
+    ===================== */
     const [rows] = await db.execute(
-      'SELECT * FROM users WHERE email = ?',
+      `
+      SELECT 
+        id,
+        email,
+        password,
+        role,
+        status
+      FROM users
+      WHERE email = ?
+      LIMIT 1
+      `,
       [email]
     );
 
     if (rows.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
     }
 
     const user = rows[0];
-    
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+
+    /* =====================
+       3️⃣ CHECK STATUS (🔥 QUAN TRỌNG)
+    ===================== */
+    if (user.status !== "active") {
+      return res.status(403).json({
+        message: "Tài khoản đã bị khóa",
+      });
     }
 
+    /* =====================
+       4️⃣ CHECK PASSWORD
+    ===================== */
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    /* =====================
+       5️⃣ SIGN TOKEN
+    ===================== */
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      {
+        id: user.id,
+        role: user.role,
+      },
       JWT_SECRET,
-      { expiresIn: '1d' }
+      {
+        expiresIn: "1d",
+      }
     );
 
-    res.json({ token });
+    /* =====================
+       6️⃣ RESPONSE
+    ===================== */
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Login failed' });
+    console.error("LOGIN ERROR:", error);
+    return res.status(500).json({
+      message: "Login failed",
+    });
   }
 };

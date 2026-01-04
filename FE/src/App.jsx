@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import axios from "axios";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -32,6 +33,7 @@ import EmployerPage from "./pages/EmployerPage";
 import EmployerApplicantsPage from "./pages/EmployerApplicantsPage";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import SavedJobListPage from "./pages/SavedJobListPage";
+import ViewedJobList from "./components/candidate/ViewedJobList";
 
 /* =====================
    ADMIN PAGES
@@ -41,14 +43,13 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminJobsPage from "./pages/admin/AdminJobsPage";
 import AdminCategoryPage from "./pages/admin/AdminCategoryPage";
 
-
 /* =====================
    CANDIDATE SUB PAGES
 ===================== */
 import AppliedJobList from "./components/candidate/AppliedJobList";
 
 /* =====================
-   USER LAYOUT (Navbar + Footer)
+   USER LAYOUT
 ===================== */
 function UserLayout() {
   return (
@@ -69,7 +70,7 @@ function AdminGuard() {
   const role = localStorage.getItem("role");
 
   if (role !== "admin") {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
@@ -86,10 +87,43 @@ function App() {
     });
   }, []);
 
+  /* =====================
+     AXIOS GLOBAL INTERCEPTOR
+     (BLOCK USER → LOGOUT + ALERT)
+  ===================== */
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        const status = error.response?.status;
+        const message = error.response?.data?.message;
+
+        if (
+          status === 401 &&
+          message === "Tài khoản đã bị khóa"
+        ) {
+          localStorage.clear();
+
+          alert(
+            "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên."
+          );
+
+          window.location.href = "/login";
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    // cleanup tránh đăng ký interceptor nhiều lần
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   return (
     <Router>
       <Routes>
-
         {/* ===== USER (CÓ NAVBAR + FOOTER) ===== */}
         <Route element={<UserLayout />}>
           {/* PUBLIC */}
@@ -111,6 +145,10 @@ function App() {
             path="/candidate/saved-jobs"
             element={<SavedJobListPage />}
           />
+          <Route
+            path="/candidate/viewed-jobs"
+            element={<ViewedJobList />}
+          />
 
           {/* EMPLOYER */}
           <Route path="/account/employer" element={<EmployerPage />} />
@@ -130,10 +168,9 @@ function App() {
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="jobs" element={<AdminJobsPage />} />
-            <Route path="categories" element={<AdminCategoryPage />}/>
+            <Route path="categories" element={<AdminCategoryPage />} />
           </Route>
         </Route>
-
       </Routes>
     </Router>
   );

@@ -1,20 +1,32 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
 import JobHeader from "../components/job_detail/JobHeader";
 import JobInfoSection from "../components/job_detail/JobInfo";
 import JobSidebar from "../components/job_detail/JobSidebar";
 import ApplyButton from "../components/job_detail/ApplyButton";
-import { getJobDetail } from "../services/jobService";
 import JobGeneralInfo from "../components/job_detail/JobGeneralInfo";
-import { applyJob, getMyApplications } from "../services/applicationService";
+import ApplyForm from "../components/job_detail/ApplyForm";
+
+import { getJobDetail } from "../services/jobService";
+import { getMyApplications } from "../services/applicationService";
 
 function JobDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 🔑 Nguồn vào (Saved Jobs / Job List / Viewed Jobs / Search…)
+  const from = location.state?.from;
 
   const [job, setJob] = useState(null);
-  const [applicationStatus, setApplicationStatus] = useState(null);
-  const [loadingApply, setLoadingApply] = useState(false);
+  const [applicationStatus, setApplicationStatus] =
+    useState(null);
+  const [showApplyForm, setShowApplyForm] = useState(false);
 
   /* =====================
      HELPERS
@@ -25,6 +37,36 @@ function JobDetailPage() {
   };
 
   /* =====================
+     SAVE VIEWED JOB (BTH)
+  ===================== */
+  const saveViewedJob = (job) => {
+    const KEY = "viewed_jobs";
+    const MAX = 20;
+
+    const stored = JSON.parse(
+      localStorage.getItem(KEY) || "[]"
+    );
+
+    // bỏ trùng
+    const filtered = stored.filter(
+      (j) => j.id !== job.id
+    );
+
+    const updated = [
+      {
+        id: job.id,
+        title: job.title,
+        company: job.company_name,
+        location: job.location,
+        viewedAt: Date.now(),
+      },
+      ...filtered,
+    ].slice(0, MAX);
+
+    localStorage.setItem(KEY, JSON.stringify(updated));
+  };
+
+  /* =====================
      LOAD JOB DETAIL
   ===================== */
   useEffect(() => {
@@ -32,6 +74,9 @@ function JobDetailPage() {
       try {
         const data = await getJobDetail(id);
         setJob(data);
+
+        // 👀 lưu job đã xem (bth)
+        saveViewedJob(data);
       } catch (err) {
         console.error("LOAD JOB DETAIL ERROR:", err);
       }
@@ -55,7 +100,10 @@ function JobDetailPage() {
         );
         setApplicationStatus(found?.status || null);
       } catch (e) {
-        console.error("LOAD APPLICATION STATUS ERROR:", e);
+        console.error(
+          "LOAD APPLICATION STATUS ERROR:",
+          e
+        );
       }
     };
 
@@ -63,9 +111,9 @@ function JobDetailPage() {
   }, [id]);
 
   /* =====================
-     APPLY HANDLER
+     APPLY BUTTON CLICK
   ===================== */
-  const handleApply = async () => {
+  const handleApplyClick = () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
@@ -86,14 +134,17 @@ function JobDetailPage() {
       return;
     }
 
-    try {
-      setLoadingApply(true);
-      await applyJob({ job_id: job.id, cover_letter: null });
-      setApplicationStatus("pending");
-    } catch (err) {
-      alert(err?.response?.data?.message || "Ứng tuyển thất bại");
-    } finally {
-      setLoadingApply(false);
+    setShowApplyForm(true);
+  };
+
+  /* =====================
+     QUAY LẠI (TOPCV STYLE)
+  ===================== */
+  const handleBack = () => {
+    if (from) {
+      navigate(from);
+    } else {
+      navigate("/jobs"); // fallback an toàn
     }
   };
 
@@ -109,7 +160,9 @@ function JobDetailPage() {
   }
 
   const expired = isJobExpired(job.expired_at);
-  const applied = ["pending", "approved", "rejected"].includes(applicationStatus);
+  const applied = ["pending", "approved", "rejected"].includes(
+    applicationStatus
+  );
 
   const buttonText = expired
     ? "Đã hết hạn ứng tuyển"
@@ -119,71 +172,109 @@ function JobDetailPage() {
     ? "Đã được chấp nhận"
     : applicationStatus === "rejected"
     ? "Đã bị từ chối"
-    : loadingApply
-    ? "Đang xử lý..."
     : "Ứng tuyển ngay";
 
   return (
-    <div className="bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <>
+      <div className="bg-gray-100 py-8">
+        <div className="max-w-7xl mx-auto px-4">
 
-        {/* =====================
-            LEFT CONTENT
-        ===================== */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* HEADER */}
-          <div className="bg-white rounded-xl border p-6">
-            <JobHeader job={job} />
+          {/* ===== BACK BUTTON ===== */}
+          <button
+            onClick={handleBack}
+            className="
+              mb-4
+              px-3 py-1.5
+              text-sm text-gray-600
+              border rounded-lg
+              hover:bg-gray-100
+            "
+          >
+            ← Quay lại
+          </button>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* =====================
+                LEFT CONTENT
+            ===================== */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-xl border p-6">
+                <JobHeader job={job} />
+              </div>
+
+              <JobInfoSection
+                title="Mô tả công việc"
+                content={job.description}
+              />
+
+              <JobInfoSection
+                title="Yêu cầu ứng viên"
+                content={job.job_requirements}
+              />
+
+              <JobInfoSection
+                title="Kỹ năng yêu cầu"
+                content={job.skills?.map((s) => s.name)}
+                isList
+              />
+
+              <JobInfoSection
+                title="Quyền lợi"
+                content={job.benefits}
+              />
+            </div>
+
+            {/* =====================
+                RIGHT SIDEBAR
+            ===================== */}
+            <div className="space-y-6 sticky top-6 h-fit">
+              <div className="bg-white border rounded-xl p-6 space-y-3">
+                <ApplyButton
+                  applied={applied}
+                  disabled={expired || applied}
+                  onApply={handleApplyClick}
+                  buttonText={buttonText}
+                />
+
+                {expired && (
+                  <p className="text-xs text-red-500">
+                    Hạn nộp hồ sơ đã kết thúc
+                  </p>
+                )}
+              </div>
+
+              <JobSidebar job={job} />
+              <JobGeneralInfo job={job} />
+            </div>
           </div>
-
-          <JobInfoSection
-            title="Mô tả công việc"
-            content={job.description}
-          />
-
-          <JobInfoSection
-            title="Yêu cầu ứng viên"
-            content={job.job_requirements}
-          />
-
-          <JobInfoSection
-            title="Kỹ năng yêu cầu"
-            content={job.skills?.map((s) => s.name)}
-            isList
-          />
-
-          <JobInfoSection
-            title="Quyền lợi"
-            content={job.benefits}
-          />
-        </div>
-
-        {/* =====================
-            RIGHT SIDEBAR
-        ===================== */}
-        <div className="space-y-6 sticky top-6 h-fit">
-          {/* APPLY BOX */}
-          <div className="bg-white border rounded-xl p-6 space-y-3">
-            <ApplyButton
-              applied={applied}
-              disabled={expired || loadingApply}
-              onApply={handleApply}
-              buttonText={buttonText}
-            />
-
-            {expired && (
-              <p className="text-xs text-red-500">
-                Hạn nộp hồ sơ đã kết thúc
-              </p>
-            )}
-          </div>
-
-          {/* COMPANY */}
-          <JobSidebar job={job} />
-          <JobGeneralInfo job={job} />
         </div>
       </div>
-    </div>
+
+      {/* =====================
+          APPLY FORM MODAL
+      ===================== */}
+      {showApplyForm && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"
+          onClick={() => setShowApplyForm(false)}
+        >
+          <div
+            className="bg-white rounded-xl w-full max-w-lg p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ApplyForm
+              jobId={job.id}
+              jobTitle={job.title}
+              onClose={() => setShowApplyForm(false)}
+              onSuccess={() => {
+                setApplicationStatus("pending");
+                setShowApplyForm(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
