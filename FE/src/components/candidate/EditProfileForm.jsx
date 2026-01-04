@@ -310,7 +310,7 @@ function EditProfileForm({ profile, onUpdated, onCancel }) {
         </Section>
 
         {/* ================= EDUCATION ================= */}
-        <Section icon={<GraduationCap size={18} />} title="Học vấn (không bắt buộc)">
+        <Section icon={<GraduationCap size={18} />} title="Học vấn">
           {form.education.map((edu, index) => (
             <Card key={index} onRemove={() => removeEducation(index)}>
               <Select
