@@ -1,6 +1,5 @@
 const pool = require('../config/db');
 
-
  // API Lấy toàn bộ hồ sơ ứng viên
 exports.getProfile = async (req, res) => {
   const candidate = req.candidate;

@@ -15,7 +15,7 @@ exports.updateProfile = async (req, res) => {
       business_license,
       logo
     } = req.body;
-    if (!company_name || !city || !district || !address_detail) {
+    if (!company_name || !city || !district || !address_detail||!business_license) {
       return res.status(400).json({
         message: "Vui lòng nhập đầy đủ thông tin bắt buộc"
       });

@@ -191,9 +191,11 @@ exports.getAllJobs = async (req, res) => {
 
     if (user && user.role === "candidate") {
       sql += `
+        LEFT JOIN candidate c ON c.user_id = ?
         LEFT JOIN application a
-          ON j.id = a.job_id
-          AND a.candidate_id = ?
+          ON a.job_id = j.id
+          AND a.candidate_id = c.id
+          AND a.status != 'cancelled'
       `;
       params.push(user.id);
     }
@@ -219,6 +221,7 @@ exports.getAllJobs = async (req, res) => {
     if (jobs.length === 0) return res.json([]);
 
     const jobIds = jobs.map((j) => j.id);
+
     const [skills] = await db.execute(
       `
       SELECT js.job_id, s.name
@@ -244,6 +247,7 @@ exports.getAllJobs = async (req, res) => {
     return res.status(500).json({ message: "Get jobs failed" });
   }
 };
+
 
 /* =====================
    GET JOB DETAIL

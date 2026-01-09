@@ -4,8 +4,12 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = 'secret_key_luan_van';
 
-
+/* =====================
+   REGISTER
+===================== */
 exports.register = async (req, res) => {
+  const connection = await db.getConnection();
+
   try {
     const { email, password, role } = req.body;
 
@@ -13,26 +17,38 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const [exists] = await db.execute(
+    const normalizedRole = role.toLowerCase();
+
+    if (!['admin', 'candidate', 'employer'].includes(normalizedRole)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    await connection.beginTransaction();
+
+    const [exists] = await connection.execute(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );
 
     if (exists.length > 0) {
+      await connection.rollback();
       return res.status(400).json({ message: 'Email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await db.execute(
-      'INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
-      [email, hashedPassword, role]
+    const [result] = await connection.execute(
+      `
+      INSERT INTO users (email, password, role, status)
+      VALUES (?, ?, ?, 'active')
+      `,
+      [email, hashedPassword, normalizedRole]
     );
 
     const userId = result.insertId;
 
-    if (role === 'employer') {
-      await db.execute(
+    if (normalizedRole === 'employer') {
+      await connection.execute(
         `
         INSERT INTO employer (user_id, email, is_profile_completed)
         VALUES (?, ?, 0)
@@ -41,30 +57,45 @@ exports.register = async (req, res) => {
       );
     }
 
-    res.status(201).json({ message: 'Register successful' });
+    if (normalizedRole === 'candidate') {
+      await connection.execute(
+        `
+        INSERT INTO candidate (user_id, email, is_profile_completed)
+        VALUES (?, ?, 0)
+        `,
+        [userId, email]
+      );
+    }
+
+    await connection.commit();
+
+    return res.status(201).json({
+      message: 'Register successful',
+      user_id: userId,
+      role: normalizedRole,
+    });
   } catch (error) {
+    await connection.rollback();
     console.error('REGISTER ERROR:', error);
-    res.status(500).json({ message: 'Register failed' });
+    return res.status(500).json({ message: 'Register failed' });
+  } finally {
+    connection.release();
   }
 };
 
-
+/* =====================
+   LOGIN
+===================== */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    /* =====================
-       1️⃣ VALIDATE INPUT
-    ===================== */
     if (!email || !password) {
       return res.status(400).json({
-        message: "Missing email or password",
+        message: 'Missing email or password',
       });
     }
 
-    /* =====================
-       2️⃣ FIND USER
-    ===================== */
     const [rows] = await db.execute(
       `
       SELECT 
@@ -82,48 +113,34 @@ exports.login = async (req, res) => {
 
     if (rows.length === 0) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: 'Invalid email or password',
       });
     }
 
     const user = rows[0];
 
-    /* =====================
-       3️⃣ CHECK STATUS (🔥 QUAN TRỌNG)
-    ===================== */
-    if (user.status !== "active") {
+    if (user.status !== 'active') {
       return res.status(403).json({
-        message: "Tài khoản đã bị khóa",
+        message: 'Account is inactive',
       });
     }
 
-    /* =====================
-       4️⃣ CHECK PASSWORD
-    ===================== */
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: 'Invalid email or password',
       });
     }
 
-    /* =====================
-       5️⃣ SIGN TOKEN
-    ===================== */
     const token = jwt.sign(
       {
         id: user.id,
         role: user.role,
       },
       JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
+      { expiresIn: '1d' }
     );
 
-    /* =====================
-       6️⃣ RESPONSE
-    ===================== */
     return res.json({
       token,
       user: {
@@ -133,9 +150,9 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error('LOGIN ERROR:', error);
     return res.status(500).json({
-      message: "Login failed",
+      message: 'Login failed',
     });
   }
 };
