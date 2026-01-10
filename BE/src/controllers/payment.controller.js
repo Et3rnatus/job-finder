@@ -1,78 +1,163 @@
-const moment = require("moment");
+const https = require("https");
 const crypto = require("crypto");
-const qs = require("qs");
-const vnpayConfig = require("../config/vnpay.config");
+const momoConfig = require("../config/momo.config");
 
+/* =====================
+   DEMO IN-MEMORY STORE
+===================== */
+// Giả lập DB để demo luận văn
+const demoPayments = {};
 
- //Tạo URL thanh toán VNPay
-exports.createPayment = async (req, res) => {
+/* =====================
+   CREATE MOMO PAYMENT
+===================== */
+exports.createMoMoPayment = async (req, res) => {
   try {
-    const amount = Number(req.body.amount);
+    const { amount } = req.body;
+
     if (!amount) {
-      return res.status(400).json({ message: "Amount is required" });
+      return res.status(400).json({
+        message: "Amount is required",
+      });
     }
 
-    const date = new Date();
-    const createDate = moment(date).format("YYYYMMDDHHmmss");
-    const orderId = Date.now().toString();
+    const orderId = "ORDER_" + Date.now();
+    const requestId = orderId;
+    const orderInfo = "Thanh toan goi dich vu";
+    const requestType = "captureWallet";
+    const extraData = "";
+    const amountStr = String(amount);
 
-
-    let vnp_Params = {
-      vnp_Version: "2.1.0",
-      vnp_Command: "pay",
-      vnp_TmnCode: vnpayConfig.vnp_TmnCode,
-      vnp_Locale: "vn",
-      vnp_CurrCode: "VND",
-      vnp_TxnRef: orderId,
-      vnp_OrderInfo: "Demo thanh toan VNPay",
-      vnp_OrderType: "other",
-      vnp_Amount: amount * 100,
-      vnp_ReturnUrl: vnpayConfig.vnp_ReturnUrl,
-      vnp_IpAddr: "127.0.0.1",
-      vnp_CreateDate: createDate
+    /* ===== LƯU GIAO DỊCH (PENDING) ===== */
+    demoPayments[orderId] = {
+      orderId,
+      amount: amountStr,
+      status: "PENDING", // 👈 chờ admin duyệt
+      createdAt: new Date(),
     };
 
-    vnp_Params = sortObject(vnp_Params);
+    /* ===== SIGNATURE ===== */
+    const rawSignature =
+      "accessKey=" + momoConfig.accessKey +
+      "&amount=" + amountStr +
+      "&extraData=" + extraData +
+      "&ipnUrl=" + momoConfig.ipnUrl +
+      "&orderId=" + orderId +
+      "&orderInfo=" + orderInfo +
+      "&partnerCode=" + momoConfig.partnerCode +
+      "&redirectUrl=" + momoConfig.redirectUrl +
+      "&requestId=" + requestId +
+      "&requestType=" + requestType;
 
-    const signData = qs.stringify(vnp_Params, { encode: true });
-    const hmac = crypto.createHmac("sha512", vnpayConfig.vnp_HashSecret);
-    const secureHash = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
+    const signature = crypto
+      .createHmac("sha256", momoConfig.secretKey)
+      .update(rawSignature)
+      .digest("hex");
 
-    vnp_Params.vnp_SecureHash = secureHash;
+    /* ===== REQUEST BODY ===== */
+    const requestBody = JSON.stringify({
+      partnerCode: momoConfig.partnerCode,
+      accessKey: momoConfig.accessKey,
+      requestId,
+      amount: amountStr,
+      orderId,
+      orderInfo,
+      redirectUrl: momoConfig.redirectUrl,
+      ipnUrl: momoConfig.ipnUrl,
+      extraData,
+      requestType,
+      signature,
+      lang: "vi",
+    });
 
-    const paymentUrl =
-      vnpayConfig.vnp_Url + "?" + qs.stringify(vnp_Params, { encode: true });
+    const options = {
+      hostname: "test-payment.momo.vn",
+      port: 443,
+      path: "/v2/gateway/api/create",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(requestBody),
+      },
+    };
 
-    return res.json({ paymentUrl });
+    const momoReq = https.request(options, (momoRes) => {
+      let body = "";
+
+      momoRes.on("data", (chunk) => {
+        body += chunk;
+      });
+
+      momoRes.on("end", () => {
+        const data = JSON.parse(body);
+
+        return res.json({
+          payUrl: data.payUrl,
+          orderId, // dùng cho admin duyệt
+        });
+      });
+    });
+
+    momoReq.on("error", (error) => {
+      console.error("MOMO REQUEST ERROR:", error);
+      return res.status(500).json({
+        message: "MoMo payment failed",
+      });
+    });
+
+    momoReq.write(requestBody);
+    momoReq.end();
   } catch (error) {
-    console.error("CREATE PAYMENT ERROR ❌:", error);
-    return res.status(500).json({ message: "Create payment failed" });
+    console.error("CREATE MOMO PAYMENT ERROR:", error);
+    return res.status(500).json({
+      message: "Create MoMo payment failed",
+    });
   }
 };
 
+/* =====================
+   MOMO IPN (LOG ONLY)
+===================== */
+exports.momoIPN = async (req, res) => {
+  try {
+    console.log("🔔 MOMO IPN RECEIVED (LOG ONLY):", req.body);
 
-// Callback từ VNPay
-exports.vnpayReturn = async (req, res) => {
-  console.log("VNPay return:", req.query);
+    // ❌ KHÔNG auto duyệt
+    // ❌ Chỉ dùng để ghi nhận / đối soát nếu cần
 
-  const { vnp_ResponseCode } = req.query;
-
-  if (vnp_ResponseCode === "00") {
-    return res.redirect("http://localhost:5173/payment-success");
+    return res.status(200).json({ message: "OK" });
+  } catch (error) {
+    console.error("MOMO IPN ERROR:", error);
+    return res.status(200).json({ message: "OK" });
   }
-
-  return res.redirect("http://localhost:5173/payment-failed");
 };
 
+/* =====================
+   ADMIN: APPROVE PAYMENT
+===================== */
+exports.approvePayment = (req, res) => {
+  const { orderId } = req.body;
 
-function sortObject(obj) {
-  let sorted = {};
-  let keys = Object.keys(obj).sort();
+  if (!orderId || !demoPayments[orderId]) {
+    return res.status(404).json({
+      message: "Payment not found",
+    });
+  }
 
-  keys.forEach((key) => {
-    sorted[key] = encodeURIComponent(obj[key])
-      .replace(/%20/g, "+");
+  demoPayments[orderId].status = "SUCCESS";
+  demoPayments[orderId].approvedAt = new Date();
+
+  console.log("✅ ADMIN APPROVED PAYMENT:", orderId);
+
+  return res.json({
+    message: "Payment approved",
+    payment: demoPayments[orderId],
   });
+};
 
-  return sorted;
-}
+/* =====================
+   ADMIN: LIST PAYMENTS
+===================== */
+exports.getAllPayments = (req, res) => {
+  return res.json(Object.values(demoPayments));
+};

@@ -1,17 +1,41 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
-exports.getAllSkills = async (req, res) => {
+/**
+ * GET /api/skills/by-category/:categoryId
+ * Skill theo ngành nghề (cho JOB)
+ */
+exports.getSkillsByCategory = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT id, name FROM skill ORDER BY name ASC"
+    const { categoryId } = req.params;
+
+    const [rows] = await db.execute(
+      `
+      SELECT id, name
+      FROM skill
+      WHERE category_id = ?
+      ORDER BY name ASC
+      `,
+      [categoryId]
     );
 
-    res.status(200).json(rows);
+    res.json(rows);
   } catch (error) {
-    console.error("GET SKILLS ERROR:", error);
-    res.status(500).json({
-      message: "Failed to fetch skills",
-    });
+    console.error("GET SKILLS BY CATEGORY ERROR:", error);
+    res.status(500).json({ message: "Failed to fetch skills" });
   }
 };
 
+/**
+ * GET /api/skills
+ * Toàn bộ skills (cho CANDIDATE)
+ */
+exports.getAllSkills = async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      "SELECT id, name FROM skill ORDER BY name ASC"
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch skills" });
+  }
+};

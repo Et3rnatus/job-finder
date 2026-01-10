@@ -1,25 +1,29 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+
 import UserAvatar from "../components/employer/UserAvatar";
 import EmployerSideBarTool from "../components/employer/EmployerSideBarTool";
 import EmployerProfileForm from "../components/employer/EmployerProfileForm";
 import EmployerProfileView from "../components/employer/EmployerProfileView";
 import EmployerJobList from "../components/employer/EmployerJobList";
 import CreateJobForm from "../components/employer/CreateJobForm";
+import EmployerPayment from "../components/employer/EmployerPayment";
+
 import employerService from "../services/employerService";
 
 function EmployerPage() {
   const location = useLocation();
 
-  const [mode, setMode] = useState("profile"); // profile | jobs | create
-  const [profileMode, setProfileMode] = useState("view"); // view | edit
+  // profile | jobs | create | payment
+  const [mode, setMode] = useState("profile");
+  const [profileMode, setProfileMode] = useState("view");
 
   // 🔑 nghiệp vụ
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
 
   /* =====================
-     SYNC MODE FROM ROUTE STATE  ✅ FIX QUAN TRỌNG
+     SYNC MODE FROM ROUTE STATE
   ===================== */
   useEffect(() => {
     if (location.state?.mode) {
@@ -158,6 +162,11 @@ function EmployerPage() {
           {mode === "create" && profileCompleted && (
             <CreateJobForm />
           )}
+
+          {/* =====================
+              PAYMENT
+          ===================== */}
+          {mode === "payment" && <EmployerPayment />}
         </div>
       </div>
     </div>

@@ -8,16 +8,30 @@ exports.applyJob = async (req, res) => {
     const { job_id, cover_letter } = req.body;
     const candidate = req.candidate;
 
+    /* =========================
+       VALIDATE BASIC
+    ========================= */
+    if (!candidate) {
+      return res.status(403).json({ message: "Unauthorized candidate" });
+    }
+
     if (!job_id) {
       return res.status(400).json({ message: "Job id is required" });
     }
 
     await connection.beginTransaction();
 
-    /* 1️⃣ CHECK JOB */
+    /* =========================
+       1️⃣ CHECK JOB
+    ========================= */
     const [[job]] = await connection.execute(
       `
-      SELECT j.id, j.title, j.status, j.expired_at, e.user_id AS employer_user_id
+      SELECT
+        j.id,
+        j.title,
+        j.status,
+        j.expired_at,
+        e.user_id AS employer_user_id
       FROM job j
       JOIN employer e ON j.employer_id = e.id
       WHERE j.id = ?
@@ -25,24 +39,43 @@ exports.applyJob = async (req, res) => {
       [job_id]
     );
 
-    if (!job || job.status !== "approved") {
-      throw new Error("Job is not available");
+    if (!job) {
+      await connection.rollback();
+      return res.status(404).json({ message: "Công việc không tồn tại" });
     }
 
-    /* 2️⃣ CHECK APPLY DUPLICATE */
+    if (job.status !== "approved") {
+      await connection.rollback();
+      return res.status(400).json({ message: "Công việc chưa được mở tuyển dụng" });
+    }
+
+    if (job.expired_at && new Date(job.expired_at) < new Date()) {
+      await connection.rollback();
+      return res.status(400).json({ message: "Công việc đã hết hạn tuyển dụng" });
+    }
+
+    /* =========================
+       2️⃣ CHECK APPLY DUPLICATE
+    ========================= */
     const [[existed]] = await connection.execute(
       `
-      SELECT id FROM application
+      SELECT id
+      FROM application
       WHERE candidate_id = ? AND job_id = ? AND status != 'cancelled'
       `,
       [candidate.id, job_id]
     );
 
     if (existed) {
-      throw new Error("Bạn đã ứng tuyển công việc này");
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({ message: "Bạn đã ứng tuyển công việc này" });
     }
 
-    /* 3️⃣ BUILD SNAPSHOT JSON */
+    /* =========================
+       3️⃣ BUILD SNAPSHOT CV
+    ========================= */
     const [[basic]] = await connection.execute(
       `
       SELECT c.full_name, c.contact_number, u.email
@@ -82,21 +115,27 @@ exports.applyJob = async (req, res) => {
     );
 
     const snapshot = {
-      basic,
-      skills: skills.map(s => s.name),
+      basic: basic || {},
+      skills: skills.map((s) => s.name),
       education,
       experience,
     };
 
-    /* 4️⃣ INSERT APPLICATION */
+    /* =========================
+       4️⃣ INSERT APPLICATION
+    ========================= */
     const applicationId = uuidv4();
 
     await connection.execute(
       `
       INSERT INTO application (
-        id, job_id, candidate_id,
-        cover_letter, snapshot_cv_json,
-        status, applied_at
+        id,
+        job_id,
+        candidate_id,
+        cover_letter,
+        snapshot_cv_json,
+        status,
+        applied_at
       )
       VALUES (?, ?, ?, ?, ?, 'pending', NOW())
       `,
@@ -109,7 +148,9 @@ exports.applyJob = async (req, res) => {
       ]
     );
 
-    /* 5️⃣ NOTIFICATION */
+    /* =========================
+       5️⃣ NOTIFICATION
+    ========================= */
     await connection.execute(
       `
       INSERT INTO notification (user_id, type, title, message, related_id)
@@ -118,21 +159,21 @@ exports.applyJob = async (req, res) => {
       `,
       [
         job.employer_user_id,
-        `Có ứng viên mới ứng tuyển vào vị trí ${job.title}`,
+        `Có ứng viên mới ứng tuyển vào vị trí "${job.title}"`,
         job.id,
       ]
     );
 
     await connection.commit();
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Ứng tuyển thành công",
       application_id: applicationId,
     });
-
   } catch (err) {
     await connection.rollback();
-    res.status(400).json({ message: err.message });
+    console.error("APPLY JOB ERROR:", err);
+    return res.status(500).json({ message: "Apply job failed" });
   } finally {
     connection.release();
   }

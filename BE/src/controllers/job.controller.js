@@ -1,8 +1,14 @@
+/*
+|--------------------------------------------------------------------------
+| CREATE JOB (EMPLOYER)
+|--------------------------------------------------------------------------
+| - 1 job chỉ thuộc 1 category
+| - job có nhiều skill
+| - skill phải thuộc category của job
+| - status mặc định: pending
+*/
 const db = require("../config/db");
 
-/* =====================
-   CREATE JOB
-===================== */
 exports.createJob = async (req, res) => {
   const connection = await db.getConnection();
   let transactionStarted = false;
@@ -11,83 +17,166 @@ exports.createJob = async (req, res) => {
     const userId = req.user.id;
 
     const {
+      // ===== BẮT BUỘC =====
       title,
       description,
       job_requirements,
       benefits,
+      hiring_quantity,
+      expired_at,
+      employment_type,
+      category_id,
+      skill_ids,
+
+      // ===== SALARY =====
       min_salary,
       max_salary,
       is_salary_negotiable,
-      hiring_quantity,
-      expired_at,
+
+      // ===== THÔNG TIN BỔ SUNG =====
       location,
-      employment_type,
-      category_id,
       experience,
       level,
       education_level,
-      skill_ids,
+
+      // ===== FIELD MỚI =====
+      working_time,
+      working_day,
+      application_language,
+      preferred_gender,
+      preferred_age_min,
+      preferred_age_max,
+      preferred_nationality,
     } = req.body;
 
-    /* ===== VALIDATE ===== */
-    if (!title) return res.status(400).json({ message: "Title is required" });
-    if (!description) return res.status(400).json({ message: "Description is required" });
-    if (!job_requirements) return res.status(400).json({ message: "Job requirements are required" });
-    if (!benefits) return res.status(400).json({ message: "Benefits are required" });
-    if (!employment_type) return res.status(400).json({ message: "Employment type is required" });
-    if (!expired_at) return res.status(400).json({ message: "Expired date is required" });
-
-    if (!Array.isArray(skill_ids) || skill_ids.length === 0) {
-      return res.status(400).json({ message: "At least one skill is required" });
+    /* =========================
+       VALIDATE BẮT BUỘC
+    ========================= */
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
     }
 
-    if (Number(hiring_quantity) <= 0) {
-      return res.status(400).json({ message: "Hiring quantity must be greater than 0" });
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    if (!job_requirements) {
+      return res.status(400).json({ message: "Job requirements are required" });
+    }
+
+    if (!benefits) {
+      return res.status(400).json({ message: "Benefits are required" });
+    }
+
+    if (!employment_type) {
+      return res.status(400).json({ message: "Employment type is required" });
+    }
+
+    if (!category_id) {
+      return res.status(400).json({ message: "Category is required" });
+    }
+
+    if (!Array.isArray(skill_ids) || skill_ids.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "At least one skill is required" });
+    }
+
+    if (!hiring_quantity || Number(hiring_quantity) <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Hiring quantity must be greater than 0" });
+    }
+
+    if (!expired_at) {
+      return res.status(400).json({ message: "Expired date is required" });
     }
 
     const expiredDate = new Date(expired_at);
     expiredDate.setHours(23, 59, 59, 999);
     if (expiredDate <= new Date()) {
-      return res.status(400).json({ message: "Expired date must be in the future" });
+      return res
+        .status(400)
+        .json({ message: "Expired date must be in the future" });
     }
 
+    /* =========================
+       SALARY (CÓ ĐIỀU KIỆN)
+    ========================= */
     const isNegotiable = Number(is_salary_negotiable) === 1;
+
     if (!isNegotiable) {
-      if (!min_salary || !max_salary) {
-        return res.status(400).json({ message: "Salary range is required" });
+      if (min_salary == null || max_salary == null) {
+        return res
+          .status(400)
+          .json({ message: "Salary range is required" });
       }
-      if (+min_salary > +max_salary) {
-        return res.status(400).json({ message: "Min salary cannot be greater than max salary" });
+
+      if (Number(min_salary) > Number(max_salary)) {
+        return res
+          .status(400)
+          .json({ message: "Min salary cannot be greater than max salary" });
       }
     }
 
-    /* ===== EMPLOYER ===== */
+    /* =========================
+       EMPLOYER
+    ========================= */
     const [employerRows] = await connection.query(
       "SELECT id, address FROM employer WHERE user_id = ?",
       [userId]
     );
+
     if (employerRows.length === 0) {
-      return res.status(400).json({ message: "Employer profile not found" });
+      return res
+        .status(400)
+        .json({ message: "Employer profile not found" });
     }
 
     const employerId = employerRows[0].id;
-    const finalLocation =
-      location && location.trim() !== "" ? location : employerRows[0].address;
+    const finalAddress =
+      location && location.trim() !== ""
+        ? location.trim()
+        : employerRows[0].address;
 
-    if (!finalLocation) {
-      return res.status(400).json({ message: "Company address not found" });
+    if (!finalAddress) {
+      return res
+        .status(400)
+        .json({ message: "Company address not found" });
     }
 
-    /* ===== VALIDATE SKILLS ===== */
+    /* =========================
+       VALIDATE SKILL:
+       - Skill đúng ngành
+       - HOẶC skill mềm
+    ========================= */
     const [skillRows] = await connection.query(
-      "SELECT id FROM skill WHERE id IN (?)",
-      [skill_ids]
+      `
+      SELECT id
+      FROM skill
+      WHERE id IN (?)
+        AND (
+          category_id = ?
+          OR category_id = (
+            SELECT id
+            FROM job_category
+            WHERE name = 'Kỹ năng mềm'
+          )
+        )
+      `,
+      [skill_ids, category_id]
     );
+
     if (skillRows.length !== skill_ids.length) {
-      return res.status(400).json({ message: "One or more skills are invalid" });
+      return res.status(400).json({
+        message:
+          "One or more skills do not belong to the selected category or soft skills",
+      });
     }
 
-    /* ===== INSERT ===== */
+    /* =========================
+       INSERT JOB
+    ========================= */
     await connection.beginTransaction();
     transactionStarted = true;
 
@@ -97,46 +186,67 @@ exports.createJob = async (req, res) => {
         employer_id,
         title,
         description,
-        job_requirements,
-        benefits,
         min_salary,
         max_salary,
         is_salary_negotiable,
         hiring_quantity,
+        job_requirements,
+        benefits,
+        created_at,
+        expired_at,
+        status,
         location,
+        address,
         employment_type,
         category_id,
         experience,
         level,
         education_level,
-        status,
-        created_at,
-        expired_at
+        working_time,
+        working_day,
+        application_language,
+        preferred_gender,
+        preferred_age_min,
+        preferred_age_max,
+        preferred_nationality
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'pending',
+              ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         employerId,
         title,
         description,
-        job_requirements,
-        benefits,
         isNegotiable ? null : min_salary,
         isNegotiable ? null : max_salary,
         isNegotiable ? 1 : 0,
         hiring_quantity,
-        finalLocation,
+        job_requirements,
+        benefits,
+        expired_at,
+        finalAddress,
+        finalAddress,
         employment_type,
-        category_id || null,
+        category_id,
         experience || null,
         level || null,
         education_level || null,
-        expired_at,
+        working_time || null,
+        working_day || null,
+        application_language || null,
+        preferred_gender || "any",
+        preferred_age_min || null,
+        preferred_age_max || null,
+        preferred_nationality || null,
       ]
     );
 
     const jobId = jobResult.insertId;
 
+    /* =========================
+       INSERT JOB SKILLS
+    ========================= */
     for (const skillId of skill_ids) {
       await connection.execute(
         "INSERT INTO job_skill (job_id, skill_id) VALUES (?, ?)",
@@ -145,8 +255,9 @@ exports.createJob = async (req, res) => {
     }
 
     await connection.commit();
+
     return res.status(201).json({
-      message: "Tin tuyển dụng đã được lưu và đang chờ xét duyệt",
+      message: "Tin tuyển dụng đã được tạo và đang chờ xét duyệt",
       job_id: jobId,
     });
   } catch (error) {
@@ -164,7 +275,7 @@ exports.createJob = async (req, res) => {
 exports.getAllJobs = async (req, res) => {
   try {
     const { keyword, city } = req.query;
-    const user = req.user;
+    const user = req.user; // có thể undefined nếu public
 
     let sql = `
       SELECT
@@ -176,6 +287,7 @@ exports.getAllJobs = async (req, res) => {
         j.min_salary,
         j.max_salary,
         j.created_at,
+        jc.name AS category_name,
         e.company_name,
         e.logo,
         ${
@@ -185,10 +297,14 @@ exports.getAllJobs = async (req, res) => {
         }
       FROM job j
       JOIN employer e ON j.employer_id = e.id
+      JOIN job_category jc ON j.category_id = jc.id
     `;
 
     const params = [];
 
+    /* =========================
+       CHECK APPLY (CANDIDATE)
+    ========================= */
     if (user && user.role === "candidate") {
       sql += `
         LEFT JOIN candidate c ON c.user_id = ?
@@ -200,26 +316,39 @@ exports.getAllJobs = async (req, res) => {
       params.push(user.id);
     }
 
+    /* =========================
+       ĐIỀU KIỆN HIỂN THỊ JOB
+       👉 FIX LỖI expired_at = NULL
+    ========================= */
     sql += `
       WHERE j.status = 'approved'
         AND (j.expired_at IS NULL OR j.expired_at > NOW())
     `;
 
+    /* =========================
+       FILTER
+    ========================= */
     if (keyword) {
       sql += " AND j.title LIKE ?";
       params.push(`%${keyword}%`);
     }
 
     if (city) {
-      sql += " AND j.location = ?";
-      params.push(city);
+      sql += " AND j.location LIKE ?";
+      params.push(`%${city}%`);
     }
 
     sql += " ORDER BY j.created_at DESC";
 
+    /* =========================
+       QUERY JOBS
+    ========================= */
     const [jobs] = await db.execute(sql, params);
     if (jobs.length === 0) return res.json([]);
 
+    /* =========================
+       GET SKILLS
+    ========================= */
     const jobIds = jobs.map((j) => j.id);
 
     const [skills] = await db.execute(
@@ -232,14 +361,25 @@ exports.getAllJobs = async (req, res) => {
       jobIds
     );
 
+    /* =========================
+       MAP SKILLS
+    ========================= */
     const map = {};
-    jobs.forEach((j) => (map[j.id] = { ...j, skills: [] }));
-    skills.forEach((s) => map[s.job_id]?.skills.push(s.name));
+    jobs.forEach((j) => {
+      map[j.id] = { ...j, skills: [] };
+    });
 
+    skills.forEach((s) => {
+      map[s.job_id]?.skills.push(s.name);
+    });
+
+    /* =========================
+       RESPONSE
+    ========================= */
     return res.json(
       Object.values(map).map((j) => ({
         ...j,
-        job_skill: j.skills.join(", "),
+        skill_names: j.skills.join(", "),
       }))
     );
   } catch (error) {
@@ -247,6 +387,7 @@ exports.getAllJobs = async (req, res) => {
     return res.status(500).json({ message: "Get jobs failed" });
   }
 };
+
 
 
 /* =====================
@@ -258,8 +399,36 @@ exports.getJobDetail = async (req, res) => {
 
     const [rows] = await db.execute(
       `
-      SELECT 
-        j.*,
+      SELECT
+        j.id,
+        j.title,
+        j.description,
+        j.job_requirements,
+        j.benefits,
+        j.min_salary,
+        j.max_salary,
+        j.is_salary_negotiable,
+        j.hiring_quantity,
+        j.location,
+        j.address,
+        j.employment_type,
+        j.experience,
+        j.level,
+        j.education_level,
+        j.working_time,
+        j.working_day,
+        j.application_language,
+        j.preferred_gender,
+        j.preferred_age_min,
+        j.preferred_age_max,
+        j.preferred_nationality,
+        j.created_at,
+        j.expired_at,
+        j.status,
+
+        jc.id   AS category_id,
+        jc.name AS category_name,
+
         e.id           AS company_id,
         e.company_name AS company_name,
         e.description  AS company_description,
@@ -268,25 +437,35 @@ exports.getJobDetail = async (req, res) => {
         CONCAT_WS(', ', e.address_detail, e.district, e.city) AS company_address
       FROM job j
       JOIN employer e ON j.employer_id = e.id
+      JOIN job_category jc ON j.category_id = jc.id
       WHERE j.id = ?
       `,
       [jobId]
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({ message: "Công việc không tồn tại" });
     }
 
     const job = rows[0];
 
+    /* =========================
+       CHECK STATUS
+    ========================= */
     if (job.status !== "approved") {
-      return res.status(404).json({ message: "Công việc không còn tồn tại" });
+      return res.status(404).json({ message: "Công việc không tồn tại" });
     }
 
+    /* =========================
+       CHECK EXPIRED
+    ========================= */
     if (job.expired_at && new Date(job.expired_at) < new Date()) {
       return res.status(404).json({ message: "Công việc đã hết hạn" });
     }
 
+    /* =========================
+       GET SKILLS
+    ========================= */
     const [skills] = await db.execute(
       `
       SELECT s.id, s.name
@@ -306,6 +485,7 @@ exports.getJobDetail = async (req, res) => {
     return res.status(500).json({ message: "Get job detail failed" });
   }
 };
+
 
 /* =====================
    CLOSE JOB

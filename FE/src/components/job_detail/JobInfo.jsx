@@ -1,6 +1,10 @@
 function JobInfo({ title, content }) {
   const isArray = Array.isArray(content);
-  const isEmpty = !content || (isArray && content.length === 0);
+
+  const isEmpty =
+    !content ||
+    (isArray && content.length === 0) ||
+    (!isArray && typeof content === "string" && content.trim() === "");
 
   return (
     <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -28,7 +32,11 @@ function JobInfo({ title, content }) {
             {content.map((item, index) => (
               <li key={index} className="flex gap-3">
                 <span className="mt-1 w-2 h-2 rounded-full bg-green-600 flex-shrink-0" />
-                <span>{item}</span>
+                <span>
+                  {typeof item === "string"
+                    ? item
+                    : item?.name || ""}
+                </span>
               </li>
             ))}
           </ul>

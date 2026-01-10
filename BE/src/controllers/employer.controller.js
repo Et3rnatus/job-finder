@@ -1,6 +1,8 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
-//cập nhật hồ sơ nhà tuyển dụng
+/* =========================
+   UPDATE EMPLOYER PROFILE
+========================= */
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -13,26 +15,17 @@ exports.updateProfile = async (req, res) => {
       district,
       address_detail,
       business_license,
-      logo
+      logo,
     } = req.body;
-    if (!company_name || !city || !district || !address_detail||!business_license) {
+
+    if (!company_name || !city || !district || !address_detail || !business_license) {
       return res.status(400).json({
-        message: "Vui lòng nhập đầy đủ thông tin bắt buộc"
+        message: "Vui lòng nhập đầy đủ thông tin bắt buộc",
       });
     }
 
     const fullAddress = `${address_detail}, ${district}, ${city}`;
 
-    const isProfileCompleted =
-      company_name &&
-      city &&
-      district &&
-      address_detail &&
-      business_license
-        ? 1
-        : 0;
-
-    // 4️⃣ update DB
     await db.execute(
       `
       UPDATE employer
@@ -46,64 +39,58 @@ exports.updateProfile = async (req, res) => {
         business_license = ?,
         address = ?,
         logo = ?,
-        is_profile_completed = ?
+        is_profile_completed = 1
       WHERE user_id = ?
       `,
       [
-        company_name,
+        company_name.trim(),
         description || null,
         website || null,
         city,
         district,
         address_detail,
-        business_license || null,
+        business_license,
         fullAddress,
         logo || null,
-        isProfileCompleted,
-        userId
+        userId,
       ]
     );
 
-    res.json({
-      message: isProfileCompleted
-        ? "Employer profile completed"
-        : "Employer profile updated but not completed",
-      completed: !!isProfileCompleted
+    return res.json({
+      message: "Employer profile completed",
+      completed: true,
     });
-
   } catch (error) {
     console.error("UPDATE EMPLOYER PROFILE ERROR:", error);
-    res.status(500).json({
-      message: "Update employer profile failed"
+    return res.status(500).json({
+      message: "Update employer profile failed",
     });
   }
 };
 
-
-
-//kiem tra profile employer da hoan thanh chua
+/* =========================
+   CHECK EMPLOYER PROFILE
+========================= */
 exports.checkProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [rows] = await db.execute(
+    const [[row]] = await db.execute(
       "SELECT is_profile_completed FROM employer WHERE user_id = ?",
       [userId]
     );
 
-    if (rows.length === 0) {
-      return res.json({ completed: false });
-    }
-
-    res.json({
-      completed: rows[0].is_profile_completed === 1
+    return res.json({
+      completed: row?.is_profile_completed === 1,
     });
   } catch (error) {
-    res.status(500).json({ message: "Check profile failed" });
+    return res.status(500).json({ message: "Check profile failed" });
   }
 };
 
-//lay thong tin profile employer
+/* =========================
+   GET EMPLOYER PROFILE
+========================= */
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -112,7 +99,6 @@ exports.getProfile = async (req, res) => {
       `
       SELECT
         company_name,
-        email,
         logo,
         description,
         website,
@@ -133,16 +119,18 @@ exports.getProfile = async (req, res) => {
       });
     }
 
-    res.json(rows[0]);
+    return res.json(rows[0]);
   } catch (error) {
     console.error("GET EMPLOYER PROFILE ERROR:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Get employer profile failed",
     });
   }
 };
 
-//lấy những công việc đã đăng tuyển
+/* =========================
+   GET JOBS OF EMPLOYER
+========================= */
 exports.getMyJobs = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -154,12 +142,12 @@ exports.getMyJobs = async (req, res) => {
         j.title,
         j.created_at,
         j.expired_at,
-        j.status,                -- 👈 BẮT BUỘC PHẢI CÓ
+        j.status,
 
-        SUM(a.status != 'cancelled') AS total_applications,
-        SUM(a.status = 'pending') AS pending_count,
-        SUM(a.status = 'approved') AS approved_count,
-        SUM(a.status = 'rejected') AS rejected_count
+        COUNT(a.id) AS total_applications,
+        SUM(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+        SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
+        SUM(CASE WHEN a.status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count
 
       FROM job j
       JOIN employer e ON e.id = j.employer_id
@@ -171,20 +159,23 @@ exports.getMyJobs = async (req, res) => {
       [userId]
     );
 
-    res.json(rows);
+    return res.json(rows);
   } catch (error) {
     console.error("GET EMPLOYER JOBS ERROR:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Get employer jobs failed",
     });
   }
 };
 
+/* =========================
+   GET APPLICATION DETAIL (EMPLOYER)
+========================= */
 exports.getApplicationDetailForEmployer = async (req, res) => {
   try {
+    const userId = req.user.id;
     const { applicationId } = req.params;
 
-    // 1️⃣ application + snapshot
     const [[row]] = await db.execute(
       `
       SELECT
@@ -192,51 +183,23 @@ exports.getApplicationDetailForEmployer = async (req, res) => {
         a.status,
         a.applied_at,
         a.cover_letter,
-        s.id AS snapshot_id,
-        s.full_name,
-        s.email,
-        s.phone
+        a.snapshot_cv_json,
+        j.title
       FROM application a
-      JOIN application_snapshot s
-        ON s.application_id = a.id
-      WHERE a.id = ?
+      JOIN job j ON a.job_id = j.id
+      JOIN employer e ON j.employer_id = e.id
+      WHERE a.id = ? AND e.user_id = ?
       `,
-      [applicationId]
+      [applicationId, userId]
     );
 
     if (!row) {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    const snapshotId = row.snapshot_id;
-
-    // 2️⃣ snapshot details
-    const [skills] = await db.execute(
-      `
-      SELECT skill_name
-      FROM application_snapshot_skill
-      WHERE application_snapshot_id = ?
-      `,
-      [snapshotId]
-    );
-
-    const [experiences] = await db.execute(
-      `
-      SELECT company, position, start_date, end_date, description
-      FROM application_snapshot_experience
-      WHERE application_snapshot_id = ?
-      `,
-      [snapshotId]
-    );
-
-    const [educations] = await db.execute(
-      `
-      SELECT school, degree, major, start_date, end_date
-      FROM application_snapshot_education
-      WHERE application_snapshot_id = ?
-      `,
-      [snapshotId]
-    );
+    const snapshot = row.snapshot_cv_json
+      ? JSON.parse(row.snapshot_cv_json)
+      : {};
 
     return res.json({
       application: {
@@ -244,28 +207,24 @@ exports.getApplicationDetailForEmployer = async (req, res) => {
         status: row.status,
         applied_at: row.applied_at,
         cover_letter: row.cover_letter,
+        job_title: row.title,
       },
-      profile: {
-        full_name: row.full_name,
-        email: row.email,
-        phone: row.phone,
-      },
-      skills: skills.map(s => ({ name: s.skill_name })),
-      experiences,
-      educations,
+      snapshot,
     });
   } catch (err) {
+    console.error("GET APPLICATION DETAIL ERROR:", err);
     return res.status(500).json({ message: "Failed to load application detail" });
   }
 };
 
-// PATCH /api/employer/jobs/:id/resubmit
+/* =========================
+   RESUBMIT JOB
+========================= */
 exports.resubmitJob = async (req, res) => {
   const { id } = req.params;
-  const employerId = req.user.id;
+  const employerUserId = req.user.id;
 
   try {
-    // kiểm tra job thuộc employer & đang bị reject
     const [[job]] = await db.execute(
       `
       SELECT j.id
@@ -275,7 +234,7 @@ exports.resubmitJob = async (req, res) => {
         AND e.user_id = ?
         AND j.status = 'rejected'
       `,
-      [id, employerId]
+      [id, employerUserId]
     );
 
     if (!job) {
@@ -284,7 +243,6 @@ exports.resubmitJob = async (req, res) => {
       });
     }
 
-    // resubmit
     await db.execute(
       `
       UPDATE job
@@ -295,9 +253,9 @@ exports.resubmitJob = async (req, res) => {
       [id]
     );
 
-    res.json({ message: "Job resubmitted successfully" });
+    return res.json({ message: "Job resubmitted successfully" });
   } catch (err) {
     console.error("RESUBMIT JOB ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };

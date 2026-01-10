@@ -64,11 +64,20 @@ export const getSavedJobs = async () => {
   return res.data;
 };
 
-
+/* =====================
+   CHECK JOB ĐÃ LƯU CHƯA
+===================== */
 export const checkSavedJob = async (jobId) => {
+  if (!jobId) {
+    throw new Error("jobId is required");
+  }
+
   const res = await axios.get(
     `${API_URL}/check/${jobId}`,
-    { headers: authHeader() }
+    {
+      headers: getAuthHeader(),
+    }
   );
+
   return res.data;
 };

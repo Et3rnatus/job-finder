@@ -21,27 +21,27 @@ export default function AdminLayout() {
         <h2 className="text-lg font-bold mb-6">ADMIN PANEL</h2>
 
         <nav className="space-y-2 flex-1">
-  <NavLink to="/admin" end className={navClass}>
-    Dashboard
-  </NavLink>
+          <NavLink to="/admin" end className={navClass}>
+            Dashboard
+          </NavLink>
 
-  <NavLink to="/admin/users" className={navClass}>
-    Users
-  </NavLink>
+          <NavLink to="/admin/users" className={navClass}>
+            Users
+          </NavLink>
 
-  <NavLink to="/admin/jobs" className={navClass}>
-    Jobs
-  </NavLink>
+          <NavLink to="/admin/jobs" className={navClass}>
+            Jobs
+          </NavLink>
 
-  {/* ⭐ NEW: CATEGORY MANAGEMENT */}
-  <NavLink
-    to="/admin/categories"
-    className={navClass}
-  >
-    Categories
-  </NavLink>
-</nav>
+          <NavLink to="/admin/categories" className={navClass}>
+            Categories
+          </NavLink>
 
+          {/* ⭐ NEW: PAYMENT MANAGEMENT */}
+          <NavLink to="/admin/payments" className={navClass}>
+            Payments
+          </NavLink>
+        </nav>
 
         {/* ===== LOGOUT ===== */}
         <button

@@ -64,6 +64,15 @@ function EmployerSideBarTool({
           Đăng tuyển mới
         </li>
 
+        {/* ===== PAYMENT ===== */}
+        <li
+          onClick={() => setMode("payment")}
+          className={menuClass("payment")}
+        >
+          <span className="text-lg">💳</span>
+          Nâng cấp tài khoản
+        </li>
+
         {/* DIVIDER */}
         <div className="my-3 border-t" />
 

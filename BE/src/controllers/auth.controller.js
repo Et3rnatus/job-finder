@@ -9,7 +9,7 @@ const JWT_SECRET = 'secret_key_luan_van';
 ===================== */
 exports.register = async (req, res) => {
   const connection = await db.getConnection();
-
+  
   try {
     const { email, password, role } = req.body;
 

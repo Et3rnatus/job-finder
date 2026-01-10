@@ -34,6 +34,8 @@ import EmployerApplicantsPage from "./pages/EmployerApplicantsPage";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import SavedJobListPage from "./pages/SavedJobListPage";
 import ViewedJobList from "./components/candidate/ViewedJobList";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+
 
 /* =====================
    ADMIN PAGES
@@ -42,6 +44,7 @@ import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminJobsPage from "./pages/admin/AdminJobsPage";
 import AdminCategoryPage from "./pages/admin/AdminCategoryPage";
+import AdminPaymentPage from "./pages/admin/AdminPaymentPage";
 
 /* =====================
    CANDIDATE SUB PAGES
@@ -160,6 +163,7 @@ function App() {
             path="/employer/applications/:applicationId"
             element={<ApplicationDetailPage />}
           />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
         </Route>
 
         {/* ===== ADMIN (KHÔNG NAVBAR / FOOTER) ===== */}
@@ -169,6 +173,7 @@ function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="jobs" element={<AdminJobsPage />} />
             <Route path="categories" element={<AdminCategoryPage />} />
+            <Route path="payment" element={<AdminPaymentPage/>}/>
           </Route>
         </Route>
       </Routes>

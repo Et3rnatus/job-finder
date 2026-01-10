@@ -33,21 +33,15 @@ export const getDashboardTrends = async () => {
 export const getJobTrends = async () => {
   const res = await axios.get(
     `${API_URL}/job-trends`,
-    {
-      headers: getAuthHeader(),
-    }
+    { headers: getAuthHeader() }
   );
   return res.data;
 };
 
 export const getJobTrends24h = async () => {
   const res = await axios.get(
-    "http://127.0.0.1:3001/api/admin/dashboard/job-trends-24h",
-    {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    }
+    `${API_URL}/dashboard/job-trends-24h`,
+    { headers: getAuthHeader() }
   );
   return res.data;
 };
@@ -65,7 +59,7 @@ export const getJobs = async (status = "pending") => {
   return res.data;
 };
 
-// GET /api/admin/jobs/:id (job detail for review)
+// GET /api/admin/jobs/:id
 export const getJobDetailForAdmin = async (jobId) => {
   const res = await axios.get(
     `${API_URL}/jobs/${jobId}`,
@@ -150,4 +144,27 @@ export const toggleCategory = async (id) => {
     {},
     { headers: getAuthHeader() }
   );
+};
+
+/* =========================
+   PAYMENT MANAGEMENT (NEW)
+========================= */
+
+// GET /api/admin/payments
+export const getPayments = async () => {
+  const res = await axios.get(
+    `${API_URL}/payments`,
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};
+
+// POST /api/admin/payments/approve
+export const approvePayment = async (orderId) => {
+  const res = await axios.post(
+    `${API_URL}/payments/approve`,
+    { orderId },
+    { headers: getAuthHeader() }
+  );
+  return res.data;
 };

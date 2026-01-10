@@ -2,7 +2,7 @@ const db = require("../config/db");
 
 /**
  * GET /api/notifications
- * Employer lấy danh sách thông báo của mình
+ * User lấy danh sách thông báo của mình
  */
 exports.getMyNotifications = async (req, res) => {
   try {
@@ -21,21 +21,21 @@ exports.getMyNotifications = async (req, res) => {
       FROM notification
       WHERE user_id = ?
       ORDER BY created_at DESC
+      LIMIT 50
       `,
       [userId]
     );
 
-    res.json(rows);
+    return res.json(rows);
   } catch (error) {
     console.error("GET NOTIFICATIONS ERROR:", error);
-    res.status(500).json({ message: "Get notifications failed" });
+    return res.status(500).json({ message: "Get notifications failed" });
   }
 };
 
-
 /**
  * PATCH /api/notifications/:id/read
- * Đánh dấu đã đọc
+ * Đánh dấu thông báo đã đọc
  */
 exports.markAsRead = async (req, res) => {
   try {
@@ -53,14 +53,13 @@ exports.markAsRead = async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        message: "Notification not found"
+        message: "Notification not found",
       });
     }
 
-    res.json({ message: "Marked as read" });
+    return res.json({ message: "Notification marked as read" });
   } catch (error) {
     console.error("MARK AS READ ERROR:", error);
-    res.status(500).json({ message: "Update failed" });
+    return res.status(500).json({ message: "Update failed" });
   }
 };
-

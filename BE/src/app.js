@@ -11,6 +11,7 @@ const candidateRoutes = require('./routes/candidate.routes');
 const notificationRoutes= require('./routes/notification.routes');
 const adminRoutes=require('./routes/admin.routes');
 const categoryRoutes = require('./routes/category.routes');
+const paymentRoutes = require('./routes/payment.routes');
 
 console.log('APP.JS LOADED');
 
@@ -31,6 +32,7 @@ app.use('/api/candidate', candidateRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin',adminRoutes);
 app.use('/api/categories',categoryRoutes);
+app.use('/api/payments',paymentRoutes);
 
 
 // Health check

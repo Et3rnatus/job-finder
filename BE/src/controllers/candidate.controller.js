@@ -1,39 +1,50 @@
-const pool = require('../config/db');
+const pool = require("../config/db");
 
- // API Lấy toàn bộ hồ sơ ứng viên
+/* =========================
+   GET PROFILE
+========================= */
 exports.getProfile = async (req, res) => {
   const candidate = req.candidate;
 
+  if (!candidate) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
   try {
-    // 🔹 lấy email từ users
     const [[user]] = await pool.query(
-      'SELECT email FROM users WHERE id = ?',
+      "SELECT email FROM users WHERE id = ?",
       [candidate.user_id]
     );
 
     const [skills] = await pool.query(
-      `SELECT s.id, s.name
-       FROM skill s
-       JOIN candidate_skill cs ON s.id = cs.skill_id
-       WHERE cs.candidate_id = ?`,
+      `
+      SELECT s.id, s.name
+      FROM skill s
+      JOIN candidate_skill cs ON s.id = cs.skill_id
+      WHERE cs.candidate_id = ?
+      `,
       [candidate.id]
     );
 
     const [education] = await pool.query(
-      `SELECT school, degree, major, start_date, end_date
-       FROM education
-       WHERE candidate_id = ?`,
+      `
+      SELECT school, degree, major, start_date, end_date
+      FROM education
+      WHERE candidate_id = ?
+      `,
       [candidate.id]
     );
 
     const [experiences] = await pool.query(
-      `SELECT company, position, start_date, end_date, description
-       FROM work_experience
-       WHERE candidate_id = ?`,
+      `
+      SELECT company, position, start_date, end_date, description
+      FROM work_experience
+      WHERE candidate_id = ?
+      `,
       [candidate.id]
     );
 
-    res.json({
+    return res.json({
       id: candidate.id,
       full_name: candidate.full_name,
       email: user?.email || null,
@@ -45,34 +56,63 @@ exports.getProfile = async (req, res) => {
       is_profile_completed: candidate.is_profile_completed,
       skills,
       education,
-      experiences
+      experiences,
     });
   } catch (error) {
     console.error("GET PROFILE ERROR:", error);
-    res.status(500).json({ message: "Load profile failed" });
+    return res.status(500).json({ message: "Load profile failed" });
   }
 };
 
-
-// API check hồ sơ ứng viên
+/* =========================
+   CHECK PROFILE
+========================= */
 exports.checkProfile = async (req, res) => {
   const c = req.candidate;
+
+  if (!c) {
+    return res.json({
+      is_profile_completed: false,
+      missing_fields: ["Hồ sơ ứng viên"],
+    });
+  }
+
   const missingFields = [];
 
   if (!c.full_name) missingFields.push("Họ tên");
   if (!c.contact_number) missingFields.push("Số điện thoại");
   if (!c.date_of_birth) missingFields.push("Ngày sinh");
 
-  res.json({
+  // Check skills
+  const [[skillCount]] = await pool.query(
+    "SELECT COUNT(*) AS total FROM candidate_skill WHERE candidate_id = ?",
+    [c.id]
+  );
+  if (skillCount.total === 0) missingFields.push("Kỹ năng");
+
+  // Check education
+  const [[eduCount]] = await pool.query(
+    "SELECT COUNT(*) AS total FROM education WHERE candidate_id = ?",
+    [c.id]
+  );
+  if (eduCount.total === 0) missingFields.push("Học vấn");
+
+  return res.json({
     is_profile_completed: missingFields.length === 0,
     missing_fields: missingFields,
   });
 };
 
-
- // Update toàn bộ hồ sơ + cập nhật trạng thái hoàn thiện
+/* =========================
+   UPDATE PROFILE
+========================= */
 exports.updateProfile = async (req, res) => {
   const candidate = req.candidate;
+
+  if (!candidate) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
   const {
     full_name,
     contact_number,
@@ -82,16 +122,15 @@ exports.updateProfile = async (req, res) => {
     date_of_birth,
     skills,
     education,
-    experiences
+    experiences,
   } = req.body;
 
   const connection = await pool.getConnection();
 
   try {
     /* =====================
-       1️⃣ VALIDATE BẮT BUỘC
+       VALIDATE BẮT BUỘC
     ===================== */
-
     if (!full_name || !contact_number || !date_of_birth) {
       return res.status(400).json({
         message: "Họ tên, số điện thoại và ngày sinh là bắt buộc",
@@ -100,19 +139,15 @@ exports.updateProfile = async (req, res) => {
 
     const dob = new Date(date_of_birth);
     if (isNaN(dob.getTime())) {
-      return res.status(400).json({
-        message: "Ngày sinh không hợp lệ",
-      });
+      return res.status(400).json({ message: "Ngày sinh không hợp lệ" });
     }
 
-    /* ===== SKILLS ===== */
     if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
         message: "Vui lòng chọn ít nhất một kỹ năng",
       });
     }
 
-    /* ===== EDUCATION (BẮT BUỘC) ===== */
     if (!Array.isArray(education) || education.length === 0) {
       return res.status(400).json({
         message: "Vui lòng nhập ít nhất một học vấn",
@@ -120,7 +155,7 @@ exports.updateProfile = async (req, res) => {
     }
 
     const validEducation = education.filter(
-      edu => edu.school && edu.school.trim()
+      (edu) => edu.school && edu.school.trim()
     );
 
     if (validEducation.length === 0) {
@@ -130,13 +165,25 @@ exports.updateProfile = async (req, res) => {
     }
 
     /* =====================
-       2️⃣ TRANSACTION
+       VALIDATE SKILL ID
+    ===================== */
+    const [skillRows] = await connection.query(
+      "SELECT id FROM skill WHERE id IN (?)",
+      [skills]
+    );
+
+    if (skillRows.length !== skills.length) {
+      return res.status(400).json({
+        message: "Một hoặc nhiều kỹ năng không hợp lệ",
+      });
+    }
+
+    /* =====================
+       TRANSACTION
     ===================== */
     await connection.beginTransaction();
 
-    /* =====================
-       3️⃣ UPDATE CANDIDATE
-    ===================== */
+    /* UPDATE CANDIDATE */
     await connection.query(
       `
       UPDATE candidate
@@ -157,13 +204,11 @@ exports.updateProfile = async (req, res) => {
         bio || null,
         gender || null,
         date_of_birth,
-        candidate.id
+        candidate.id,
       ]
     );
 
-    /* =====================
-       4️⃣ SKILLS
-    ===================== */
+    /* SKILLS */
     await connection.query(
       "DELETE FROM candidate_skill WHERE candidate_id = ?",
       [candidate.id]
@@ -176,9 +221,7 @@ exports.updateProfile = async (req, res) => {
       );
     }
 
-    /* =====================
-       5️⃣ EDUCATION
-    ===================== */
+    /* EDUCATION */
     await connection.query(
       "DELETE FROM education WHERE candidate_id = ?",
       [candidate.id]
@@ -197,14 +240,12 @@ exports.updateProfile = async (req, res) => {
           edu.degree || null,
           edu.major || null,
           edu.start_date || null,
-          edu.end_date || null
+          edu.end_date || null,
         ]
       );
     }
 
-    /* =====================
-       6️⃣ EXPERIENCE (KHÔNG BẮT BUỘC)
-    ===================== */
+    /* EXPERIENCE (OPTIONAL) */
     await connection.query(
       "DELETE FROM work_experience WHERE candidate_id = ?",
       [candidate.id]
@@ -226,7 +267,7 @@ exports.updateProfile = async (req, res) => {
             exp.position || null,
             exp.start_date || null,
             exp.end_date || null,
-            exp.description || null
+            exp.description || null,
           ]
         );
       }
@@ -234,15 +275,14 @@ exports.updateProfile = async (req, res) => {
 
     await connection.commit();
 
-    res.json({
+    return res.json({
       message: "Cập nhật hồ sơ thành công",
-      is_profile_completed: 1
+      is_profile_completed: 1,
     });
-
   } catch (error) {
     await connection.rollback();
     console.error("UPDATE PROFILE ERROR:", error);
-    res.status(500).json({ message: "Update profile failed" });
+    return res.status(500).json({ message: "Update profile failed" });
   } finally {
     connection.release();
   }
