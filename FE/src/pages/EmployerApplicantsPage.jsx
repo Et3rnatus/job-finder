@@ -10,6 +10,7 @@ import { getApplicantsByJob } from "../services/applicationService";
 const FILTERS = {
   ALL: "all",
   PENDING: "pending",
+  INTERVIEW: "interview",
   APPROVED: "approved",
   REJECTED: "rejected",
 };
@@ -18,6 +19,10 @@ const statusConfig = {
   pending: {
     label: "Chờ duyệt",
     className: "bg-yellow-100 text-yellow-700",
+  },
+  interview: {
+    label: "Mời phỏng vấn",
+    className: "bg-blue-100 text-blue-700",
   },
   approved: {
     label: "Đã duyệt",
@@ -35,9 +40,7 @@ function EmployerApplicantsPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // 🔑 NGUỒN VÀO (JOB LIST / JOB DETAIL)
   const from = location.state?.from;
-
   const tabFromUrl = searchParams.get("tab");
   const highlight = searchParams.get("highlight");
 
@@ -46,7 +49,7 @@ function EmployerApplicantsPage() {
   const [error, setError] = useState(null);
 
   const [filter, setFilter] = useState(
-    tabFromUrl && FILTERS[tabFromUrl?.toUpperCase()]
+    tabFromUrl && Object.values(FILTERS).includes(tabFromUrl)
       ? tabFromUrl
       : FILTERS.ALL
   );
@@ -76,10 +79,7 @@ function EmployerApplicantsPage() {
      SYNC TAB FROM URL
   ===================== */
   useEffect(() => {
-    if (
-      tabFromUrl &&
-      Object.values(FILTERS).includes(tabFromUrl)
-    ) {
+    if (tabFromUrl && Object.values(FILTERS).includes(tabFromUrl)) {
       setFilter(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -105,6 +105,7 @@ function EmployerApplicantsPage() {
     return {
       total: applicants.length,
       pending: applicants.filter((a) => a.status === "pending").length,
+      interview: applicants.filter((a) => a.status === "interview").length,
       approved: applicants.filter((a) => a.status === "approved").length,
       rejected: applicants.filter((a) => a.status === "rejected").length,
     };
@@ -115,28 +116,17 @@ function EmployerApplicantsPage() {
     return applicants.filter((a) => a.status === filter);
   }, [filter, applicants]);
 
-  /* =====================
-     QUAY LẠI (CHUẨN TOPCV)
-  ===================== */
   const handleBack = () => {
-    if (from) {
-      navigate(from);
-    } else {
-      // fallback an toàn nếu refresh / mở tab mới
-      navigate("/employer/jobs");
-    }
+    if (from) navigate(from);
+    else navigate("/employer/jobs");
   };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-      {/* =====================
-          HEADER
-      ===================== */}
+      {/* HEADER */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-semibold">
-            Danh sách ứng viên
-          </h1>
+          <h1 className="text-2xl font-semibold">Danh sách ứng viên</h1>
           <p className="text-sm text-gray-500 mt-1">
             Quản lý và đánh giá hồ sơ ứng tuyển
           </p>
@@ -150,23 +140,21 @@ function EmployerApplicantsPage() {
         </button>
       </div>
 
-      {/* =====================
-          SUMMARY
-      ===================== */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <SummaryCard label="Tổng ứng viên" value={summary.total} />
+      {/* SUMMARY */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <SummaryCard label="Tổng" value={summary.total} />
         <SummaryCard label="Chờ duyệt" value={summary.pending} />
+        <SummaryCard label="Mời PV" value={summary.interview} />
         <SummaryCard label="Đã duyệt" value={summary.approved} />
         <SummaryCard label="Từ chối" value={summary.rejected} />
       </div>
 
-      {/* =====================
-          FILTER TABS
-      ===================== */}
+      {/* FILTER TABS */}
       <div className="flex gap-2 border-b">
         {[
           ["Tất cả", FILTERS.ALL, summary.total],
           ["Chờ duyệt", FILTERS.PENDING, summary.pending],
+          ["Mời PV", FILTERS.INTERVIEW, summary.interview],
           ["Đã duyệt", FILTERS.APPROVED, summary.approved],
           ["Từ chối", FILTERS.REJECTED, summary.rejected],
         ].map(([label, key, count]) => (
@@ -183,112 +171,72 @@ function EmployerApplicantsPage() {
               filter === key
                 ? "border-green-600 text-green-600 font-medium"
                 : "border-transparent text-gray-500 hover:text-gray-700"
-            } ${
-              count === 0 ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            } ${count === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {label} ({count})
           </button>
         ))}
       </div>
 
-      {/* =====================
-          ERROR STATE
-      ===================== */}
-      {error && (
-        <div className="p-10 text-center text-red-600 space-y-2 bg-white border rounded-lg">
-          <p className="font-medium">
-            Không thể tải danh sách ứng viên
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Thử lại
-          </button>
-        </div>
-      )}
+      {/* LIST */}
+      <div className="bg-white border rounded-lg divide-y">
+        {loading && (
+          <p className="p-6 text-sm text-gray-500">Đang tải...</p>
+        )}
 
-      {/* =====================
-          LIST
-      ===================== */}
-      {!error && (
-        <div className="bg-white border rounded-lg divide-y">
-          {loading && (
-            <p className="p-6 text-sm text-gray-500">
-              Đang tải...
-            </p>
-          )}
+        {!loading && filteredApplicants.length === 0 && (
+          <div className="p-10 text-center text-gray-500">
+            Chưa có ứng viên
+          </div>
+        )}
 
-          {!loading && filteredApplicants.length === 0 && (
-            <div className="p-10 text-center text-gray-500 space-y-2">
-              <p className="text-base font-medium">
-                Chưa có ứng viên cho công việc này
-              </p>
-              <p className="text-sm">
-                Khi có ứng viên mới, danh sách sẽ hiển thị tại đây.
-              </p>
-            </div>
-          )}
+        {!loading &&
+          filteredApplicants.map((app) => {
+            const fullName =
+              app.snapshot?.basic?.full_name || "Ứng viên";
 
-          {!loading &&
-            filteredApplicants.map((app, index) => {
-              const shouldHighlight =
-                highlight === "new" &&
-                filter === FILTERS.PENDING &&
-                index === 0;
-
-              return (
-                <div
-                  key={app.application_id}
-                  className={`flex justify-between items-center p-4 transition ${
-                    shouldHighlight
-                      ? "bg-green-50 border-l-4 border-green-500 animate-pulse"
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <div>
-                    <p className="font-medium text-gray-800">
-                      {app.full_name}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Nộp ngày{" "}
-                      {new Date(app.applied_at).toLocaleDateString(
-                        "vi-VN"
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        statusConfig[app.status]?.className
-                      }`}
-                    >
-                      {statusConfig[app.status]?.label}
-                    </span>
-
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/employer/applications/${app.application_id}`,
-                          {
-                            state: {
-                              from: `/employer/jobs/${jobId}/applicants`,
-                            },
-                          }
-                        )
-                      }
-                      className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                    >
-                      Xem hồ sơ
-                    </button>
-                  </div>
+            return (
+              <div
+                key={app.application_id}
+                className="flex justify-between items-center p-4 hover:bg-gray-50"
+              >
+                <div>
+                  <p className="font-medium text-gray-800">{fullName}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Nộp ngày{" "}
+                    {new Date(app.applied_at).toLocaleDateString("vi-VN")}
+                  </p>
                 </div>
-              );
-            })}
-        </div>
-      )}
+
+                <div className="flex items-center gap-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      statusConfig[app.status]?.className
+                    }`}
+                  >
+                    {statusConfig[app.status]?.label}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/employer/applications/${app.application_id}`,
+                        {
+                          state: {
+                            from: `/employer/jobs/${jobId}/applicants`,
+                          },
+                        }
+                      )
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                  >
+                    Xem hồ sơ
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+      </div>
     </div>
   );
 }

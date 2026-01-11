@@ -56,7 +56,7 @@ export const cancelApplication = async (applicationId) => {
   return res.data;
 };
 
-// Check đã ứng tuyển chưa (backend)
+// Check đã ứng tuyển chưa
 export const checkAppliedJob = async (jobId) => {
   if (!jobId) {
     return { applied: false };
@@ -73,7 +73,7 @@ export const checkAppliedJob = async (jobId) => {
   }
 };
 
-// 🔥 Candidate xem chi tiết hồ sơ ĐÃ ỨNG TUYỂN (SNAPSHOT)
+// Candidate xem chi tiết hồ sơ đã ứng tuyển
 export const getMyApplicationDetail = async (applicationId) => {
   if (!applicationId) {
     throw new Error("applicationId is required");
@@ -93,23 +93,50 @@ export const getMyApplicationDetail = async (applicationId) => {
 
 // Nhà tuyển dụng xem danh sách ứng viên
 export const getApplicantsByJob = async (jobId) => {
-  return axios
-    .get(
-      `${API_URL}/jobs/${jobId}/applicants`,
-      { headers: getAuthHeader() }
-    )
-    .then((res) => res.data);
+  if (!jobId) {
+    throw new Error("jobId is required");
+  }
+
+  const res = await axios.get(
+    `${API_URL}/jobs/${jobId}/applicants`,
+    { headers: getAuthHeader() }
+  );
+
+  return res.data;
+};
+
+// Employer xem chi tiết 1 hồ sơ (snapshot)
+export const getApplicationDetail = async (applicationId) => {
+  if (!applicationId) {
+    throw new Error("applicationId is required");
+  }
+
+  const res = await axios.get(
+    `${API_URL}/${applicationId}`,
+    {
+      headers: getAuthHeader(),
+    }
+  );
+
+  return res.data;
 };
 
 // Duyệt / từ chối hồ sơ
-export const updateApplicationStatus = async (id, status) => {
+export const updateApplicationStatus = async (
+  applicationId,
+  status,
+  reject_reason = null
+) => {
   if (!["approved", "rejected"].includes(status)) {
     throw new Error("Invalid status");
   }
 
   const res = await axios.patch(
-    `${API_URL}/${id}/status`,
-    { status },
+    `${API_URL}/${applicationId}/status`,
+    {
+      status,
+      reject_reason,
+    },
     {
       headers: {
         ...getAuthHeader(),
@@ -121,16 +148,26 @@ export const updateApplicationStatus = async (id, status) => {
   return res.data;
 };
 
-// Employer xem chi tiết 1 hồ sơ (SNAPSHOT)
-export const getApplicationDetail = async (applicationId) => {
+// 🔥 MỜI PHỎNG VẤN (MAILTRAP)
+export const inviteToInterview = async (applicationId, data) => {
   if (!applicationId) {
     throw new Error("applicationId is required");
   }
 
-  const res = await axios.get(
-    `${API_URL}/${applicationId}`,
+  if (!data?.interview_time || !data?.interview_location) {
+    throw new Error(
+      "interview_time and interview_location are required"
+    );
+  }
+
+  const res = await axios.put(
+    `${API_URL}/${applicationId}/interview`,
+    data,
     {
-      headers: getAuthHeader(),
+      headers: {
+        ...getAuthHeader(),
+        "Content-Type": "application/json",
+      },
     }
   );
 

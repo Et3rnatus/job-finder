@@ -1,6 +1,10 @@
 const { v4: uuidv4 } = require("uuid");
 const db = require("../config/db");
+const transporter = require("../config/mailer");
 
+/* =========================
+   APPLY JOB
+========================= */
 exports.applyJob = async (req, res) => {
   const connection = await db.getConnection();
 
@@ -8,9 +12,6 @@ exports.applyJob = async (req, res) => {
     const { job_id, cover_letter } = req.body;
     const candidate = req.candidate;
 
-    /* =========================
-       VALIDATE BASIC
-    ========================= */
     if (!candidate) {
       return res.status(403).json({ message: "Unauthorized candidate" });
     }
@@ -21,9 +22,6 @@ exports.applyJob = async (req, res) => {
 
     await connection.beginTransaction();
 
-    /* =========================
-       1️⃣ CHECK JOB
-    ========================= */
     const [[job]] = await connection.execute(
       `
       SELECT
@@ -54,9 +52,6 @@ exports.applyJob = async (req, res) => {
       return res.status(400).json({ message: "Công việc đã hết hạn tuyển dụng" });
     }
 
-    /* =========================
-       2️⃣ CHECK APPLY DUPLICATE
-    ========================= */
     const [[existed]] = await connection.execute(
       `
       SELECT id
@@ -68,14 +63,9 @@ exports.applyJob = async (req, res) => {
 
     if (existed) {
       await connection.rollback();
-      return res
-        .status(400)
-        .json({ message: "Bạn đã ứng tuyển công việc này" });
+      return res.status(400).json({ message: "Bạn đã ứng tuyển công việc này" });
     }
 
-    /* =========================
-       3️⃣ BUILD SNAPSHOT CV
-    ========================= */
     const [[basic]] = await connection.execute(
       `
       SELECT c.full_name, c.contact_number, u.email
@@ -121,9 +111,6 @@ exports.applyJob = async (req, res) => {
       experience,
     };
 
-    /* =========================
-       4️⃣ INSERT APPLICATION
-    ========================= */
     const applicationId = uuidv4();
 
     await connection.execute(
@@ -148,14 +135,10 @@ exports.applyJob = async (req, res) => {
       ]
     );
 
-    /* =========================
-       5️⃣ NOTIFICATION
-    ========================= */
     await connection.execute(
       `
       INSERT INTO notification (user_id, type, title, message, related_id)
-      VALUES (?, 'NEW_APPLICATION', 'Có ứng viên mới',
-              ?, ?)
+      VALUES (?, 'NEW_APPLICATION', 'Có ứng viên mới', ?, ?)
       `,
       [
         job.employer_user_id,
@@ -166,35 +149,33 @@ exports.applyJob = async (req, res) => {
 
     await connection.commit();
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Ứng tuyển thành công",
       application_id: applicationId,
     });
   } catch (err) {
     await connection.rollback();
     console.error("APPLY JOB ERROR:", err);
-    return res.status(500).json({ message: "Apply job failed" });
+    res.status(500).json({ message: "Apply job failed" });
   } finally {
     connection.release();
   }
 };
 
-// API xem job đã ứng tuyển của ứng viên
+/* =========================
+   GET MY APPLICATIONS
+========================= */
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 1️⃣ Lấy candidate theo user
     const [[candidate]] = await db.execute(
       `SELECT id FROM candidate WHERE user_id = ?`,
       [userId]
     );
 
-    if (!candidate) {
-      return res.json([]);
-    }
+    if (!candidate) return res.json([]);
 
-    // 2️⃣ Lấy danh sách hồ sơ đã ứng tuyển (THÊM reject_reason)
     const [rows] = await db.execute(
       `
       SELECT
@@ -202,7 +183,7 @@ exports.getMyApplications = async (req, res) => {
         a.job_id,
         a.status,
         a.applied_at,
-        a.reject_reason,   
+        a.reject_reason,
         j.title AS job_title,
         e.company_name
       FROM application a
@@ -214,51 +195,46 @@ exports.getMyApplications = async (req, res) => {
       [candidate.id]
     );
 
-    return res.json(rows);
+    res.json(rows);
   } catch (error) {
     console.error("GET MY APPLICATIONS ERROR:", error);
-    return res.status(500).json({
-      message: "Failed to load applied jobs",
-    });
+    res.status(500).json({ message: "Failed to load applied jobs" });
   }
 };
 
-
-
- // API hủy ứng tuyển
+/* =========================
+   CANCEL APPLICATION
+========================= */
 exports.cancelApplication = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
 
     const [[candidate]] = await db.execute(
-      'SELECT id FROM candidate WHERE user_id = ?',
+      "SELECT id FROM candidate WHERE user_id = ?",
       [userId]
     );
 
     if (!candidate) {
-      return res.status(403).json({ message: 'Forbidden' });
+      return res.status(403).json({ message: "Forbidden" });
     }
 
     const [[app]] = await db.execute(
       `
       SELECT id, status
       FROM application
-      WHERE id = ?
-        AND candidate_id = ?
+      WHERE id = ? AND candidate_id = ?
       `,
       [id, candidate.id]
     );
 
     if (!app) {
-      return res.status(404).json({
-        message: 'Application not found'
-      });
+      return res.status(404).json({ message: "Application not found" });
     }
 
-    if (app.status !== 'pending') {
+    if (app.status !== "pending") {
       return res.status(400).json({
-        message: 'Only pending applications can be cancelled'
+        message: "Only pending applications can be cancelled",
       });
     }
 
@@ -271,16 +247,16 @@ exports.cancelApplication = async (req, res) => {
       [id]
     );
 
-    res.json({ message: 'Application cancelled successfully' });
+    res.json({ message: "Application cancelled successfully" });
   } catch (error) {
-    console.error('CANCEL APPLICATION ERROR:', error);
-    res.status(500).json({ message: 'Cancel failed' });
+    console.error("CANCEL APPLICATION ERROR:", error);
+    res.status(500).json({ message: "Cancel failed" });
   }
 };
 
-
- // API nhà tuyển dụng xem danh sách ứng viên
-
+/* =========================
+   GET APPLICANTS BY JOB
+========================= */
 exports.getApplicantsByJob = async (req, res) => {
   try {
     const employerUserId = req.user.id;
@@ -305,58 +281,41 @@ exports.getApplicantsByJob = async (req, res) => {
       [jobId, employerUserId]
     );
 
-    const result = rows.map(app => ({
-      application_id: app.application_id,
-      status: app.status,
-      applied_at: app.applied_at,
-      cover_letter: app.cover_letter,
-      snapshot: app.snapshot_cv_json
-    }));
-
-    res.json(result);
+    res.json(
+      rows.map((app) => ({
+        application_id: app.application_id,
+        status: app.status,
+        applied_at: app.applied_at,
+        cover_letter: app.cover_letter,
+        snapshot: app.snapshot_cv_json,
+      }))
+    );
   } catch (error) {
     console.error("GET APPLICANTS ERROR:", error);
     res.status(500).json({ message: "Get applicants failed" });
   }
 };
 
-
-
- // nhà tuyển dụng duyệt / từ chối hồ sơ
-
+/* =========================
+   UPDATE RESULT AFTER INTERVIEW
+========================= */
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const employerUserId = req.user.id;
     const { id } = req.params;
     const { status, reject_reason } = req.body;
 
-    /* =====================
-       1️⃣ VALIDATE STATUS
-    ===================== */
     if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({
-        message: "Invalid status",
-      });
+      return res.status(400).json({ message: "Invalid status" });
     }
 
-    /* =====================
-       2️⃣ VALIDATE REJECT REASON
-    ===================== */
-    if (
-      status === "rejected" &&
-      (!reject_reason || reject_reason.trim() === "")
-    ) {
-      return res.status(400).json({
-        message: "Reject reason is required",
-      });
+    if (status === "rejected" && (!reject_reason || reject_reason.trim() === "")) {
+      return res.status(400).json({ message: "Reject reason is required" });
     }
 
-    /* =====================
-       3️⃣ CHECK EMPLOYER PERMISSION
-    ===================== */
     const [[row]] = await db.execute(
       `
-      SELECT a.id
+      SELECT a.id, a.status
       FROM application a
       JOIN job j ON a.job_id = j.id
       JOIN employer e ON j.employer_id = e.id
@@ -367,60 +326,47 @@ exports.updateApplicationStatus = async (req, res) => {
     );
 
     if (!row) {
-      return res.status(403).json({
-        message: "Forbidden",
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (row.status !== "interview") {
+      return res.status(400).json({
+        message: "Only interviewed applications can be evaluated",
       });
     }
 
-    /* =====================
-       4️⃣ UPDATE APPLICATION
-    ===================== */
     await db.execute(
       `
       UPDATE application
-      SET
-        status = ?,
-        reject_reason = ?
+      SET status = ?, reject_reason = ?
       WHERE id = ?
       `,
-      [
-        status,
-        status === "rejected" ? reject_reason : null,
-        id,
-      ]
+      [status, status === "rejected" ? reject_reason : null, id]
     );
 
-    return res.json({
-      message: "Application status updated successfully",
-    });
+    res.json({ message: "Application result updated successfully" });
   } catch (error) {
     console.error("UPDATE APPLICATION STATUS ERROR:", error);
-    return res.status(500).json({
-      message: "Update status failed",
-    });
+    res.status(500).json({ message: "Update status failed" });
   }
 };
 
-
-
-// API check ứng tuyển
+/* =========================
+   CHECK APPLIED JOB
+========================= */
 exports.checkAppliedJob = async (req, res) => {
   try {
     const userId = req.user.id;
     const { jobId } = req.params;
 
-    if (!jobId) {
-      return res.json({ applied: false });
-    }
+    if (!jobId) return res.json({ applied: false });
 
     const [[candidate]] = await db.execute(
-      'SELECT id FROM candidate WHERE user_id = ?',
+      "SELECT id FROM candidate WHERE user_id = ?",
       [userId]
     );
 
-    if (!candidate) {
-      return res.json({ applied: false });
-    }
+    if (!candidate) return res.json({ applied: false });
 
     const [[row]] = await db.execute(
       `
@@ -436,11 +382,14 @@ exports.checkAppliedJob = async (req, res) => {
 
     res.json({ applied: !!row });
   } catch (error) {
-    console.error('CHECK APPLIED ERROR:', error);
+    console.error("CHECK APPLIED ERROR:", error);
     res.status(500).json({ applied: false });
   }
 };
 
+/* =========================
+   GET APPLICATION DETAIL
+========================= */
 exports.getApplicationDetail = async (req, res) => {
   const { applicationId } = req.params;
 
@@ -474,4 +423,117 @@ exports.getApplicationDetail = async (req, res) => {
   });
 };
 
+/* =========================
+   INVITE TO INTERVIEW
+========================= */
+exports.inviteToInterview = async (req, res) => {
+  try {
+    const employerUserId = req.user.id;
+    const { id } = req.params;
+
+    // 🔥 FIX TRIỆT ĐỂ: KHÔNG DESTRUCTURE TRỰC TIẾP
+    const body = req.body ?? {};
+    const interview_time = body.interview_time;
+    const interview_location = body.interview_location;
+    const interview_note = body.interview_note || null;
+
+    /* =========================
+       1️⃣ VALIDATE INPUT
+    ========================= */
+    if (!interview_time || !interview_location) {
+      return res.status(400).json({
+        message: "Interview time and location are required",
+      });
+    }
+
+    /* =========================
+       2️⃣ CHECK APPLICATION + PERMISSION
+    ========================= */
+    const [[app]] = await db.execute(
+      `
+      SELECT
+        a.id,
+        a.status,
+        c.full_name,
+        u.email,
+        j.title AS job_title
+      FROM application a
+      JOIN candidate c ON a.candidate_id = c.id
+      JOIN users u ON c.user_id = u.id
+      JOIN job j ON a.job_id = j.id
+      JOIN employer e ON j.employer_id = e.id
+      WHERE a.id = ?
+        AND e.user_id = ?
+      `,
+      [id, employerUserId]
+    );
+
+    if (!app) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (app.status !== "pending") {
+      return res.status(400).json({
+        message: "Only pending applications can be invited to interview",
+      });
+    }
+
+    /* =========================
+       3️⃣ UPDATE APPLICATION
+    ========================= */
+    await db.execute(
+      `
+      UPDATE application
+      SET
+        status = 'interview',
+        interview_time = ?,
+        interview_location = ?,
+        interview_note = ?,
+        interview_sent_at = NOW()
+      WHERE id = ?
+      `,
+      [
+        interview_time,
+        interview_location,
+        interview_note,
+        id,
+      ]
+    );
+
+    /* =========================
+       4️⃣ SEND EMAIL (MAILTRAP)
+       ❗ MAIL FAIL ≠ API FAIL
+    ========================= */
+    try {
+      await transporter.sendMail({
+        from: `"JobFinder" <no-reply@jobfinder.dev>`,
+        to: app.email,
+        subject: `Thư mời phỏng vấn – ${app.job_title}`,
+        html: `
+          <p>Xin chào <b>${app.full_name}</b>,</p>
+
+          <p>Chúng tôi trân trọng mời bạn tham gia phỏng vấn cho vị trí
+          <b>${app.job_title}</b>.</p>
+
+          <p><b>⏰ Thời gian:</b> ${interview_time}</p>
+          <p><b>📍 Địa điểm:</b> ${interview_location}</p>
+          <p><b>📝 Ghi chú:</b> ${interview_note || "Không có"}</p>
+
+          <p>Trân trọng,<br/>Bộ phận tuyển dụng</p>
+        `,
+      });
+    } catch (mailErr) {
+      console.error("MAIL ERROR (ignored):", mailErr);
+    }
+
+    return res.json({
+      message: "Interview invitation sent successfully",
+    });
+  } catch (error) {
+    console.error("INVITE INTERVIEW ERROR:", error);
+    return res.status(500).json({
+      message: "Invite interview failed",
+    });
+  }
+};
 

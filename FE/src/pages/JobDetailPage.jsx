@@ -20,12 +20,11 @@ function JobDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🔑 Nguồn vào (Saved Jobs / Job List / Viewed Jobs / Search…)
+  // 🔑 Nguồn điều hướng (job list / saved / viewed…)
   const from = location.state?.from;
 
   const [job, setJob] = useState(null);
-  const [applicationStatus, setApplicationStatus] =
-    useState(null);
+  const [applicationStatus, setApplicationStatus] = useState(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
 
   /* =====================
@@ -37,7 +36,7 @@ function JobDetailPage() {
   };
 
   /* =====================
-     SAVE VIEWED JOB (BTH)
+     SAVE VIEWED JOB
   ===================== */
   const saveViewedJob = (job) => {
     const KEY = "viewed_jobs";
@@ -47,9 +46,9 @@ function JobDetailPage() {
       localStorage.getItem(KEY) || "[]"
     );
 
-    // bỏ trùng
+    // bỏ trùng job
     const filtered = stored.filter(
-      (j) => j.id !== job.id
+      (j) => String(j.id) !== String(job.id)
     );
 
     const updated = [
@@ -58,7 +57,7 @@ function JobDetailPage() {
         title: job.title,
         company: job.company_name,
         location: job.location,
-        viewedAt: Date.now(),
+        viewedAt: new Date().toISOString(),
       },
       ...filtered,
     ].slice(0, MAX);
@@ -75,12 +74,13 @@ function JobDetailPage() {
         const data = await getJobDetail(id);
         setJob(data);
 
-        // 👀 lưu job đã xem (bth)
+        // 👀 lưu lịch sử xem
         saveViewedJob(data);
       } catch (err) {
         console.error("LOAD JOB DETAIL ERROR:", err);
       }
     };
+
     loadJob();
   }, [id]);
 
@@ -138,13 +138,13 @@ function JobDetailPage() {
   };
 
   /* =====================
-     QUAY LẠI (TOPCV STYLE)
+     BACK BUTTON
   ===================== */
   const handleBack = () => {
     if (from) {
       navigate(from);
     } else {
-      navigate("/jobs"); // fallback an toàn
+      navigate("/jobs");
     }
   };
 
@@ -194,9 +194,7 @@ function JobDetailPage() {
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* =====================
-                LEFT CONTENT
-            ===================== */}
+            {/* ===== LEFT CONTENT ===== */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-xl border p-6">
                 <JobHeader job={job} />
@@ -224,9 +222,7 @@ function JobDetailPage() {
               />
             </div>
 
-            {/* =====================
-                RIGHT SIDEBAR
-            ===================== */}
+            {/* ===== RIGHT SIDEBAR ===== */}
             <div className="space-y-6 sticky top-6 h-fit">
               <div className="bg-white border rounded-xl p-6 space-y-3">
                 <ApplyButton
@@ -250,9 +246,7 @@ function JobDetailPage() {
         </div>
       </div>
 
-      {/* =====================
-          APPLY FORM MODAL
-      ===================== */}
+      {/* ===== APPLY FORM MODAL ===== */}
       {showApplyForm && (
         <div
           className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"

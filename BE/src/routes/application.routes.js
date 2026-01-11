@@ -63,5 +63,13 @@ router.get(
   applicationController.getApplicationDetail
 );
 
+// Mời phỏng vấn
+router.put(
+  "/:id/interview",
+  verifyToken,
+  requireRole("employer"),
+  applicationController.inviteToInterview
+);
+
 
 module.exports = router;
