@@ -20,33 +20,21 @@ function JobDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🔑 Nguồn điều hướng (job list / saved / viewed…)
   const from = location.state?.from;
 
   const [job, setJob] = useState(null);
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
 
-  /* =====================
-     HELPERS
-  ===================== */
-  const isJobExpired = (expiredAt) => {
-    if (!expiredAt) return false;
-    return new Date(expiredAt) < new Date();
-  };
+  const isJobExpired = (expiredAt) =>
+    expiredAt && new Date(expiredAt) < new Date();
 
-  /* =====================
-     SAVE VIEWED JOB
-  ===================== */
   const saveViewedJob = (job) => {
     const KEY = "viewed_jobs";
     const MAX = 20;
 
-    const stored = JSON.parse(
-      localStorage.getItem(KEY) || "[]"
-    );
+    const stored = JSON.parse(localStorage.getItem(KEY) || "[]");
 
-    // bỏ trùng job
     const filtered = stored.filter(
       (j) => String(j.id) !== String(job.id)
     );
@@ -65,16 +53,11 @@ function JobDetailPage() {
     localStorage.setItem(KEY, JSON.stringify(updated));
   };
 
-  /* =====================
-     LOAD JOB DETAIL
-  ===================== */
   useEffect(() => {
     const loadJob = async () => {
       try {
         const data = await getJobDetail(id);
         setJob(data);
-
-        // 👀 lưu lịch sử xem
         saveViewedJob(data);
       } catch (err) {
         console.error("LOAD JOB DETAIL ERROR:", err);
@@ -84,9 +67,6 @@ function JobDetailPage() {
     loadJob();
   }, [id]);
 
-  /* =====================
-     LOAD APPLY STATUS
-  ===================== */
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -100,19 +80,13 @@ function JobDetailPage() {
         );
         setApplicationStatus(found?.status || null);
       } catch (e) {
-        console.error(
-          "LOAD APPLICATION STATUS ERROR:",
-          e
-        );
+        console.error("LOAD APPLICATION STATUS ERROR:", e);
       }
     };
 
     loadStatus();
   }, [id]);
 
-  /* =====================
-     APPLY BUTTON CLICK
-  ===================== */
   const handleApplyClick = () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -137,20 +111,11 @@ function JobDetailPage() {
     setShowApplyForm(true);
   };
 
-  /* =====================
-     BACK BUTTON
-  ===================== */
   const handleBack = () => {
-    if (from) {
-      navigate(from);
-    } else {
-      navigate("/jobs");
-    }
+    if (from) navigate(from);
+    else navigate("/jobs");
   };
 
-  /* =====================
-     GUARD
-  ===================== */
   if (!job) {
     return (
       <div className="text-center py-20 text-gray-500">
@@ -178,23 +143,14 @@ function JobDetailPage() {
     <>
       <div className="bg-gray-100 py-8">
         <div className="max-w-7xl mx-auto px-4">
-
-          {/* ===== BACK BUTTON ===== */}
           <button
             onClick={handleBack}
-            className="
-              mb-4
-              px-3 py-1.5
-              text-sm text-gray-600
-              border rounded-lg
-              hover:bg-gray-100
-            "
+            className="mb-4 px-3 py-1.5 text-sm text-gray-600 border rounded-lg hover:bg-gray-100"
           >
             ← Quay lại
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* ===== LEFT CONTENT ===== */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-xl border p-6">
                 <JobHeader job={job} />
@@ -222,7 +178,6 @@ function JobDetailPage() {
               />
             </div>
 
-            {/* ===== RIGHT SIDEBAR ===== */}
             <div className="space-y-6 sticky top-6 h-fit">
               <div className="bg-white border rounded-xl p-6 space-y-3">
                 <ApplyButton
@@ -246,7 +201,6 @@ function JobDetailPage() {
         </div>
       </div>
 
-      {/* ===== APPLY FORM MODAL ===== */}
       {showApplyForm && (
         <div
           className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"

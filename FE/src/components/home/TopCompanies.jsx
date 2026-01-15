@@ -1,4 +1,6 @@
-function TopCompanies() {
+import { Sparkles } from "lucide-react";
+
+export default function TopCompanies() {
   const companies = [
     { name: "VPBank", logo: "/logos/vpbank.png" },
     { name: "Techcombank", logo: "/logos/techcombank.png" },
@@ -7,48 +9,48 @@ function TopCompanies() {
   ];
 
   return (
-    <section className="max-w-6xl mx-auto px-4 mt-24">
+    <section className="max-w-7xl mx-auto px-6 mt-32">
       {/* HEADER */}
-      <div className="text-center mb-10">
-        <h2
-          className="text-3xl font-bold text-gray-800"
-          data-aos="fade-left"
-        >
+      <div className="text-center mb-16">
+        <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold mb-5">
+          <Sparkles size={14} />
+          Đối tác tuyển dụng
+        </span>
+
+        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
           Doanh nghiệp hàng đầu
         </h2>
-        <p className="text-gray-500 mt-2">
-          Được tin tưởng bởi các thương hiệu uy tín
+
+        <p className="text-gray-500 mt-4 max-w-2xl mx-auto leading-relaxed">
+          Đồng hành cùng hàng trăm doanh nghiệp lớn và uy tín
+          trên toàn quốc
         </p>
       </div>
 
       {/* LOGO GRID */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 items-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
         {companies.map((company, index) => (
           <div
             key={index}
-            data-aos="fade-up"
-            className="
-              group bg-white border rounded-xl
-              p-6 flex justify-center items-center
-              hover:shadow-lg hover:border-green-500
-              transition-all duration-300
-            "
+            className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-10 flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-transparent"
           >
+            {/* GRADIENT BACKDROP */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-green-600/10 opacity-0 group-hover:opacity-100 transition" />
+
+            {/* LOGO */}
             <img
               src={company.logo}
               alt={company.name}
-              className="
-                h-12 object-contain
-                grayscale opacity-80
-                group-hover:grayscale-0 group-hover:opacity-100
-                transition
-              "
+              className="relative z-10 h-14 object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition duration-300"
             />
+
+            {/* LABEL */}
+            <div className="absolute bottom-4 text-xs font-semibold text-emerald-600 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition">
+              {company.name}
+            </div>
           </div>
         ))}
       </div>
     </section>
   );
 }
-
-export default TopCompanies;

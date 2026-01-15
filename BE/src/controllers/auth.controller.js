@@ -156,3 +156,124 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+/* =====================
+   FORGOT PASSWORD
+===================== */
+/* =====================
+   FORGOT PASSWORD
+===================== */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    const [rows] = await db.execute(
+      'SELECT id FROM users WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    // 🔒 Che việc email có tồn tại hay không
+    if (rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Nếu email tồn tại, liên kết đặt lại mật khẩu sẽ được gửi',
+      });
+    }
+
+    const userId = rows[0].id;
+
+    const resetToken = jwt.sign(
+      { userId, purpose: 'reset_password' },
+      JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    const transporter = require('../config/mailer');
+
+    await transporter.sendMail({
+      from: '"JobFinder" <no-reply@jobfinder.com>',
+      to: email,
+      subject: 'Đặt lại mật khẩu',
+      html: `
+        <p>Bạn đã yêu cầu đặt lại mật khẩu.</p>
+        <p>Link có hiệu lực trong 15 phút:</p>
+        <a href="${resetLink}">${resetLink}</a>
+      `,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Nếu email tồn tại, liên kết đặt lại mật khẩu sẽ được gửi',
+    });
+
+  } catch (error) {
+    console.error('FORGOT PASSWORD ERROR:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Request failed',
+    });
+  }
+};
+
+
+
+/* =====================
+   RESET PASSWORD
+===================== */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu token hoặc mật khẩu mới',
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token không hợp lệ hoặc đã hết hạn',
+      });
+    }
+
+    if (decoded.purpose !== 'reset_password') {
+      return res.status(400).json({
+        success: false,
+        message: 'Token không hợp lệ',
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.execute(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, decoded.userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Đặt lại mật khẩu thành công',
+    });
+  } catch (error) {
+    console.error('RESET PASSWORD ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Reset password failed',
+    });
+  }
+};

@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
 import employerService from "../../services/employerService";
 import vnAddress from "../../data/vn-address.json";
+import {
+  Building2,
+  Globe,
+  FileText,
+  MapPin,
+  Save,
+  X,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
 
-function EmployerProfileForm({ onProfileCompleted }) {
+export default function EmployerProfileForm({ onProfileCompleted }) {
   const [form, setForm] = useState({
     company_name: "",
     website: "",
@@ -16,18 +26,19 @@ function EmployerProfileForm({ onProfileCompleted }) {
   const [districts, setDistricts] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  /* =====================
-     LOAD PROFILE
-  ===================== */
   useEffect(() => {
     employerService
       .getProfile()
       .then((data) => {
-        const cityData = vnAddress.find((c) => c.Name === data.city);
-        const districtData = cityData?.Districts?.find(
-          (d) => d.Name === data.district
+        const cityData = vnAddress.find(
+          (c) => c.Name === data.city
         );
+        const districtData =
+          cityData?.Districts?.find(
+            (d) => d.Name === data.district
+          );
 
         setForm({
           company_name: data.company_name || "",
@@ -36,18 +47,17 @@ function EmployerProfileForm({ onProfileCompleted }) {
           city: cityData?.Id || "",
           district: districtData?.Id || "",
           address_detail: data.address_detail || "",
-          business_license: data.business_license || "",
+          business_license:
+            data.business_license || "",
         });
 
-        setDistricts(cityData ? cityData.Districts : []);
-        setLoading(false);
+        setDistricts(
+          cityData ? cityData.Districts : []
+        );
       })
-      .catch(() => setLoading(false));
+      .finally(() => setLoading(false));
   }, []);
 
-  /* =====================
-     HANDLERS
-  ===================== */
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     if (errors[e.target.name]) {
@@ -57,7 +67,9 @@ function EmployerProfileForm({ onProfileCompleted }) {
 
   const handleCityChange = (e) => {
     const cityId = e.target.value;
-    const cityData = vnAddress.find((c) => c.Id === cityId);
+    const cityData = vnAddress.find(
+      (c) => c.Id === cityId
+    );
 
     setForm({ ...form, city: cityId, district: "" });
     setDistricts(cityData ? cityData.Districts : []);
@@ -65,18 +77,17 @@ function EmployerProfileForm({ onProfileCompleted }) {
   };
 
   const validate = () => {
-    const newErrors = {};
+    const e = {};
     if (!form.company_name)
-      newErrors.company_name = "Tên công ty không được để trống";
+      e.company_name = "Tên công ty không được để trống";
     if (!form.city)
-      newErrors.city = "Vui lòng chọn tỉnh / thành phố";
+      e.city = "Vui lòng chọn tỉnh / thành phố";
     if (!form.district)
-      newErrors.district = "Vui lòng chọn quận / huyện";
+      e.district = "Vui lòng chọn quận / huyện";
     if (!form.address_detail)
-      newErrors.address_detail = "Vui lòng nhập địa chỉ chi tiết";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+      e.address_detail = "Vui lòng nhập địa chỉ chi tiết";
+    setErrors(e);
+    return !Object.keys(e).length;
   };
 
   const handleSubmit = async (e) => {
@@ -88,52 +99,47 @@ function EmployerProfileForm({ onProfileCompleted }) {
     const districtName =
       districts.find((d) => d.Id === form.district)?.Name || "";
 
-    const payload = {
-      ...form,
-      city: cityName,
-      district: districtName,
-    };
-
     try {
-      await employerService.updateProfile(payload);
+      setSaving(true);
+      await employerService.updateProfile({
+        ...form,
+        city: cityName,
+        district: districtName,
+      });
       onProfileCompleted && onProfileCompleted();
-    } catch (error) {
-      alert(error.response?.data?.message || "Cập nhật thất bại");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    onProfileCompleted && onProfileCompleted();
-  };
-
-  /* =====================
-     LOADING
-  ===================== */
   if (loading) {
     return (
-      <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
+      <div className="bg-white border rounded-3xl p-16 text-center text-gray-500 flex flex-col items-center gap-3">
+        <Loader2 className="animate-spin" />
         Đang tải hồ sơ doanh nghiệp...
       </div>
     );
   }
 
-  /* =====================
-     RENDER
-  ===================== */
   return (
-    <div className="bg-white border rounded-xl p-8">
-      <div className="mb-8">
-        <h3 className="text-2xl font-semibold text-gray-800">
-          Hồ sơ doanh nghiệp
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Thông tin này sẽ hiển thị cho ứng viên khi xem tin tuyển dụng
-        </p>
+    <div className="max-w-5xl mx-auto bg-white border border-gray-200 rounded-3xl p-12 shadow-sm">
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-12">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+          <Building2 size={26} />
+        </div>
+        <div>
+          <h2 className="text-3xl font-semibold">
+            Hồ sơ doanh nghiệp
+          </h2>
+          <p className="text-gray-500">
+            Thông tin hiển thị cho ứng viên
+          </p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-10">
-        {/* ===== DOANH NGHIỆP ===== */}
-        <FormSection title="Thông tin doanh nghiệp">
+      <form onSubmit={handleSubmit} className="space-y-14">
+        <Section icon={<Building2 />} title="Thông tin doanh nghiệp">
           <Input
             label="Tên công ty *"
             name="company_name"
@@ -141,53 +147,56 @@ function EmployerProfileForm({ onProfileCompleted }) {
             onChange={handleChange}
             error={errors.company_name}
           />
+          <Grid>
+            <Input
+              label="Website"
+              name="website"
+              value={form.website}
+              onChange={handleChange}
+              icon={<Globe size={16} />}
+            />
+            <Input
+              label="Giấy phép kinh doanh"
+              name="business_license"
+              value={form.business_license}
+              onChange={handleChange}
+              icon={<FileText size={16} />}
+            />
+          </Grid>
+        </Section>
 
-          <Input
-            label="Website"
-            name="website"
-            value={form.website}
-            onChange={handleChange}
-          />
+        <Section icon={<MapPin />} title="Địa chỉ công ty">
+          <Grid>
+            <Select
+              label="Tỉnh / Thành phố *"
+              value={form.city}
+              onChange={handleCityChange}
+              error={errors.city}
+            >
+              <option value="">Chọn tỉnh / thành phố</option>
+              {vnAddress.map((c) => (
+                <option key={c.Id} value={c.Id}>
+                  {c.Name}
+                </option>
+              ))}
+            </Select>
 
-          <Input
-            label="Giấy phép kinh doanh"
-            name="business_license"
-            value={form.business_license}
-            onChange={handleChange}
-          />
-        </FormSection>
-
-        {/* ===== ĐỊA CHỈ ===== */}
-        <FormSection title="Địa chỉ công ty">
-          <Select
-            label="Tỉnh / Thành phố *"
-            value={form.city}
-            onChange={handleCityChange}
-            error={errors.city}
-          >
-            <option value="">Chọn tỉnh / thành phố</option>
-            {vnAddress.map((c) => (
-              <option key={c.Id} value={c.Id}>
-                {c.Name}
-              </option>
-            ))}
-          </Select>
-
-          <Select
-            label="Quận / Huyện *"
-            name="district"
-            value={form.district}
-            onChange={handleChange}
-            disabled={!form.city}
-            error={errors.district}
-          >
-            <option value="">Chọn quận / huyện</option>
-            {districts.map((d) => (
-              <option key={d.Id} value={d.Id}>
-                {d.Name}
-              </option>
-            ))}
-          </Select>
+            <Select
+              label="Quận / Huyện *"
+              name="district"
+              value={form.district}
+              onChange={handleChange}
+              disabled={!form.city}
+              error={errors.district}
+            >
+              <option value="">Chọn quận / huyện</option>
+              {districts.map((d) => (
+                <option key={d.Id} value={d.Id}>
+                  {d.Name}
+                </option>
+              ))}
+            </Select>
+          </Grid>
 
           <Input
             label="Số nhà, tên đường *"
@@ -196,32 +205,37 @@ function EmployerProfileForm({ onProfileCompleted }) {
             onChange={handleChange}
             error={errors.address_detail}
           />
-        </FormSection>
+        </Section>
 
-        {/* ===== GIỚI THIỆU ===== */}
-        <FormSection title="Giới thiệu công ty">
+        <Section icon={<FileText />} title="Giới thiệu công ty">
           <Textarea
             label="Mô tả ngắn gọn về doanh nghiệp"
             name="description"
             value={form.description}
             onChange={handleChange}
           />
-        </FormSection>
+        </Section>
 
-        {/* ===== ACTION ===== */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-6 border-t">
           <button
             type="submit"
-            className="px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 font-medium"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-10 py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:bg-gray-400"
           >
+            {saving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
             Lưu hồ sơ
           </button>
 
           <button
             type="button"
-            onClick={handleCancel}
-            className="px-8 py-3 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 font-medium"
+            onClick={onProfileCompleted}
+            className="inline-flex items-center gap-2 px-10 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
           >
+            <X size={16} />
             Hủy
           </button>
         </div>
@@ -230,76 +244,78 @@ function EmployerProfileForm({ onProfileCompleted }) {
   );
 }
 
-/* =====================
-   UI COMPONENTS
-===================== */
+/* UI */
 
-function FormSection({ title, children }) {
-  return (
-    <section>
-      <h4 className="text-lg font-semibold text-gray-800 mb-4">
-        {title}
-      </h4>
-      <div className="space-y-4">{children}</div>
-    </section>
-  );
-}
+const Section = ({ icon, title, children }) => (
+  <section>
+    <div className="flex items-center gap-2 mb-5 text-gray-900">
+      <span className="text-emerald-600">{icon}</span>
+      <h3 className="text-xl font-semibold">{title}</h3>
+    </div>
+    <div className="space-y-4">{children}</div>
+  </section>
+);
 
-function Input({ label, error, ...props }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        {label}
-      </label>
+const Grid = ({ children }) => (
+  <div className="grid md:grid-cols-2 gap-4">
+    {children}
+  </div>
+);
+
+const Input = ({ label, error, icon, ...props }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">
+      {label}
+    </label>
+    <div className="relative">
+      {icon && (
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {icon}
+        </span>
+      )}
       <input
         {...props}
-        className={`w-full border p-3 rounded-lg ${
-          error ? "border-red-500" : ""
-        }`}
-      />
-      {error && (
-        <p className="text-sm text-red-500 mt-1">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Select({ label, error, ...props }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        {label}
-      </label>
-      <select
-        {...props}
-        className={`w-full border p-3 rounded-lg ${
-          error ? "border-red-500" : ""
-        }`}
-      />
-      {error && (
-        <p className="text-sm text-red-500 mt-1">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Textarea({ label, ...props }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        {label}
-      </label>
-      <textarea
-        {...props}
-        rows={5}
-        className="w-full border p-3 rounded-lg"
+        className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-emerald-500 ${
+          icon ? "pl-10" : ""
+        } ${error ? "border-red-500" : "border-gray-300"}`}
       />
     </div>
-  );
-}
+    {error && (
+      <p className="text-sm text-red-500 mt-1">
+        {error}
+      </p>
+    )}
+  </div>
+);
 
-export default EmployerProfileForm;
+const Select = ({ label, error, ...props }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">
+      {label}
+    </label>
+    <select
+      {...props}
+      className={`w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-emerald-500 ${
+        error ? "border-red-500" : "border-gray-300"
+      }`}
+    />
+    {error && (
+      <p className="text-sm text-red-500 mt-1">
+        {error}
+      </p>
+    )}
+  </div>
+);
+
+const Textarea = ({ label, ...props }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">
+      {label}
+    </label>
+    <textarea
+      {...props}
+      rows={5}
+      className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-emerald-500"
+    />
+  </div>
+);

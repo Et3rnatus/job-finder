@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { getJobs } from "../../services/adminService";
+import {
+  ShieldCheck,
+  Loader2,
+  ClipboardList,
+} from "lucide-react";
 
 import JobTable from "../../components/admin/JobTable";
 import JobReviewModal from "../../components/admin/JobReviewModal";
@@ -9,20 +14,14 @@ export default function AdminJobsPage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // review job (xem chi tiết + duyệt / từ chối)
   const [reviewJobId, setReviewJobId] = useState(null);
-
-  // audit log
   const [auditJobId, setAuditJobId] = useState(null);
 
-  /* =====================
-     LOAD JOBS (PENDING)
-  ===================== */
   const loadJobs = async () => {
     try {
       setLoading(true);
       const res = await getJobs("pending");
-      setJobs(res);
+      setJobs(Array.isArray(res) ? res : []);
     } catch (error) {
       console.error("GET ADMIN JOBS ERROR:", error);
     } finally {
@@ -36,27 +35,51 @@ export default function AdminJobsPage() {
 
   if (loading) {
     return (
-      <p className="text-gray-500">
-        Loading jobs...
-      </p>
+      <div className="bg-white border border-gray-200 rounded-3xl p-16 flex flex-col items-center gap-4 text-gray-500">
+        <Loader2 className="animate-spin" size={28} />
+        Đang tải danh sách tin tuyển dụng...
+      </div>
     );
   }
 
   return (
-    <div>
-      {/* ===== TITLE ===== */}
-      <h1 className="text-2xl font-bold mb-6">
-        Job Moderation
-      </h1>
+    <div className="space-y-8">
+      {/* HEADER */}
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+          <ShieldCheck size={26} />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Job Moderation
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Duyệt & kiểm soát tin tuyển dụng chờ phê duyệt
+          </p>
+        </div>
+      </div>
 
-      {/* ===== JOB TABLE ===== */}
-      <JobTable
-        jobs={jobs}
-        onReview={(id) => setReviewJobId(id)}
-        onViewLogs={(id) => setAuditJobId(id)}
-      />
+      {/* STATS BAR */}
+      <div className="bg-white border border-gray-200 rounded-2xl px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <ClipboardList size={16} />
+          Tổng tin chờ duyệt:{" "}
+          <span className="font-semibold text-gray-900">
+            {jobs.length}
+          </span>
+        </div>
+      </div>
 
-      {/* ===== REVIEW MODAL ===== */}
+      {/* TABLE */}
+      <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
+        <JobTable
+          jobs={jobs}
+          onReview={(id) => setReviewJobId(id)}
+          onViewLogs={(id) => setAuditJobId(id)}
+        />
+      </div>
+
+      {/* REVIEW MODAL */}
       {reviewJobId && (
         <JobReviewModal
           jobId={reviewJobId}
@@ -65,7 +88,7 @@ export default function AdminJobsPage() {
         />
       )}
 
-      {/* ===== AUDIT LOG MODAL ===== */}
+      {/* AUDIT LOG MODAL */}
       {auditJobId && (
         <JobAuditModal
           jobId={auditJobId}

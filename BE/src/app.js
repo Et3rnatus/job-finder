@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 
@@ -12,8 +14,6 @@ const notificationRoutes = require("./routes/notification.routes");
 const adminRoutes = require("./routes/admin.routes");
 const categoryRoutes = require("./routes/category.routes");
 const paymentRoutes = require("./routes/payment.routes");
-
-console.log("APP.JS LOADED");
 
 const app = express();
 

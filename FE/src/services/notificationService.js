@@ -25,12 +25,12 @@ export const getMyNotifications = async () => {
     headers: getAuthHeader(),
   });
 
-  return res.data; 
-  // expect: [{ id, type, title, message, related_id, is_read, created_at }]
+  return res.data;
+  // [{ id, type, title, message, related_id, is_read, created_at }]
 };
 
 /* =====================
-   MARK AS READ
+   MARK ONE AS READ
 ===================== */
 export const markAsRead = async (notificationId) => {
   if (!notificationId) {
@@ -40,6 +40,36 @@ export const markAsRead = async (notificationId) => {
   const res = await axios.patch(
     `${API_URL}/${notificationId}/read`,
     null,
+    {
+      headers: getAuthHeader(),
+    }
+  );
+
+  return res.data;
+};
+
+/* =====================
+   MARK ALL AS READ
+===================== */
+export const markAllAsRead = async () => {
+  const res = await axios.patch(
+    `${API_URL}/read-all`,
+    null,
+    {
+      headers: getAuthHeader(),
+    }
+  );
+
+  return res.data;
+};
+
+/* =====================
+   DELETE READ NOTIFICATIONS
+   (CHỈ XÓA ĐÃ ĐỌC)
+===================== */
+export const deleteReadNotifications = async () => {
+  const res = await axios.delete(
+    `${API_URL}/read`,
     {
       headers: getAuthHeader(),
     }

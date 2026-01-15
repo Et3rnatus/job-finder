@@ -18,43 +18,78 @@ exports.updateProfile = async (req, res) => {
       logo,
     } = req.body;
 
-    if (!company_name || !city || !district || !address_detail || !business_license) {
+    if (
+      !company_name ||
+      !city ||
+      !district ||
+      !address_detail ||
+      !business_license
+    ) {
       return res.status(400).json({
         message: "Vui lòng nhập đầy đủ thông tin bắt buộc",
       });
     }
 
-    const fullAddress = `${address_detail}, ${district}, ${city}`;
-
-    await db.execute(
+    /* =========================
+       CHECK EXISTING LICENSE
+    ========================= */
+    const [[existing]] = await db.execute(
       `
-      UPDATE employer
-      SET
-        company_name = ?,
-        description = ?,
-        website = ?,
-        city = ?,
-        district = ?,
-        address_detail = ?,
-        business_license = ?,
-        address = ?,
-        logo = ?,
-        is_profile_completed = 1
+      SELECT business_license
+      FROM employer
       WHERE user_id = ?
       `,
-      [
-        company_name.trim(),
-        description || null,
-        website || null,
-        city,
-        district,
-        address_detail,
-        business_license,
-        fullAddress,
-        logo || null,
-        userId,
-      ]
+      [userId]
     );
+
+    // Nếu đã có license rồi → không cho sửa
+    if (existing?.business_license) {
+      return res.status(400).json({
+        message: "Giấy phép kinh doanh chỉ được nhập một lần và không thể chỉnh sửa",
+      });
+    }
+
+    const fullAddress = `${address_detail}, ${district}, ${city}`;
+
+    try {
+      await db.execute(
+        `
+        UPDATE employer
+        SET
+          company_name = ?,
+          description = ?,
+          website = ?,
+          city = ?,
+          district = ?,
+          address_detail = ?,
+          business_license = ?,
+          address = ?,
+          logo = ?,
+          is_profile_completed = 1
+        WHERE user_id = ?
+        `,
+        [
+          company_name.trim(),
+          description || null,
+          website || null,
+          city,
+          district,
+          address_detail,
+          business_license.trim(),
+          fullAddress,
+          logo || null,
+          userId,
+        ]
+      );
+    } catch (err) {
+      // Bắt lỗi UNIQUE từ MySQL
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.status(400).json({
+          message: "Giấy phép kinh doanh đã tồn tại trong hệ thống",
+        });
+      }
+      throw err;
+    }
 
     return res.json({
       message: "Employer profile completed",

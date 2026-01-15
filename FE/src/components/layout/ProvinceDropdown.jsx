@@ -38,7 +38,7 @@ function ProvinceDropdown({ value, onChange }) {
   }, []);
 
   /* =====================
-     AUTO-FOCUS SEARCH INPUT WHEN OPEN
+     AUTO FOCUS SEARCH
   ===================== */
   useEffect(() => {
     if (open) {
@@ -62,7 +62,6 @@ function ProvinceDropdown({ value, onChange }) {
     );
   }, [keyword]);
 
-  /* reset active when list changes */
   useEffect(() => {
     setActiveIndex(0);
   }, [keyword]);
@@ -77,7 +76,7 @@ function ProvinceDropdown({ value, onChange }) {
       e.preventDefault();
       setActiveIndex((i) =>
         Math.min(i + 1, items.length)
-      ); // +1 vì có item "Tất cả địa điểm"
+      );
     }
 
     if (e.key === "ArrowUp") {
@@ -105,56 +104,71 @@ function ProvinceDropdown({ value, onChange }) {
   return (
     <div
       ref={wrapRef}
-      className="relative w-56 shrink-0"
-      onKeyDown={handleKeyDown}
       tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="relative w-60 shrink-0"
     >
-      {/* ===== BUTTON ===== */}
+      {/* =====================
+          TRIGGER BUTTON
+      ===================== */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="
-          w-full h-12 px-3
+          w-full h-12 px-4
           flex items-center justify-between
-          rounded-xl border border-gray-300
-          bg-gray-50 text-sm
+          rounded-xl border
+          bg-white text-sm
+          border-gray-300
           hover:border-green-500
+          focus:outline-none focus:ring-2 focus:ring-green-500
+          transition
         "
       >
         <span className="flex items-center gap-2 truncate text-gray-800">
-          <MapPinIcon className="h-5 w-5 text-gray-400" />
+          <MapPinIcon className="h-5 w-5 text-green-600 shrink-0" />
           {value || "Tất cả địa điểm"}
         </span>
-        <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+
+        <ChevronDownIcon
+          className={`h-4 w-4 text-gray-400 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
-      {/* ===== DROPDOWN ===== */}
+      {/* =====================
+          DROPDOWN
+      ===================== */}
       {open && (
         <div
           className="
             absolute top-full left-0 mt-2 w-full
             bg-white border border-gray-200
-            rounded-xl shadow-lg z-50
+            rounded-2xl shadow-xl z-50
+            overflow-hidden
+            animate-fade-in
           "
         >
           {/* SEARCH */}
-          <div className="p-2 border-b">
+          <div className="p-3 border-b bg-gray-50">
             <input
               ref={inputRef}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Tìm tỉnh / thành..."
+              placeholder="Tìm tỉnh / thành phố..."
               className="
-                w-full px-3 py-2 text-sm
-                border rounded-lg
+                w-full px-4 py-2.5 text-sm
+                border rounded-xl
                 text-gray-800
-                focus:outline-none focus:ring-2 focus:ring-green-500
+                focus:outline-none
+                focus:ring-2 focus:ring-green-500
               "
             />
           </div>
 
           {/* LIST */}
-          <div className="max-h-56 overflow-y-auto py-1">
+          <div className="max-h-64 overflow-y-auto py-1">
             {/* ALL */}
             <div
               onMouseEnter={() => setActiveIndex(0)}
@@ -164,14 +178,14 @@ function ProvinceDropdown({ value, onChange }) {
                 setKeyword("");
               }}
               className={`
-                px-4 py-2 text-sm cursor-pointer
+                px-4 py-2.5 text-sm cursor-pointer
                 flex items-center gap-2
                 ${
                   activeIndex === 0
-                    ? "bg-green-100 text-green-700"
+                    ? "bg-green-100 text-green-700 font-medium"
                     : "text-gray-700"
                 }
-                hover:bg-gray-100 hover:text-gray-900
+                hover:bg-green-50 hover:text-green-700
               `}
             >
               <GlobeAltIcon className="h-4 w-4 text-gray-400" />
@@ -182,7 +196,7 @@ function ProvinceDropdown({ value, onChange }) {
 
             {/* PROVINCES */}
             {items.map((p, idx) => {
-              const index = idx + 1; // vì item đầu là "Tất cả địa điểm"
+              const index = idx + 1;
               const isActive = activeIndex === index;
 
               return (
@@ -195,7 +209,8 @@ function ProvinceDropdown({ value, onChange }) {
                     setKeyword("");
                   }}
                   className={`
-                    px-4 py-2 text-sm cursor-pointer
+                    px-4 py-2.5 text-sm cursor-pointer
+                    transition
                     ${
                       isActive
                         ? "bg-green-100 text-green-700 font-medium"

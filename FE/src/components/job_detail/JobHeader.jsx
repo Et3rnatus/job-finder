@@ -2,7 +2,7 @@ import {
   MapPin,
   DollarSign,
   Clock,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 
 function JobHeader({ job }) {
@@ -12,7 +12,7 @@ function JobHeader({ job }) {
   const formatSalary = () => {
     if (job.is_salary_negotiable) return "Thỏa thuận";
     if (job.min_salary && job.max_salary) {
-      return `${job.min_salary} - ${job.max_salary} triệu`;
+      return `${job.min_salary} – ${job.max_salary} triệu`;
     }
     return "Thỏa thuận";
   };
@@ -31,6 +31,7 @@ function JobHeader({ job }) {
     );
 
     if (days <= 0) return "Hôm nay";
+    if (days === 1) return "1 ngày trước";
     return `${days} ngày trước`;
   };
 
@@ -48,74 +49,144 @@ function JobHeader({ job }) {
   ===================== */
   const getCityFromLocation = () => {
     if (!job.location) return null;
-    // location dạng: "Số nhà, Quận/Huyện, Thành phố"
     const parts = job.location.split(",");
     return parts[parts.length - 1].trim();
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+    <section
+      className="
+        bg-white border border-gray-200
+        rounded-2xl p-6 md:p-8
+        shadow-sm
+      "
+    >
       {/* =====================
-          JOB TITLE
+          TOP SECTION
       ===================== */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900 leading-snug">
+      <div className="flex flex-col gap-3 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug">
           {job.title}
         </h1>
 
-        {/* POSTED DATE */}
-        {job.created_at && (
-          <p className="text-xs text-gray-500 mt-1">
-            Đăng {formatPostedDate()}
-          </p>
-        )}
+        {/* META LINE */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+          {job.created_at && (
+            <span>Đăng {formatPostedDate()}</span>
+          )}
+
+          {job.expired_at && (
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              Hạn nộp:{" "}
+              <span className="font-medium text-gray-700">
+                {formatDeadline()}
+              </span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* =====================
-          META INFO
+          INFO GRID
       ===================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 text-sm text-gray-700">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* SALARY */}
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-green-600" />
-          <span>
-            <span className="font-medium">Mức lương:</span>{" "}
-            {formatSalary()}
-          </span>
-        </div>
+        <InfoCard
+          icon={DollarSign}
+          label="Mức lương"
+          value={formatSalary()}
+          highlight
+        />
 
-        {/* LOCATION – CITY ONLY */}
+        {/* LOCATION */}
         {job.location && (
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-green-600" />
-            <span>
-              <span className="font-medium">Địa điểm:</span>{" "}
-              {getCityFromLocation()}
-            </span>
-          </div>
+          <InfoCard
+            icon={MapPin}
+            label="Địa điểm"
+            value={getCityFromLocation()}
+          />
         )}
 
         {/* EXPERIENCE */}
-        {job.experience && experienceLabelMap[job.experience] && (
-          <div className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-green-600" />
-            <span>
-              <span className="font-medium">Kinh nghiệm:</span>{" "}
-              {experienceLabelMap[job.experience]}
-            </span>
-          </div>
-        )}
+        {job.experience &&
+          experienceLabelMap[job.experience] && (
+            <InfoCard
+              icon={Briefcase}
+              label="Kinh nghiệm"
+              value={experienceLabelMap[job.experience]}
+            />
+          )}
 
         {/* DEADLINE */}
         {job.expired_at && (
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-green-600" />
-            <span>
-              <span className="font-medium">Hạn nộp hồ sơ:</span>{" "}
-              {formatDeadline()}
-            </span>
-          </div>
+          <InfoCard
+            icon={Clock}
+            label="Hạn nộp"
+            value={formatDeadline()}
+          />
         )}
+      </div>
+    </section>
+  );
+}
+
+/* =====================
+   SUB COMPONENT
+===================== */
+
+function InfoCard({
+  icon: Icon,
+  label,
+  value,
+  highlight = false,
+}) {
+  return (
+    <div
+      className={`
+        flex items-start gap-4
+        p-4 rounded-xl border
+        transition
+        ${
+          highlight
+            ? "bg-green-50 border-green-200"
+            : "bg-gray-50 border-gray-100 hover:bg-white hover:border-green-200"
+        }
+      `}
+    >
+      {/* ICON */}
+      <div
+        className={`
+          w-10 h-10 rounded-lg
+          flex items-center justify-center
+          shrink-0
+          ${
+            highlight
+              ? "bg-green-600 text-white"
+              : "bg-green-100 text-green-600"
+          }
+        `}
+      >
+        <Icon size={18} />
+      </div>
+
+      {/* CONTENT */}
+      <div>
+        <p className="text-xs text-gray-500 mb-1">
+          {label}
+        </p>
+        <p
+          className={`
+            text-sm font-semibold
+            ${
+              highlight
+                ? "text-green-700"
+                : "text-gray-800"
+            }
+          `}
+        >
+          {value}
+        </p>
       </div>
     </div>
   );

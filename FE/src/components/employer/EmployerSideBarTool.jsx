@@ -1,6 +1,13 @@
 import { useNavigate } from "react-router-dom";
+import {
+  Building2,
+  Briefcase,
+  PlusCircle,
+  CreditCard,
+  LogOut,
+} from "lucide-react";
 
-function EmployerSideBarTool({
+export default function EmployerSideBarTool({
   setMode,
   setProfileMode,
   currentMode,
@@ -10,88 +17,89 @@ function EmployerSideBarTool({
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    sessionStorage.removeItem("employerProfileModalShown");
+    sessionStorage.removeItem(
+      "employerProfileModalShown"
+    );
     navigate("/login");
   };
 
-  const menuClass = (mode) =>
-    `
-      flex items-center gap-3
-      px-4 py-3 rounded-lg cursor-pointer
-      transition font-medium
-      ${
-        currentMode === mode
-          ? "bg-green-100 text-green-700"
+  const isActive = (mode) => currentMode === mode;
+
+  const Item = ({ icon, label, mode, onClick }) => (
+    <li
+      onClick={onClick}
+      className={`group flex items-center justify-between px-4 py-3 rounded-2xl cursor-pointer transition ${
+        isActive(mode)
+          ? "bg-emerald-50 text-emerald-700"
           : "text-gray-700 hover:bg-gray-100"
-      }
-    `;
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={`transition ${
+            isActive(mode)
+              ? "text-emerald-600"
+              : "text-gray-400 group-hover:text-gray-700"
+          }`}
+        >
+          {icon}
+        </span>
+        <span className="font-semibold">
+          {label}
+        </span>
+      </div>
+    </li>
+  );
 
   return (
-    <div className="bg-white border rounded-xl p-6 mt-6">
+    <div className="bg-white border border-gray-200 rounded-3xl p-6 mt-6 shadow-sm">
       {/* HEADER */}
-      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">
         Quản lý tuyển dụng
       </h3>
 
       <ul className="space-y-1 text-sm">
-        {/* ===== PROFILE ===== */}
-        <li
+        <Item
+          icon={<Building2 size={18} />}
+          label="Hồ sơ công ty"
+          mode="profile"
           onClick={() => {
             setMode("profile");
             setProfileMode?.("view");
           }}
-          className={menuClass("profile")}
-        >
-          <span className="text-lg">🏢</span>
-          Hồ sơ công ty
-        </li>
+        />
 
-        {/* ===== JOBS ===== */}
-        <li
+        <Item
+          icon={<Briefcase size={18} />}
+          label="Việc làm đã đăng"
+          mode="jobs"
           onClick={() => setMode("jobs")}
-          className={menuClass("jobs")}
-        >
-          <span className="text-lg">📄</span>
-          Việc làm đã đăng
-        </li>
+        />
 
-        {/* ===== CREATE JOB ===== */}
-        <li
+        <Item
+          icon={<PlusCircle size={18} />}
+          label="Đăng tuyển mới"
+          mode="create"
           onClick={() => setMode("create")}
-          className={menuClass("create")}
-        >
-          <span className="text-lg">➕</span>
-          Đăng tuyển mới
-        </li>
+        />
 
-        {/* ===== PAYMENT ===== */}
-        <li
+        <Item
+          icon={<CreditCard size={18} />}
+          label="Nâng cấp tài khoản"
+          mode="payment"
           onClick={() => setMode("payment")}
-          className={menuClass("payment")}
-        >
-          <span className="text-lg">💳</span>
-          Nâng cấp tài khoản
-        </li>
+        />
 
-        {/* DIVIDER */}
-        <div className="my-3 border-t" />
+        <div className="my-5 border-t border-gray-200" />
 
-        {/* ===== LOGOUT ===== */}
         <li
           onClick={handleLogout}
-          className="
-            flex items-center gap-3
-            px-4 py-3 rounded-lg cursor-pointer
-            text-red-600 hover:bg-red-50
-            font-medium transition
-          "
+          className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer text-red-600 font-semibold hover:bg-red-50 transition"
         >
-          <span className="text-lg">🚪</span>
+          <LogOut size={18} />
           Đăng xuất
         </li>
       </ul>
     </div>
   );
 }
-
-export default EmployerSideBarTool;

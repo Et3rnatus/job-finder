@@ -10,20 +10,19 @@ import CreateJobForm from "../components/employer/CreateJobForm";
 import EmployerPayment from "../components/employer/EmployerPayment";
 
 import employerService from "../services/employerService";
+import { AlertTriangle } from "lucide-react";
 
 function EmployerPage() {
   const location = useLocation();
 
-  // profile | jobs | create | payment
   const [mode, setMode] = useState("profile");
   const [profileMode, setProfileMode] = useState("view");
 
-  // 🔑 nghiệp vụ
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
 
   /* =====================
-     SYNC MODE FROM ROUTE STATE
+     SYNC MODE FROM ROUTE
   ===================== */
   useEffect(() => {
     if (location.state?.mode) {
@@ -39,32 +38,23 @@ function EmployerPage() {
       try {
         const res = await employerService.checkProfile();
         setProfileCompleted(res.completed);
-
-        if (!res.completed) {
-          setShowWarning(true);
-        }
-      } catch (error) {
-        console.error("CHECK EMPLOYER PROFILE ERROR:", error);
+        setShowWarning(!res.completed);
+      } catch (err) {
+        console.error("CHECK EMPLOYER PROFILE ERROR:", err);
       }
     };
-
     checkProfile();
   }, []);
 
   /* =====================
-     CHANGE MODE (GUARD)
+     MODE GUARD
   ===================== */
   const handleChangeMode = (newMode) => {
-    // ❌ chặn đăng tin khi hồ sơ chưa hoàn tất
     if (newMode === "create" && !profileCompleted) {
       setShowWarning(true);
-      alert(
-        "Hồ sơ công ty chưa hoàn tất. Vui lòng cập nhật hồ sơ trước khi đăng tin."
-      );
       return;
     }
 
-    // reset edit khi rời profile
     if (newMode !== "profile") {
       setProfileMode("view");
     }
@@ -73,100 +63,92 @@ function EmployerPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      {/* =====================
-          HEADER
-      ===================== */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800">
-          Trang quản lý nhà tuyển dụng
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Quản lý hồ sơ công ty, tin tuyển dụng và ứng viên
-        </p>
-      </div>
-
-      {/* =====================
-          MAIN LAYOUT
-      ===================== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* =====================
-            SIDEBAR
-        ===================== */}
-        <div className="space-y-6">
-          <UserAvatar />
-
-          <EmployerSideBarTool
-            currentMode={mode}
-            setMode={handleChangeMode}
-            setProfileMode={setProfileMode}
-          />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
+        {/* HEADER */}
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Bảng điều khiển nhà tuyển dụng
+          </h1>
+          <p className="text-sm text-gray-500">
+            Quản lý doanh nghiệp, tin tuyển dụng và ứng viên
+          </p>
         </div>
 
-        {/* =====================
-            MAIN CONTENT
-        ===================== */}
-        <div className="md:col-span-3 space-y-6">
-          {/* ⚠️ PROFILE WARNING */}
-          {showWarning && !profileCompleted && (
-            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
-              <p className="font-semibold text-yellow-800">
-                Hồ sơ công ty chưa hoàn thiện
-              </p>
-              <p className="text-sm text-yellow-700 mt-1">
-                Bạn cần hoàn thiện hồ sơ công ty trước khi có thể đăng
-                tin tuyển dụng.
-              </p>
+        {/* LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* SIDEBAR */}
+          <aside className="lg:col-span-3 space-y-6">
+            <UserAvatar />
 
-              <button
-                onClick={() => {
-                  setMode("profile");
-                  setProfileMode("edit");
-                }}
-                className="mt-3 text-sm font-medium text-green-600 hover:underline"
-              >
-                Hoàn thiện hồ sơ ngay →
-              </button>
-            </div>
-          )}
+            <EmployerSideBarTool
+              currentMode={mode}
+              setMode={handleChangeMode}
+              setProfileMode={setProfileMode}
+            />
+          </aside>
 
-          {/* =====================
-              PROFILE
-          ===================== */}
-          {mode === "profile" && (
-            <>
-              {profileMode === "view" ? (
-                <EmployerProfileView
-                  onEdit={() => setProfileMode("edit")}
-                />
-              ) : (
-                <EmployerProfileForm
-                  onProfileCompleted={() => {
-                    setProfileCompleted(true);
-                    setShowWarning(false);
-                    setProfileMode("view");
-                  }}
-                />
-              )}
-            </>
-          )}
+          {/* CONTENT */}
+          <main className="lg:col-span-9 space-y-6">
+            {/* WARNING */}
+            {showWarning && !profileCompleted && (
+              <div className="flex items-start gap-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-5">
+                <div className="w-10 h-10 rounded-xl bg-yellow-100 text-yellow-700 flex items-center justify-center">
+                  <AlertTriangle size={20} />
+                </div>
 
-          {/* =====================
-              JOB MANAGEMENT
-          ===================== */}
-          {mode === "jobs" && <EmployerJobList />}
+                <div className="flex-1">
+                  <p className="font-semibold text-yellow-900">
+                    Hồ sơ công ty chưa hoàn thiện
+                  </p>
+                  <p className="text-sm text-yellow-800 mt-1">
+                    Bạn cần hoàn thiện hồ sơ doanh nghiệp trước khi đăng tin
+                    tuyển dụng hoặc sử dụng đầy đủ tính năng.
+                  </p>
 
-          {/* =====================
-              CREATE JOB
-          ===================== */}
-          {mode === "create" && profileCompleted && (
-            <CreateJobForm />
-          )}
+                  <button
+                    onClick={() => {
+                      setMode("profile");
+                      setProfileMode("edit");
+                    }}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:underline"
+                  >
+                    Hoàn thiện hồ sơ ngay →
+                  </button>
+                </div>
+              </div>
+            )}
 
-          {/* =====================
-              PAYMENT
-          ===================== */}
-          {mode === "payment" && <EmployerPayment />}
+            {/* PROFILE */}
+            {mode === "profile" && (
+              <>
+                {profileMode === "view" ? (
+                  <EmployerProfileView
+                    onEdit={() => setProfileMode("edit")}
+                  />
+                ) : (
+                  <EmployerProfileForm
+                    onProfileCompleted={() => {
+                      setProfileCompleted(true);
+                      setShowWarning(false);
+                      setProfileMode("view");
+                    }}
+                  />
+                )}
+              </>
+            )}
+
+            {/* JOBS */}
+            {mode === "jobs" && <EmployerJobList />}
+
+            {/* CREATE JOB */}
+            {mode === "create" && profileCompleted && (
+              <CreateJobForm />
+            )}
+
+            {/* PAYMENT */}
+            {mode === "payment" && <EmployerPayment />}
+          </main>
         </div>
       </div>
     </div>

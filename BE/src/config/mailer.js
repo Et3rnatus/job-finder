@@ -1,11 +1,16 @@
+require("dotenv").config();
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAILTRAP_HOST,
-  port: process.env.MAILTRAP_PORT,
+  port: Number(process.env.MAILTRAP_PORT),
+  secure: false, // QUAN TRỌNG
   auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
+    user: process.env.MAILTRAP_USER,
+    pass: process.env.MAILTRAP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false, // QUAN TRỌNG
   },
 });
 

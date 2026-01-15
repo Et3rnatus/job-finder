@@ -24,12 +24,7 @@ exports.applyJob = async (req, res) => {
 
     const [[job]] = await connection.execute(
       `
-      SELECT
-        j.id,
-        j.title,
-        j.status,
-        j.expired_at,
-        e.user_id AS employer_user_id
+      SELECT j.id, j.title, j.status, j.expired_at, e.user_id AS employer_user_id
       FROM job j
       JOIN employer e ON j.employer_id = e.id
       WHERE j.id = ?
@@ -44,26 +39,35 @@ exports.applyJob = async (req, res) => {
 
     if (job.status !== "approved") {
       await connection.rollback();
-      return res.status(400).json({ message: "Công việc chưa được mở tuyển dụng" });
+      return res
+        .status(400)
+        .json({ message: "Công việc chưa được mở tuyển dụng" });
     }
 
     if (job.expired_at && new Date(job.expired_at) < new Date()) {
       await connection.rollback();
-      return res.status(400).json({ message: "Công việc đã hết hạn tuyển dụng" });
+      return res
+        .status(400)
+        .json({ message: "Công việc đã hết hạn tuyển dụng" });
     }
 
     const [[existed]] = await connection.execute(
       `
       SELECT id
       FROM application
-      WHERE candidate_id = ? AND job_id = ? AND status != 'cancelled'
+      WHERE candidate_id = ?
+        AND job_id = ?
+        AND status != 'cancelled'
+        AND is_deleted = 0
       `,
       [candidate.id, job_id]
     );
 
     if (existed) {
       await connection.rollback();
-      return res.status(400).json({ message: "Bạn đã ứng tuyển công việc này" });
+      return res
+        .status(400)
+        .json({ message: "Bạn đã ứng tuyển công việc này" });
     }
 
     const [[basic]] = await connection.execute(
@@ -122,9 +126,10 @@ exports.applyJob = async (req, res) => {
         cover_letter,
         snapshot_cv_json,
         status,
-        applied_at
+        applied_at,
+        is_deleted
       )
-      VALUES (?, ?, ?, ?, ?, 'pending', NOW())
+      VALUES (?, ?, ?, ?, ?, 'pending', NOW(), 0)
       `,
       [
         applicationId,
@@ -165,9 +170,14 @@ exports.applyJob = async (req, res) => {
 /* =========================
    GET MY APPLICATIONS
 ========================= */
+/* =========================
+   GET MY APPLICATIONS (SEARCH + FILTER)
+========================= */
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user.id;
+
+    const { keyword, status, from_date, to_date } = req.query;
 
     const [[candidate]] = await db.execute(
       `SELECT id FROM candidate WHERE user_id = ?`,
@@ -175,6 +185,40 @@ exports.getMyApplications = async (req, res) => {
     );
 
     if (!candidate) return res.json([]);
+
+    let conditions = `
+      a.candidate_id = ?
+      AND a.is_deleted = 0
+    `;
+    const params = [candidate.id];
+
+    // 🔎 SEARCH BY JOB TITLE / COMPANY NAME
+    if (keyword) {
+      conditions += `
+        AND (
+          j.title LIKE ?
+          OR e.company_name LIKE ?
+        )
+      `;
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+
+    // 🎯 FILTER BY STATUS
+    if (status) {
+      conditions += ` AND a.status = ? `;
+      params.push(status);
+    }
+
+    // 📅 FILTER BY DATE RANGE
+    if (from_date) {
+      conditions += ` AND a.applied_at >= ? `;
+      params.push(from_date);
+    }
+
+    if (to_date) {
+      conditions += ` AND a.applied_at <= ? `;
+      params.push(to_date);
+    }
 
     const [rows] = await db.execute(
       `
@@ -189,10 +233,10 @@ exports.getMyApplications = async (req, res) => {
       FROM application a
       JOIN job j ON a.job_id = j.id
       JOIN employer e ON j.employer_id = e.id
-      WHERE a.candidate_id = ?
+      WHERE ${conditions}
       ORDER BY a.applied_at DESC
       `,
-      [candidate.id]
+      params
     );
 
     res.json(rows);
@@ -201,6 +245,44 @@ exports.getMyApplications = async (req, res) => {
     res.status(500).json({ message: "Failed to load applied jobs" });
   }
 };
+
+
+/* =========================
+   DELETE ALL APPLICATION HISTORY (SOFT DELETE)
+========================= */
+exports.deleteApplicationHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [[candidate]] = await db.execute(
+      "SELECT id FROM candidate WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!candidate) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const [result] = await db.execute(
+      `
+      UPDATE application
+      SET is_deleted = 1
+      WHERE candidate_id = ?
+        AND is_deleted = 0
+      `,
+      [candidate.id]
+    );
+
+    return res.json({
+      message: "Đã xóa toàn bộ lịch sử ứng tuyển",
+      deleted_count: result.affectedRows,
+    });
+  } catch (error) {
+    console.error("DELETE ALL APPLICATION HISTORY ERROR:", error);
+    res.status(500).json({ message: "Delete history failed" });
+  }
+};
+
 
 /* =========================
    CANCEL APPLICATION
@@ -223,7 +305,9 @@ exports.cancelApplication = async (req, res) => {
       `
       SELECT id, status
       FROM application
-      WHERE id = ? AND candidate_id = ?
+      WHERE id = ?
+        AND candidate_id = ?
+        AND is_deleted = 0
       `,
       [id, candidate.id]
     );
@@ -315,10 +399,16 @@ exports.updateApplicationStatus = async (req, res) => {
 
     const [[row]] = await db.execute(
       `
-      SELECT a.id, a.status
+      SELECT
+        a.id,
+        a.job_id,
+        a.status,
+        c.user_id AS candidate_user_id,
+        j.title AS job_title
       FROM application a
       JOIN job j ON a.job_id = j.id
       JOIN employer e ON j.employer_id = e.id
+      JOIN candidate c ON a.candidate_id = c.id
       WHERE a.id = ?
         AND e.user_id = ?
       `,
@@ -344,12 +434,44 @@ exports.updateApplicationStatus = async (req, res) => {
       [status, status === "rejected" ? reject_reason : null, id]
     );
 
+    // 🔔 NOTIFICATION FOR CANDIDATE
+    if (status === "approved") {
+      await db.execute(
+        `
+        INSERT INTO notification (user_id, type, title, message, related_id)
+        VALUES (?, 'APPLICATION_APPROVED', ?, ?, ?)
+        `,
+        [
+          row.candidate_user_id,
+          "Hồ sơ được duyệt",
+          `Chúc mừng! Hồ sơ của bạn đã được duyệt cho vị trí "${row.job_title}".`,
+          row.job_id, // ✅ INT
+        ]
+      );
+    }
+
+    if (status === "rejected") {
+      await db.execute(
+        `
+        INSERT INTO notification (user_id, type, title, message, related_id)
+        VALUES (?, 'APPLICATION_REJECTED', ?, ?, ?)
+        `,
+        [
+          row.candidate_user_id,
+          "Kết quả ứng tuyển",
+          `Rất tiếc, hồ sơ của bạn chưa phù hợp với vị trí "${row.job_title}".`,
+          row.job_id, // ✅ INT
+        ]
+      );
+    }
+
     res.json({ message: "Application result updated successfully" });
   } catch (error) {
     console.error("UPDATE APPLICATION STATUS ERROR:", error);
     res.status(500).json({ message: "Update status failed" });
   }
 };
+
 
 /* =========================
    CHECK APPLIED JOB
@@ -375,6 +497,7 @@ exports.checkAppliedJob = async (req, res) => {
       WHERE candidate_id = ?
         AND job_id = ?
         AND status != 'cancelled'
+        AND is_deleted = 0
       LIMIT 1
       `,
       [candidate.id, jobId]

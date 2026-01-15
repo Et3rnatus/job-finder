@@ -30,75 +30,100 @@ const employmentTypeMap = {
 function JobGeneralInfo({ job }) {
   if (!job) return null;
 
-  const hasLevel = Boolean(job.level);
-  const hasEducation = Boolean(job.education_level);
-  const hasQuantity = job.hiring_quantity != null;
-  const hasEmploymentType = Boolean(job.employment_type);
+  const items = [
+    job.level && {
+      icon: Briefcase,
+      label: "Cấp bậc",
+      value: levelMap[job.level] || job.level,
+    },
+    job.education_level && {
+      icon: GraduationCap,
+      label: "Học vấn",
+      value:
+        educationMap[job.education_level] ||
+        job.education_level,
+    },
+    job.hiring_quantity != null && {
+      icon: Users,
+      label: "Số lượng tuyển",
+      value:
+        job.hiring_quantity === 1
+          ? "1 người"
+          : `${job.hiring_quantity} người`,
+    },
+    job.employment_type && {
+      icon: Clock,
+      label: "Hình thức làm việc",
+      value:
+        employmentTypeMap[job.employment_type] ||
+        job.employment_type,
+    },
+  ].filter(Boolean);
 
   return (
-    <div className="bg-white border rounded-xl p-6 space-y-4">
-      <h3 className="text-lg font-semibold">
-        Thông tin chung
-      </h3>
+    <section className="bg-white border rounded-2xl p-6 shadow-sm">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-800">
+          Thông tin chung
+        </h3>
+        <span className="text-xs px-3 py-1 rounded-full bg-green-50 text-green-600 font-medium">
+          Tổng quan
+        </span>
+      </div>
 
-      <div className="space-y-3 text-sm text-gray-700">
-        {/* LEVEL */}
-        {hasLevel && (
-          <div className="flex items-center gap-3">
-            <Briefcase className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="text-gray-500">Cấp bậc</p>
-              <p className="font-medium">
-                {levelMap[job.level] || job.level}
-              </p>
-            </div>
-          </div>
-        )}
+      {/* GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {items.map((item, index) => (
+          <InfoCard
+            key={index}
+            icon={item.icon}
+            label={item.label}
+            value={item.value}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
-        {/* EDUCATION */}
-        {hasEducation && (
-          <div className="flex items-center gap-3">
-            <GraduationCap className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="text-gray-500">Học vấn</p>
-              <p className="font-medium">
-                {educationMap[job.education_level] ||
-                  job.education_level}
-              </p>
-            </div>
-          </div>
-        )}
+/* =====================
+   SUB COMPONENT
+===================== */
 
-        {/* QUANTITY */}
-        {hasQuantity && (
-          <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="text-gray-500">Số lượng tuyển</p>
-              <p className="font-medium">
-                {job.hiring_quantity === 1
-                  ? "1 người"
-                  : `${job.hiring_quantity} người`}
-              </p>
-            </div>
-          </div>
-        )}
+function InfoCard({ icon: Icon, label, value }) {
+  return (
+    <div
+      className="
+        flex items-start gap-4
+        p-4 rounded-xl
+        border border-gray-100
+        bg-gray-50
+        hover:bg-white hover:border-green-200
+        hover:shadow-sm
+        transition
+      "
+    >
+      {/* ICON */}
+      <div
+        className="
+          w-10 h-10 flex items-center justify-center
+          rounded-lg
+          bg-green-100 text-green-600
+          shrink-0
+        "
+      >
+        <Icon size={18} />
+      </div>
 
-        {/* EMPLOYMENT TYPE */}
-        {hasEmploymentType && (
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="text-gray-500">
-                Hình thức làm việc
-              </p>
-              <p className="font-medium">
-                {employmentTypeMap[job.employment_type] ||
-                  job.employment_type}
-              </p>
-            </div>
-          </div>
-        )}
+      {/* CONTENT */}
+      <div>
+        <p className="text-xs text-gray-500 mb-1">
+          {label}
+        </p>
+        <p className="text-sm font-semibold text-gray-800">
+          {value}
+        </p>
       </div>
     </div>
   );

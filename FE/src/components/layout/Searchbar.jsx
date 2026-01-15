@@ -16,7 +16,6 @@ function Searchbar() {
     searchParams.get("keyword") || ""
   );
 
-  // 🔁 đổi city → province (nhưng vẫn map về location khi search)
   const [province, setProvince] = useState(
     searchParams.get("location") || ""
   );
@@ -32,13 +31,12 @@ function Searchbar() {
   }, []);
 
   /* =====================
-     DEBOUNCE KEYWORD
+     DEBOUNCE
   ===================== */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedKeyword(keyword);
     }, 300);
-
     return () => clearTimeout(timer);
   }, [keyword]);
 
@@ -57,7 +55,7 @@ function Searchbar() {
 
     const params = {};
     if (keyword.trim()) params.keyword = keyword.trim();
-    if (province.trim()) params.location = province.trim(); // 👈 map về location
+    if (province.trim()) params.location = province.trim();
 
     navigate({
       pathname: "/jobs",
@@ -86,10 +84,7 @@ function Searchbar() {
 
     return parts.map((part, i) =>
       part.toLowerCase() === kw.toLowerCase() ? (
-        <span
-          key={i}
-          className="text-green-600 font-semibold"
-        >
+        <span key={i} className="text-green-600 font-semibold">
           {part}
         </span>
       ) : (
@@ -99,17 +94,20 @@ function Searchbar() {
   };
 
   return (
-    <div className="mt-8 px-4">
+    <div className="mt-10 px-4">
       <div
         className="
-          max-w-5xl mx-auto
+          max-w-6xl mx-auto
           bg-white border border-gray-200
-          rounded-2xl shadow-sm
-          p-4 flex flex-col md:flex-row
+          rounded-2xl shadow-lg
+          p-4
+          flex flex-col md:flex-row
           items-stretch gap-4
         "
       >
-        {/* ===== KEYWORD INPUT ===== */}
+        {/* =====================
+            KEYWORD INPUT
+        ===================== */}
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
 
@@ -120,7 +118,7 @@ function Searchbar() {
             onChange={(e) => setKeyword(e.target.value)}
             onFocus={() => setShowSuggest(true)}
             onBlur={() =>
-              setTimeout(() => setShowSuggest(false), 200)
+              setTimeout(() => setShowSuggest(false), 150)
             }
             onKeyDown={(e) => {
               if (e.key === "Enter" && !isSearchDisabled) {
@@ -135,11 +133,17 @@ function Searchbar() {
               w-full h-12 pl-12 pr-4
               rounded-xl border border-gray-300
               text-sm text-gray-800
-              focus:outline-none focus:ring-2 focus:ring-green-500
+              bg-white
+              focus:outline-none
+              focus:ring-2 focus:ring-green-500
+              focus:border-green-500
+              transition
             "
           />
 
-          {/* ===== AUTOCOMPLETE ===== */}
+          {/* =====================
+              AUTOCOMPLETE
+          ===================== */}
           {showSuggest &&
             debouncedKeyword &&
             filteredSuggestions.length > 0 && (
@@ -147,14 +151,14 @@ function Searchbar() {
                 className="
                   absolute top-full left-0 w-full mt-2
                   bg-white border border-gray-200
-                  rounded-xl shadow-lg z-50
-                  overflow-hidden
+                  rounded-2xl shadow-xl
+                  z-50 overflow-hidden
                 "
               >
-                {filteredSuggestions.map((item, index) => (
+                {filteredSuggestions.slice(0, 8).map((item, index) => (
                   <div
                     key={index}
-                    onClick={() => {
+                    onMouseDown={() => {
                       setKeyword(item);
                       setShowSuggest(false);
                       navigate({
@@ -167,8 +171,10 @@ function Searchbar() {
                     className="
                       px-4 py-3
                       text-sm text-gray-700
-                      hover:bg-gray-50
-                      cursor-pointer flex items-center gap-2
+                      cursor-pointer
+                      flex items-center gap-2
+                      hover:bg-green-50
+                      transition
                     "
                   >
                     <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
@@ -181,13 +187,14 @@ function Searchbar() {
             )}
         </div>
 
-        {/* ===== LOCATION (DROPDOWN SEARCH) ===== */}
-        <ProvinceDropdown
-          value={province}
-          onChange={setProvince}
-        />
+        {/* =====================
+            LOCATION
+        ===================== */}
+        <ProvinceDropdown value={province} onChange={setProvince} />
 
-        {/* ===== SEARCH BUTTON ===== */}
+        {/* =====================
+            SEARCH BUTTON
+        ===================== */}
         <div
           title={
             isSearchDisabled
@@ -203,11 +210,12 @@ function Searchbar() {
               rounded-xl
               font-semibold text-sm
               flex items-center justify-center gap-2
-              transition
+              transition-all duration-200
+              active:scale-[0.98]
               ${
                 isSearchDisabled
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
               }
             `}
           >

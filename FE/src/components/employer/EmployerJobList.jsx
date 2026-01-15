@@ -1,45 +1,64 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import employerService from "../../services/employerService";
+import {
+  Briefcase,
+  Users,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  PauseCircle,
+  RefreshCcw,
+  AlertTriangle,
+  FilePlus2,
+} from "lucide-react";
 
+/* =====================
+   JOB STATUS CONFIG
+===================== */
 const JOB_STATUS = {
   active: {
     text: "Đang tuyển",
-    badge: "bg-green-100 text-green-700",
+    badge:
+      "bg-emerald-50 text-emerald-700 border-emerald-200",
+    icon: <CheckCircle2 size={14} />,
   },
   pending: {
     text: "Chờ duyệt",
-    badge: "bg-yellow-100 text-yellow-700",
+    badge:
+      "bg-amber-50 text-amber-700 border-amber-200",
+    icon: <Clock size={14} />,
   },
   rejected: {
     text: "Bị từ chối",
-    badge: "bg-red-100 text-red-700",
+    badge:
+      "bg-red-50 text-red-700 border-red-200",
+    icon: <XCircle size={14} />,
   },
   closed: {
     text: "Đã đóng",
-    badge: "bg-gray-100 text-gray-600",
+    badge:
+      "bg-gray-50 text-gray-600 border-gray-200",
+    icon: <PauseCircle size={14} />,
   },
   expired: {
     text: "Hết hạn",
-    badge: "bg-gray-100 text-gray-600",
+    badge:
+      "bg-gray-50 text-gray-600 border-gray-200",
+    icon: <PauseCircle size={14} />,
   },
 };
 
-function EmployerJobList() {
+export default function EmployerJobList() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* =====================
-     FETCH JOBS
-  ===================== */
   const fetchJobs = async () => {
     try {
       const data = await employerService.getMyJobs();
       setJobs(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error("FETCH JOBS ERROR:", e);
     } finally {
       setLoading(false);
     }
@@ -49,80 +68,49 @@ function EmployerJobList() {
     fetchJobs();
   }, []);
 
-  /* =====================
-     JOB ACTIONS
-  ===================== */
   const handleCloseJob = async (jobId) => {
-    if (!window.confirm("Bạn có chắc muốn đóng tuyển dụng?")) return;
-
-    try {
-      await employerService.closeJob(jobId);
-      setJobs((prev) =>
-        prev.map((j) =>
-          j.id === jobId ? { ...j, status: "closed" } : j
-        )
-      );
-    } catch (e) {
-      alert(
-        e.response?.data?.message ||
-          "Không thể đóng tuyển dụng"
-      );
-    }
+    if (!window.confirm("Đóng tuyển dụng?")) return;
+    await employerService.closeJob(jobId);
+    setJobs((p) =>
+      p.map((j) =>
+        j.id === jobId ? { ...j, status: "closed" } : j
+      )
+    );
   };
 
   const handleReopenJob = async (jobId) => {
-    if (!window.confirm("Mở lại tuyển dụng cho công việc này?")) return;
-
-    try {
-      await employerService.reopenJob(jobId);
-      setJobs((prev) =>
-        prev.map((j) =>
-          j.id === jobId ? { ...j, status: "active" } : j
-        )
-      );
-    } catch (e) {
-      alert(
-        e.response?.data?.message ||
-          "Không thể mở lại tuyển dụng"
-      );
-    }
+    if (!window.confirm("Mở lại tuyển dụng?")) return;
+    await employerService.reopenJob(jobId);
+    setJobs((p) =>
+      p.map((j) =>
+        j.id === jobId ? { ...j, status: "active" } : j
+      )
+    );
   };
 
-  // ⭐ RE-SUBMIT JOB (SAU KHI BỊ REJECT)
   const handleResubmitJob = async (jobId) => {
-    if (!window.confirm("Gửi lại job để admin duyệt?")) return;
-
-    try {
-      await employerService.resubmitJob(jobId);
-
-      // 🔑 reload để UI cập nhật pending + ẩn admin_note
-      await fetchJobs();
-
-      alert("Job đã được gửi lại để admin duyệt");
-    } catch (e) {
-      alert(
-        e.response?.data?.message ||
-          "Không thể gửi lại job"
-      );
-    }
+    if (!window.confirm("Gửi lại để duyệt?")) return;
+    await employerService.resubmitJob(jobId);
+    fetchJobs();
   };
 
-  /* =====================
-     EMPTY
-  ===================== */
   if (!loading && jobs.length === 0) {
     return (
-      <div className="bg-white border rounded-xl p-12 text-center">
-        <div className="text-6xl mb-4">📄</div>
+      <div className="bg-white border border-gray-200 rounded-3xl p-20 text-center shadow-sm">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+          <FilePlus2 size={32} />
+        </div>
         <h3 className="text-xl font-semibold mb-2">
           Chưa có tin tuyển dụng
         </h3>
-        <p className="text-gray-600 mb-6">
-          Hãy tạo tin tuyển dụng đầu tiên để bắt đầu nhận hồ sơ
+        <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          Đăng tin để tiếp cận ứng viên phù hợp
         </p>
         <button
-          onClick={() => navigate("/employer/jobs/create")}
-          className="px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700"
+          onClick={() =>
+            navigate("/employer/jobs/create")
+          }
+          className="px-10 py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
         >
           Đăng tin ngay
         </button>
@@ -130,25 +118,33 @@ function EmployerJobList() {
     );
   }
 
-  /* =====================
-     LIST
-  ===================== */
   return (
-    <div className="bg-white border rounded-xl p-6">
-      <h3 className="text-xl font-semibold mb-6">
-        Việc làm đã đăng ({jobs.length})
-      </h3>
+    <div className="bg-white border border-gray-200 rounded-3xl shadow-sm">
+      {/* HEADER */}
+      <div className="flex items-center gap-2 p-6 border-b">
+        <Briefcase
+          size={20}
+          className="text-emerald-600"
+        />
+        <h3 className="text-xl font-semibold">
+          Việc làm đã đăng
+        </h3>
+        <span className="text-sm text-gray-500">
+          ({jobs.length})
+        </span>
+      </div>
 
       {loading && (
-        <p className="text-sm text-gray-500">
+        <p className="p-6 text-sm text-gray-500">
           Đang tải dữ liệu...
         </p>
       )}
 
-      <div className="space-y-4">
+      <div className="p-6 grid gap-4">
         {jobs.map((job) => {
           const status =
-            JOB_STATUS[job.status] || JOB_STATUS.active;
+            JOB_STATUS[job.status] ||
+            JOB_STATUS.active;
 
           const totalApplicants =
             job.total_applications || 0;
@@ -156,78 +152,53 @@ function EmployerJobList() {
           return (
             <div
               key={job.id}
-              className="
-                border rounded-xl p-5
-                hover:shadow-md hover:border-green-500
-                transition
-              "
+              className="border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:border-emerald-500 transition bg-white"
             >
-              {/* HEADER */}
-              <div className="flex justify-between gap-6">
-                <div className="min-w-0">
-                  <h4 className="text-lg font-semibold text-gray-800 truncate">
+              <div className="flex flex-wrap justify-between gap-6">
+                {/* LEFT */}
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-lg font-semibold text-gray-900 truncate">
                     {job.title}
                   </h4>
 
                   <span
-                    className={`inline-block mt-2 px-3 py-1 text-xs rounded-full ${status.badge}`}
+                    className={`inline-flex items-center gap-1 mt-2 px-3 py-1 text-xs font-semibold rounded-full border ${status.badge}`}
                   >
+                    {status.icon}
                     {status.text}
                   </span>
 
-                  {/* 🔴 ADMIN REJECT NOTE */}
                   {job.status === "rejected" &&
                     job.admin_note && (
-                      <div className="mt-3 bg-red-50 border border-red-300 p-3 rounded">
-                        <p className="text-sm font-semibold text-red-600">
-                          Lý do bị từ chối
-                        </p>
-                        <p className="text-sm text-gray-700 mt-1">
+                      <div className="mt-4 rounded-xl bg-red-50 border border-red-200 p-4 text-sm">
+                        <div className="flex items-center gap-2 text-red-600 font-medium mb-1">
+                          <AlertTriangle size={14} />
+                          Lý do từ chối
+                        </div>
+                        <p className="text-gray-700">
                           {job.admin_note}
                         </p>
                       </div>
                     )}
 
-                  {/* 🟡 PENDING MESSAGE */}
                   {job.status === "pending" && (
-                    <p className="text-sm text-yellow-700 mt-3">
-                      Job đang chờ admin duyệt lại
+                    <p className="mt-3 text-sm text-amber-700">
+                      Tin đang chờ admin duyệt
                     </p>
                   )}
 
-                  {/* STATS */}
-                  <div className="flex flex-wrap gap-3 mt-4 text-sm">
-                    <Stat
-                      label="Tổng"
-                      value={totalApplicants}
-                    />
-                    <Stat
-                      label="Chờ"
-                      value={job.pending_count || 0}
-                      color="yellow"
-                    />
-                    <Stat
-                      label="Duyệt"
-                      value={job.approved_count || 0}
-                      color="green"
-                    />
-                    <Stat
-                      label="Từ chối"
-                      value={job.rejected_count || 0}
-                      color="red"
-                    />
+                  <div className="flex flex-wrap gap-2 mt-5 text-xs">
+                    <Stat label="Tổng" value={totalApplicants} />
+                    <Stat label="Chờ" value={job.pending_count || 0} color="amber" />
+                    <Stat label="Duyệt" value={job.approved_count || 0} color="emerald" />
+                    <Stat label="Từ chối" value={job.rejected_count || 0} color="red" />
                   </div>
                 </div>
 
-                {/* ACTIONS */}
-                <div className="flex flex-col gap-2 min-w-[170px]">
+                {/* RIGHT */}
+                <div className="flex flex-col gap-2 min-w-[200px]">
                   <button
                     disabled={totalApplicants === 0}
-                    title={
-                      totalApplicants === 0
-                        ? "Chưa có ứng viên cho công việc này"
-                        : ""
-                    }
                     onClick={() =>
                       navigate(
                         `/employer/jobs/${job.id}/applications`,
@@ -240,31 +211,31 @@ function EmployerJobList() {
                         }
                       )
                     }
-                    className={`
-                      w-full px-4 py-2 text-sm rounded transition
-                      ${
-                        totalApplicants === 0
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-green-600 text-white hover:bg-green-700"
-                      }
-                    `}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+                      totalApplicants === 0
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    }`}
                   >
+                    <Users
+                      size={14}
+                      className="inline mr-1"
+                    />
                     Xem ứng viên
                   </button>
 
-                  {/* RE-SUBMIT */}
                   {job.status === "rejected" && (
                     <button
                       onClick={() =>
                         handleResubmitJob(job.id)
                       }
-                      className="
-                        w-full px-4 py-2 text-sm
-                        bg-blue-600 text-white rounded
-                        hover:bg-blue-700
-                      "
+                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
                     >
-                      Re-submit Job
+                      <RefreshCcw
+                        size={14}
+                        className="inline mr-1"
+                      />
+                      Gửi lại duyệt
                     </button>
                   )}
 
@@ -273,11 +244,7 @@ function EmployerJobList() {
                       onClick={() =>
                         handleCloseJob(job.id)
                       }
-                      className="
-                        w-full px-4 py-2 text-sm
-                        bg-red-100 text-red-600 rounded
-                        hover:bg-red-200
-                      "
+                      className="px-4 py-2 rounded-xl text-sm bg-red-100 text-red-600 hover:bg-red-200"
                     >
                       Đóng tuyển dụng
                     </button>
@@ -288,11 +255,7 @@ function EmployerJobList() {
                       onClick={() =>
                         handleReopenJob(job.id)
                       }
-                      className="
-                        w-full px-4 py-2 text-sm
-                        bg-blue-100 text-blue-600 rounded
-                        hover:bg-blue-200
-                      "
+                      className="px-4 py-2 rounded-xl text-sm bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
                     >
                       Mở lại tuyển dụng
                     </button>
@@ -311,20 +274,20 @@ function EmployerJobList() {
    SUB COMPONENT
 ===================== */
 function Stat({ label, value, color = "gray" }) {
-  const colorMap = {
-    gray: "bg-gray-100 text-gray-700",
-    yellow: "bg-yellow-100 text-yellow-700",
-    green: "bg-green-100 text-green-700",
-    red: "bg-red-100 text-red-700",
+  const map = {
+    gray: "bg-gray-100 text-gray-700 border-gray-200",
+    amber:
+      "bg-amber-100 text-amber-700 border-amber-200",
+    emerald:
+      "bg-emerald-100 text-emerald-700 border-emerald-200",
+    red: "bg-red-100 text-red-700 border-red-200",
   };
 
   return (
     <span
-      className={`px-3 py-1 rounded-full text-xs font-medium ${colorMap[color]}`}
+      className={`px-3 py-1 rounded-full border font-semibold ${map[color]}`}
     >
       {label}: {value}
     </span>
   );
 }
-
-export default EmployerJobList;

@@ -15,11 +15,30 @@ const getAuthHeader = () => {
 
 /* ================== CANDIDATE ================== */
 
-// Lấy danh sách job đã ứng tuyển
-export const getMyApplications = async () => {
+// 🔍 Lấy danh sách job đã ứng tuyển (SEARCH + FILTER)
+export const getMyApplications = async (filters = {}) => {
   const res = await axios.get(`${API_URL}/me`, {
     headers: getAuthHeader(),
+    params: {
+      keyword: filters.keyword || undefined,
+      status: filters.status || undefined,
+      from_date: filters.from_date || undefined,
+      to_date: filters.to_date || undefined,
+    },
   });
+
+  return res.data;
+};
+
+// 🗑 XÓA TOÀN BỘ LỊCH SỬ ỨNG TUYỂN (SOFT DELETE)
+export const deleteApplicationHistory = async () => {
+  const res = await axios.delete(
+    `${API_URL}/history`,
+    {
+      headers: getAuthHeader(),
+    }
+  );
+
   return res.data;
 };
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Sparkles, AlertTriangle, ArrowRight } from "lucide-react";
 
 import HeroSection from "../components/home/HeroSection";
 import JobList from "../components/home/JobList";
@@ -12,14 +13,10 @@ function HomePage() {
   const [showEmployerModal, setShowEmployerModal] = useState(false);
   const navigate = useNavigate();
 
-  /* =====================
-     EMPLOYER PROFILE GUARD
-  ===================== */
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role !== "employer") return;
 
-    // chỉ hiện 1 lần mỗi session
     const modalShown = sessionStorage.getItem(
       "employerProfileModalShown"
     );
@@ -38,62 +35,67 @@ function HomePage() {
 
   return (
     <>
-      {/* =====================
-          HERO
-      ===================== */}
+      {/* HERO */}
       <HeroSection />
 
-      {/* =====================
-          MAIN CONTENT
-      ===================== */}
-      <main className="max-w-6xl mx-auto px-4 py-14 space-y-20">
-        {/* JOB LIST */}
-        <section>
-          <SectionHeader
-            title="Việc làm mới nhất"
-            subtitle="Khám phá những cơ hội nghề nghiệp phù hợp với bạn"
-          />
-          <JobList />
-        </section>
+      {/* CONTENT */}
+      <main className="bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-20 space-y-28">
+          {/* JOB LIST */}
+          <section>
+            <SectionHeader
+              badge="Gợi ý hôm nay"
+              title="Việc làm mới nhất"
+              subtitle="Cập nhật liên tục những cơ hội nghề nghiệp phù hợp"
+            />
+            <JobList />
+          </section>
 
-        {/* KEY INDUSTRIES */}
-        <section>
-          <SectionHeader
-            title="Ngành nghề nổi bật"
-            subtitle="Các lĩnh vực đang tuyển dụng nhiều nhất"
-          />
-          <KeyIndustries />
-        </section>
+          {/* INDUSTRIES */}
+          <section>
+            <SectionHeader
+              badge="Xu hướng"
+              title="Ngành nghề nổi bật"
+              subtitle="Những lĩnh vực đang tuyển dụng mạnh nhất hiện nay"
+            />
+            <KeyIndustries />
+          </section>
 
-        {/* TOP COMPANIES */}
-        <section>
-          <SectionHeader
-            title="Nhà tuyển dụng hàng đầu"
-            subtitle="Những doanh nghiệp được ứng viên quan tâm nhiều nhất"
-          />
-          <TopCompanies />
-        </section>
+          {/* COMPANIES */}
+          <section>
+            <SectionHeader
+              badge="Đối tác"
+              title="Nhà tuyển dụng hàng đầu"
+              subtitle="Doanh nghiệp uy tín được ứng viên tin tưởng"
+            />
+            <TopCompanies />
+          </section>
+        </div>
       </main>
 
-      {/* =====================
-          EMPLOYER WARNING MODAL
-      ===================== */}
+      {/* EMPLOYER WARNING MODAL */}
       {showEmployerModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              Hồ sơ công ty chưa hoàn tất
-            </h3>
-
-            <p className="text-sm text-gray-600 mb-6">
-              Bạn cần hoàn thiện hồ sơ công ty để sử dụng đầy đủ
-              chức năng như đăng tin tuyển dụng và quản lý ứng viên.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Hồ sơ công ty chưa hoàn thiện
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Hoàn thiện hồ sơ để đăng tin tuyển dụng và quản lý
+                  ứng viên hiệu quả hơn.
+                </p>
+              </div>
+            </div>
 
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowEmployerModal(false)}
-                className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100"
+                className="px-5 py-2 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
               >
                 Để sau
               </button>
@@ -103,9 +105,10 @@ function HomePage() {
                   setShowEmployerModal(false);
                   navigate("/account/employer");
                 }}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition"
               >
-                Hoàn thiện hồ sơ
+                Hoàn thiện ngay
+                <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -115,16 +118,20 @@ function HomePage() {
   );
 }
 
-/* =====================
-   UI HELPERS
-===================== */
-const SectionHeader = ({ title, subtitle }) => (
-  <div className="mb-6">
-    <h2 className="text-2xl font-semibold text-gray-800">
+/* UI */
+const SectionHeader = ({ badge, title, subtitle }) => (
+  <div className="mb-10 text-center">
+    {badge && (
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-green-50 text-green-700 text-sm font-medium">
+        <Sparkles size={14} />
+        {badge}
+      </div>
+    )}
+    <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
       {title}
     </h2>
     {subtitle && (
-      <p className="text-sm text-gray-500 mt-1">
+      <p className="text-gray-500 mt-3 max-w-xl mx-auto">
         {subtitle}
       </p>
     )}

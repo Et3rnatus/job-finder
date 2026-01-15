@@ -2,10 +2,17 @@ import JobCard from "../jobs/JobCard";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getJobs } from "../../services/jobService";
+import {
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Briefcase,
+  SearchX,
+} from "lucide-react";
 
 const ITEMS_PER_PAGE = 6;
 
-function JobList() {
+export default function JobList() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +22,7 @@ function JobList() {
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
-      setCurrentPage(1); // ✅ reset page khi search/filter đổi
+      setCurrentPage(1);
 
       try {
         const keyword = searchParams.get("keyword") || "";
@@ -24,26 +31,24 @@ function JobList() {
         const data = await getJobs({ keyword, city });
 
         if (!Array.isArray(data)) {
-          console.error("API getJobs trả sai định dạng:", data);
           setJobs([]);
           return;
         }
 
-        const mappedJobs = data.map((job) => ({
-          id: job.id,
-          title: job.title,
-          salary:
-            job.min_salary != null && job.max_salary != null
-              ? `${job.min_salary} - ${job.max_salary}`
-              : "Thỏa thuận",
-          location: job.location || "Chưa cập nhật",
-          company: job.company_name || "Chưa cập nhật",
-          skills: job.job_skill || "",
-        }));
-
-        setJobs(mappedJobs);
-      } catch (err) {
-        console.error("Lỗi gọi getJobs:", err);
+        setJobs(
+          data.map((job) => ({
+            id: job.id,
+            title: job.title,
+            salary:
+              job.min_salary != null && job.max_salary != null
+                ? `${job.min_salary} - ${job.max_salary}`
+                : "Thỏa thuận",
+            location: job.location || "Chưa cập nhật",
+            company: job.company_name || "Chưa cập nhật",
+            skills: job.job_skill || "",
+          }))
+        );
+      } catch {
         setJobs([]);
       } finally {
         setLoading(false);
@@ -53,9 +58,6 @@ function JobList() {
     fetchJobs();
   }, [searchParams]);
 
-  /* =====================
-     PAGINATION LOGIC
-  ===================== */
   const totalPages = Math.ceil(jobs.length / ITEMS_PER_PAGE);
 
   const paginatedJobs = jobs.slice(
@@ -64,32 +66,43 @@ function JobList() {
   );
 
   return (
-    <section className="bg-white border rounded-xl overflow-hidden">
+    <section className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
       {/* HEADER */}
-      <div className="px-6 py-5 border-b">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Việc làm đang tuyển dụng
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">
-          {jobs.length > 0
-            ? `Tìm thấy ${jobs.length} công việc phù hợp`
-            : "Danh sách các công việc hiện có trên hệ thống"}
-        </p>
+      <div className="px-8 py-6 border-b bg-gradient-to-r from-gray-50 to-white">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <Briefcase size={22} />
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Việc làm đang tuyển dụng
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {jobs.length
+                ? `Tìm thấy ${jobs.length} công việc phù hợp`
+                : "Danh sách công việc hiện có trên hệ thống"}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* CONTENT */}
-      <div className="p-6">
+      <div className="p-8">
         {/* LOADING */}
         {loading && (
-          <div className="py-10 text-center text-gray-500">
-            Đang tải dữ liệu công việc...
+          <div className="py-28 flex flex-col items-center gap-4 text-gray-500">
+            <Loader2 className="animate-spin" size={28} />
+            <span className="text-sm">
+              Đang tải dữ liệu công việc...
+            </span>
           </div>
         )}
 
         {/* LIST */}
         {!loading && paginatedJobs.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {paginatedJobs.map((job) => (
                 <JobCard key={job.id} {...job} />
               ))}
@@ -97,27 +110,25 @@ function JobList() {
 
             {/* PAGINATION */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-10">
-                {/* PREV */}
+              <div className="flex items-center justify-center gap-6 mt-14">
                 <button
                   onClick={() =>
                     setCurrentPage((p) => Math.max(1, p - 1))
                   }
                   disabled={currentPage === 1}
-                  className="w-10 h-10 rounded-full border disabled:opacity-40"
+                  className="w-11 h-11 rounded-full flex items-center justify-center border border-gray-300 hover:bg-gray-100 disabled:opacity-40"
                 >
-                  ‹
+                  <ChevronLeft size={18} />
                 </button>
 
-                {/* PAGE INFO */}
                 <span className="text-sm text-gray-600">
-                  <span className="text-green-600 font-medium">
+                  Trang{" "}
+                  <span className="font-semibold text-emerald-600">
                     {currentPage}
                   </span>{" "}
-                  / {totalPages} trang
+                  / {totalPages}
                 </span>
 
-                {/* NEXT */}
                 <button
                   onClick={() =>
                     setCurrentPage((p) =>
@@ -125,9 +136,9 @@ function JobList() {
                     )
                   }
                   disabled={currentPage === totalPages}
-                  className="w-10 h-10 rounded-full border disabled:opacity-40"
+                  className="w-11 h-11 rounded-full flex items-center justify-center border border-gray-300 hover:bg-gray-100 disabled:opacity-40"
                 >
-                  ›
+                  <ChevronRight size={18} />
                 </button>
               </div>
             )}
@@ -136,12 +147,14 @@ function JobList() {
 
         {/* EMPTY */}
         {!loading && jobs.length === 0 && (
-          <div className="py-16 text-center text-gray-500">
-            <div className="text-5xl mb-4">🔍</div>
-            <p className="text-lg font-medium mb-1">
+          <div className="py-28 text-center text-gray-500">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <SearchX size={36} />
+            </div>
+            <p className="text-xl font-semibold mb-2 text-gray-700">
               Không tìm thấy công việc phù hợp
             </p>
-            <p className="text-sm">
+            <p className="text-sm text-gray-500">
               Hãy thử thay đổi từ khóa hoặc khu vực tìm kiếm
             </p>
           </div>
@@ -150,5 +163,3 @@ function JobList() {
     </section>
   );
 }
-
-export default JobList;

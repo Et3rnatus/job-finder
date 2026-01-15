@@ -1,97 +1,176 @@
+import {
+  Eye,
+  History,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
+
 export default function JobTable({
   jobs,
   onReview,
   onViewLogs,
 }) {
-  const renderStatusBadge = (status) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-700";
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "rejected":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
+  const statusConfig = {
+    approved: {
+      label: "Đã duyệt",
+      badge:
+        "bg-green-100 text-green-700 border-green-200",
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    },
+    pending: {
+      label: "Chờ duyệt",
+      badge:
+        "bg-yellow-100 text-yellow-700 border-yellow-200",
+      icon: <AlertCircle className="w-3.5 h-3.5" />,
+    },
+    rejected: {
+      label: "Từ chối",
+      badge:
+        "bg-red-100 text-red-700 border-red-200",
+      icon: <AlertCircle className="w-3.5 h-3.5" />,
+    },
   };
 
   return (
-    <div className="overflow-x-auto bg-white rounded shadow">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* ===== TABLE ===== */}
       <table className="w-full text-sm">
-        <thead className="bg-gray-100">
+        {/* ===== HEADER ===== */}
+        <thead className="bg-gray-50 border-b">
           <tr>
-            <th className="p-3 text-left">Title</th>
-            <th className="p-3 text-left">Employer</th>
-            <th className="p-3 text-left">Status</th>
-            <th className="p-3 text-left">Action</th>
+            <th className="p-4 text-left font-semibold text-gray-700">
+              Công việc
+            </th>
+            <th className="p-4 text-left font-semibold text-gray-700">
+              Nhà tuyển dụng
+            </th>
+            <th className="p-4 text-left font-semibold text-gray-700">
+              Trạng thái
+            </th>
+            <th className="p-4 text-right font-semibold text-gray-700">
+              Hành động
+            </th>
           </tr>
         </thead>
 
-        <tbody>
+        {/* ===== BODY ===== */}
+        <tbody className="divide-y">
           {jobs.length === 0 && (
             <tr>
               <td
-                colSpan="4"
-                className="p-4 text-center text-gray-500"
+                colSpan={4}
+                className="p-12 text-center text-gray-500"
               >
-                No jobs found
+                Không có tin tuyển dụng nào
               </td>
             </tr>
           )}
 
-          {jobs.map((job) => (
-            <tr
-              key={job.id}
-              className="border-t hover:bg-gray-50"
-            >
-              {/* TITLE */}
-              <td className="p-3 font-medium">
-                {job.title}
-              </td>
+          {jobs.map((job) => {
+            const status =
+              statusConfig[job.status] || {};
 
-              {/* EMPLOYER */}
-              <td className="p-3">
-                {job.employer_email}
-              </td>
+            return (
+              <tr
+                key={job.id}
+                className="
+                  group
+                  hover:bg-gray-50
+                  transition
+                "
+              >
+                {/* ===== JOB ===== */}
+                <td className="p-4">
+                  <div className="font-medium text-gray-900 leading-snug line-clamp-2">
+                    {job.title}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    Job ID: #{job.id}
+                  </div>
+                </td>
 
-              {/* STATUS */}
-              <td className="p-3">
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${renderStatusBadge(
-                    job.status
-                  )}`}
-                >
-                  {job.status}
-                </span>
-              </td>
+                {/* ===== EMPLOYER ===== */}
+                <td className="p-4 text-gray-600 truncate max-w-[240px]">
+                  {job.employer_email}
+                </td>
 
-              {/* ACTION */}
-              <td className="p-3 space-x-2">
-                {/* 🔍 Review job (pending only) */}
-                {job.status === "pending" ? (
-                  <button
-                    onClick={() => onReview(job.id)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                {/* ===== STATUS ===== */}
+                <td className="p-4">
+                  <span
+                    className={`
+                      inline-flex items-center gap-1.5
+                      px-3 py-1
+                      rounded-full
+                      text-xs font-semibold
+                      border
+                      ${status.badge ||
+                        "bg-gray-100 text-gray-600 border-gray-200"}
+                    `}
                   >
-                    Xem & duyệt
-                  </button>
-                ) : (
-                  <span className="text-gray-400 text-xs mr-2">
-                    Đã xử lý
+                    {status.icon}
+                    {status.label || job.status}
                   </span>
-                )}
+                </td>
 
-                {/* 📜 Audit history (luôn cho xem) */}
-                <button
-                  onClick={() => onViewLogs(job.id)}
-                  className="px-3 py-1 bg-gray-600 text-white rounded text-xs hover:bg-gray-700"
-                >
-                  Lịch sử
-                </button>
-              </td>
-            </tr>
-          ))}
+                {/* ===== ACTIONS ===== */}
+                <td className="p-4">
+                  <div className="flex justify-end gap-2">
+                    {/* REVIEW */}
+                    {job.status === "pending" ? (
+                      <button
+                        onClick={() => onReview(job.id)}
+                        className="
+                          inline-flex items-center gap-1.5
+                          px-3 py-1.5
+                          rounded-lg
+                          bg-indigo-600
+                          text-white
+                          text-xs font-medium
+                          hover:bg-indigo-700
+                          active:scale-95
+                          transition
+                        "
+                      >
+                        <Eye className="w-4 h-4" />
+                        Duyệt
+                      </button>
+                    ) : (
+                      <span
+                        className="
+                          inline-flex items-center gap-1
+                          text-xs text-gray-400
+                          px-3 py-1.5
+                        "
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Đã xử lý
+                      </span>
+                    )}
+
+                    {/* LOGS */}
+                    <button
+                      onClick={() => onViewLogs(job.id)}
+                      className="
+                        inline-flex items-center gap-1.5
+                        px-3 py-1.5
+                        rounded-lg
+                        bg-gray-100
+                        text-gray-700
+                        text-xs font-medium
+                        border border-gray-200
+                        hover:bg-gray-200
+                        active:scale-95
+                        transition
+                      "
+                    >
+                      <History className="w-4 h-4" />
+                      Lịch sử
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

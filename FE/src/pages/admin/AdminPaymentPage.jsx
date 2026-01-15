@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
-import { getPayments, approvePayment } from "../../services/adminService";
+import {
+  getPayments,
+  approvePayment,
+} from "../../services/adminService";
+import {
+  CreditCard,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 
-function AdminPaymentsPage() {
+export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -9,7 +19,7 @@ function AdminPaymentsPage() {
     try {
       setLoading(true);
       const data = await getPayments();
-      setPayments(data);
+      setPayments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("FETCH PAYMENTS ERROR:", error);
       alert("Không thể tải danh sách thanh toán");
@@ -28,7 +38,6 @@ function AdminPaymentsPage() {
 
     try {
       await approvePayment(orderId);
-      alert("Đã duyệt thanh toán");
       fetchPayments();
     } catch (error) {
       console.error("APPROVE PAYMENT ERROR:", error);
@@ -37,28 +46,57 @@ function AdminPaymentsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-800">
-        Quản lý thanh toán
-      </h1>
+    <div className="space-y-10">
+      {/* HEADER */}
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+          <CreditCard size={26} />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Quản lý thanh toán
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Duyệt và theo dõi các giao dịch thanh toán
+          </p>
+        </div>
+      </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
+      {/* TABLE */}
+      <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left">Order ID</th>
-              <th className="px-4 py-3 text-left">Số tiền</th>
-              <th className="px-4 py-3 text-left">Trạng thái</th>
-              <th className="px-4 py-3 text-left">Thời gian</th>
-              <th className="px-4 py-3 text-center">Hành động</th>
+            <tr className="text-gray-600">
+              <th className="px-6 py-4 text-left">
+                Order ID
+              </th>
+              <th className="px-6 py-4 text-left">
+                Số tiền
+              </th>
+              <th className="px-6 py-4 text-left">
+                Trạng thái
+              </th>
+              <th className="px-6 py-4 text-left">
+                Thời gian
+              </th>
+              <th className="px-6 py-4 text-center">
+                Hành động
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {loading && (
               <tr>
-                <td colSpan="5" className="px-4 py-6 text-center">
-                  Đang tải...
+                <td
+                  colSpan="5"
+                  className="px-6 py-12 text-center text-gray-500"
+                >
+                  <Loader2
+                    size={20}
+                    className="inline animate-spin mr-2"
+                  />
+                  Đang tải dữ liệu...
                 </td>
               </tr>
             )}
@@ -67,7 +105,7 @@ function AdminPaymentsPage() {
               <tr>
                 <td
                   colSpan="5"
-                  className="px-4 py-6 text-center text-gray-500"
+                  className="px-6 py-12 text-center text-gray-500"
                 >
                   Chưa có giao dịch nào
                 </td>
@@ -75,35 +113,53 @@ function AdminPaymentsPage() {
             )}
 
             {payments.map((p) => (
-              <tr key={p.orderId} className="border-t">
-                <td className="px-4 py-3">{p.orderId}</td>
-                <td className="px-4 py-3">{p.amount} VNĐ</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium
-                      ${
-                        p.status === "SUCCESS"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }
-                    `}
-                  >
-                    {p.status}
-                  </span>
+              <tr
+                key={p.orderId}
+                className="border-t hover:bg-gray-50 transition"
+              >
+                <td className="px-6 py-4 font-medium text-gray-800">
+                  {p.orderId}
                 </td>
-                <td className="px-4 py-3">
-                  {new Date(p.createdAt).toLocaleString()}
+
+                <td className="px-6 py-4">
+                  {Number(p.amount).toLocaleString()} VNĐ
                 </td>
-                <td className="px-4 py-3 text-center">
+
+                <td className="px-6 py-4">
+                  {p.status === "SUCCESS" ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                      <CheckCircle2 size={12} />
+                      Đã duyệt
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                      <Clock size={12} />
+                      Chờ duyệt
+                    </span>
+                  )}
+                </td>
+
+                <td className="px-6 py-4 text-gray-600">
+                  {new Date(p.createdAt).toLocaleString(
+                    "vi-VN"
+                  )}
+                </td>
+
+                <td className="px-6 py-4 text-center">
                   {p.status === "PENDING" ? (
                     <button
-                      onClick={() => handleApprove(p.orderId)}
-                      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                      onClick={() =>
+                        handleApprove(p.orderId)
+                      }
+                      className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
                     >
+                      <ShieldCheck size={14} />
                       Duyệt
                     </button>
                   ) : (
-                    <span className="text-gray-400">Đã duyệt</span>
+                    <span className="text-gray-400 text-sm">
+                      —
+                    </span>
                   )}
                 </td>
               </tr>
@@ -114,5 +170,3 @@ function AdminPaymentsPage() {
     </div>
   );
 }
-
-export default AdminPaymentsPage;

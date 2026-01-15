@@ -35,6 +35,8 @@ import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import SavedJobListPage from "./pages/SavedJobListPage";
 import ViewedJobList from "./components/candidate/ViewedJobList";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 
 /* =====================
@@ -133,6 +135,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* JOBS */}
           <Route path="/jobs" element={<JobsPage />} />
