@@ -269,6 +269,7 @@ exports.createJob = async (req, res) => {
   }
 };
 
+
 /* =====================
    GET ALL JOBS
 ===================== */
@@ -289,7 +290,10 @@ exports.getAllJobs = async (req, res) => {
         j.created_at,
         jc.name AS category_name,
         e.company_name,
-        e.logo,
+
+        -- ✅ ĐỒNG BỘ TÊN FIELD LOGO
+        e.company_logo,
+
         ${
           user && user.role === "candidate"
             ? "CASE WHEN a.id IS NULL THEN 0 ELSE 1 END AS is_applied"
@@ -318,7 +322,6 @@ exports.getAllJobs = async (req, res) => {
 
     /* =========================
        ĐIỀU KIỆN HIỂN THỊ JOB
-       👉 FIX LỖI expired_at = NULL
     ========================= */
     sql += `
       WHERE j.status = 'approved'
@@ -379,12 +382,136 @@ exports.getAllJobs = async (req, res) => {
     return res.json(
       Object.values(map).map((j) => ({
         ...j,
-        skill_names: j.skills.join(", "),
+
+        // ✅ ĐỒNG BỘ TÊN FIELD FE ĐANG DÙNG
+        job_skill: j.skills.join(", "),
       }))
     );
   } catch (error) {
     console.error("GET ALL JOBS ERROR:", error);
     return res.status(500).json({ message: "Get jobs failed" });
+  }
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| FILTER JOBS (PUBLIC)
+|--------------------------------------------------------------------------
+| Query:
+| - categoryIds=1,2
+| - skillIds=3,5
+| - keyword=backend
+| - city=Hà Nội
+*/
+exports.filterJobs = async (req, res) => {
+  try {
+    const { categoryIds, skillIds, keyword, city } = req.query;
+
+    let sql = `
+      SELECT
+        j.id,
+        j.title,
+        j.location,
+        j.employment_type,
+        j.level,
+        j.min_salary,
+        j.max_salary,
+        j.created_at,
+        jc.name AS category_name,
+        e.company_name,
+        e.logo
+      FROM job j
+      JOIN employer e ON j.employer_id = e.id
+      JOIN job_category jc ON j.category_id = jc.id
+      JOIN job_skill js ON js.job_id = j.id
+      JOIN skill s ON s.id = js.skill_id
+      WHERE j.status = 'approved'
+        AND (j.expired_at IS NULL OR j.expired_at > NOW())
+    `;
+
+    const params = [];
+
+    /* =========================
+       CATEGORY
+    ========================= */
+    if (categoryIds) {
+      const ids = categoryIds.split(",");
+      sql += ` AND j.category_id IN (${ids.map(() => "?").join(",")})`;
+      params.push(...ids);
+    }
+
+    /* =========================
+       SKILL (AND)
+    ========================= */
+    if (skillIds) {
+      const ids = skillIds.split(",");
+      sql += ` AND s.id IN (${ids.map(() => "?").join(",")})`;
+      params.push(...ids);
+
+      sql += `
+        GROUP BY j.id
+        HAVING COUNT(DISTINCT s.id) = ?
+      `;
+      params.push(ids.length);
+    } else {
+      sql += ` GROUP BY j.id`;
+    }
+
+    /* =========================
+       KEYWORD
+    ========================= */
+    if (keyword) {
+      sql += ` AND j.title LIKE ?`;
+      params.push(`%${keyword}%`);
+    }
+
+    /* =========================
+       CITY
+    ========================= */
+    if (city) {
+      sql += ` AND j.location LIKE ?`;
+      params.push(`%${city}%`);
+    }
+
+    sql += ` ORDER BY j.created_at DESC`;
+
+    const [jobs] = await db.execute(sql, params);
+    if (jobs.length === 0) return res.json([]);
+
+    /* =========================
+       GET SKILLS
+    ========================= */
+    const jobIds = jobs.map((j) => j.id);
+
+    const [skills] = await db.execute(
+      `
+      SELECT js.job_id, s.name
+      FROM job_skill js
+      JOIN skill s ON s.id = js.skill_id
+      WHERE js.job_id IN (${jobIds.map(() => "?").join(",")})
+      `,
+      jobIds
+    );
+
+    const map = {};
+    jobs.forEach((j) => {
+      map[j.id] = { ...j, skills: [] };
+    });
+
+    skills.forEach((s) => {
+      map[s.job_id]?.skills.push(s.name);
+    });
+
+    return res.json(
+      Object.values(map).map((j) => ({
+        ...j,
+        skill_names: j.skills.join(", "),
+      }))
+    );
+  } catch (error) {
+    console.error("FILTER JOB ERROR:", error);
+    return res.status(500).json({ message: "Filter jobs failed" });
   }
 };
 

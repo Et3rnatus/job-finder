@@ -14,6 +14,7 @@ router.post(
   jobController.createJob
 );
 
+router.get("/filter", jobController.filterJobs);
 
 // employer đóng job ✅ (THÊM)
 router.patch(

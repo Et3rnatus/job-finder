@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import axios from "axios";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { Toaster, toast } from "react-hot-toast";
 
 import {
   BrowserRouter as Router,
@@ -37,7 +38,6 @@ import ViewedJobList from "./components/candidate/ViewedJobList";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-
 
 /* =====================
    ADMIN PAGES
@@ -94,7 +94,6 @@ function App() {
 
   /* =====================
      AXIOS GLOBAL INTERCEPTOR
-     (BLOCK USER → LOGOUT + ALERT)
   ===================== */
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
@@ -109,79 +108,108 @@ function App() {
         ) {
           localStorage.clear();
 
-          alert(
+          toast.error(
             "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên."
           );
 
-          window.location.href = "/login";
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1500);
         }
 
         return Promise.reject(error);
       }
     );
 
-    // cleanup tránh đăng ký interceptor nhiều lần
     return () => {
       axios.interceptors.response.eject(interceptor);
     };
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        {/* ===== USER (CÓ NAVBAR + FOOTER) ===== */}
-        <Route element={<UserLayout />}>
-          {/* PUBLIC */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+    <>
+      {/* 🔥 TOAST GLOBAL */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            fontSize: "14px",
+          },
+        }}
+      />
 
-          {/* JOBS */}
-          <Route path="/jobs" element={<JobsPage />} />
-          <Route path="/jobs/:id" element={<JobDetailPage />} />
+      <Router>
+        <Routes>
+          {/* ===== USER (CÓ NAVBAR + FOOTER) ===== */}
+          <Route element={<UserLayout />}>
+            {/* PUBLIC */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* CANDIDATE */}
-          <Route path="/account/candidate" element={<CandidatePage />} />
-          <Route
-            path="/candidate/applications"
-            element={<AppliedJobList />}
-          />
-          <Route
-            path="/candidate/saved-jobs"
-            element={<SavedJobListPage />}
-          />
-          <Route
-            path="/candidate/viewed-jobs"
-            element={<ViewedJobList />}
-          />
+            {/* JOBS */}
+            <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/jobs/:id" element={<JobDetailPage />} />
 
-          {/* EMPLOYER */}
-          <Route path="/account/employer" element={<EmployerPage />} />
-          <Route
-            path="/employer/jobs/:jobId/applications"
-            element={<EmployerApplicantsPage />}
-          />
-          <Route
-            path="/employer/applications/:applicationId"
-            element={<ApplicationDetailPage />}
-          />
-          <Route path="/payment-success" element={<PaymentSuccessPage />} />
-        </Route>
+            {/* CANDIDATE */}
+            <Route
+              path="/account/candidate"
+              element={<CandidatePage />}
+            />
+            <Route
+              path="/candidate/applications"
+              element={<AppliedJobList />}
+            />
+            <Route
+              path="/candidate/saved-jobs"
+              element={<SavedJobListPage />}
+            />
+            <Route
+              path="/candidate/viewed-jobs"
+              element={<ViewedJobList />}
+            />
 
-        {/* ===== ADMIN (KHÔNG NAVBAR / FOOTER) ===== */}
-        <Route element={<AdminGuard />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="jobs" element={<AdminJobsPage />} />
-            <Route path="categories" element={<AdminCategoryPage />} />
-            <Route path="payment" element={<AdminPaymentPage/>}/>
+            {/* EMPLOYER */}
+            <Route
+              path="/account/employer"
+              element={<EmployerPage />}
+            />
+            <Route
+              path="/employer/jobs/:jobId/applications"
+              element={<EmployerApplicantsPage />}
+            />
+            <Route
+              path="/employer/applications/:applicationId"
+              element={<ApplicationDetailPage />}
+            />
+            <Route
+              path="/payment-success"
+              element={<PaymentSuccessPage />}
+            />
           </Route>
-        </Route>
-      </Routes>
-    </Router>
+
+          {/* ===== ADMIN ===== */}
+          <Route element={<AdminGuard />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="jobs" element={<AdminJobsPage />} />
+              <Route
+                path="categories"
+                element={<AdminCategoryPage />}
+              />
+              <Route
+                path="payment"
+                element={<AdminPaymentPage />}
+              />
+            </Route>
+          </Route>
+        </Routes>
+      </Router>
+    </>
   );
 }
 

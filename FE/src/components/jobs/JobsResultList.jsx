@@ -1,15 +1,8 @@
 import JobList from "../home/JobList";
 
-function JobResultList() {
+function JobsResultList({ jobs = [], loading }) {
   return (
-    <section
-      className="
-        space-y-6
-      "
-    >
-      {/* =====================
-          RESULT CONTAINER
-      ===================== */}
+    <section className="space-y-6">
       <div
         className="
           relative
@@ -30,11 +23,21 @@ function JobResultList() {
 
         {/* CONTENT */}
         <div className="p-4 md:p-6">
-          <JobList />
+          {loading ? (
+            <div className="text-center text-gray-500 py-10">
+              Đang tải dữ liệu...
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="text-center text-gray-500 py-10">
+              Không tìm thấy công việc phù hợp
+            </div>
+          ) : (
+            <JobList jobs={jobs} />
+          )}
         </div>
       </div>
     </section>
   );
 }
 
-export default JobResultList;
+export default JobsResultList;

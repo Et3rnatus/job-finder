@@ -36,6 +36,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/employer", employerRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/candidate", candidateRoutes);
+app.use("/uploads", express.static("public/uploads"));
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);

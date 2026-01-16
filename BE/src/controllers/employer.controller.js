@@ -294,3 +294,32 @@ exports.resubmitJob = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.updateEmployerLogo = async (req, res) => {
+  try {
+    const employer = req.employer;
+
+    if (!employer) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Vui lòng chọn ảnh" });
+    }
+
+    const logoPath = `/uploads/employers/${req.file.filename}`;
+
+    await pool.query(
+      "UPDATE employer SET company_logo = ? WHERE id = ?",
+      [logoPath, employer.id]
+    );
+
+    res.json({
+      message: "Cập nhật logo công ty thành công",
+      company_logo: logoPath,
+    });
+  } catch (error) {
+    console.error("UPDATE EMPLOYER LOGO ERROR:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};

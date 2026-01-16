@@ -1,4 +1,3 @@
-import { useNavigate, useLocation } from "react-router-dom";
 import {
   UserCog,
   FileText,
@@ -9,18 +8,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function UserSidebarTool({ onEditProfile }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
+export default function UserSidebarTool({
+  onEditProfile,
+  onChangePassword,
+}) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/login");
+    window.location.href = "/login";
   };
-
-  const isActive = (path) =>
-    location.pathname === path;
 
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-6 mt-6 shadow-sm">
@@ -31,7 +27,6 @@ export default function UserSidebarTool({ onEditProfile }) {
       <ul className="space-y-1 text-sm">
         <SidebarItem
           icon={<UserCog size={16} />}
-          active={false}
           onClick={onEditProfile}
         >
           Cập nhật hồ sơ
@@ -39,9 +34,9 @@ export default function UserSidebarTool({ onEditProfile }) {
 
         <SidebarItem
           icon={<FileText size={16} />}
-          active={isActive("/candidate/applications")}
           onClick={() =>
-            navigate("/candidate/applications")
+            (window.location.href =
+              "/candidate/applications")
           }
         >
           Công việc đã ứng tuyển
@@ -49,9 +44,9 @@ export default function UserSidebarTool({ onEditProfile }) {
 
         <SidebarItem
           icon={<Bookmark size={16} />}
-          active={isActive("/candidate/saved-jobs")}
           onClick={() =>
-            navigate("/candidate/saved-jobs")
+            (window.location.href =
+              "/candidate/saved-jobs")
           }
         >
           Công việc đã lưu
@@ -59,9 +54,9 @@ export default function UserSidebarTool({ onEditProfile }) {
 
         <SidebarItem
           icon={<Eye size={16} />}
-          active={isActive("/candidate/viewed-jobs")}
           onClick={() =>
-            navigate("/candidate/viewed-jobs")
+            (window.location.href =
+              "/candidate/viewed-jobs")
           }
         >
           Công việc đã xem
@@ -69,13 +64,12 @@ export default function UserSidebarTool({ onEditProfile }) {
 
         <div className="my-4 border-t border-gray-200" />
 
-        <li className="px-3 py-2 rounded-xl flex items-start gap-2 text-gray-400 cursor-not-allowed">
-          <Lock size={16} className="mt-0.5" />
-          <div>
-            <p className="font-medium">Đổi mật khẩu</p>
-            <p className="text-xs">(Sắp ra mắt)</p>
-          </div>
-        </li>
+        <SidebarItem
+          icon={<Lock size={16} />}
+          onClick={onChangePassword}
+        >
+          Đổi mật khẩu
+        </SidebarItem>
 
         <li
           onClick={handleLogout}
@@ -89,43 +83,22 @@ export default function UserSidebarTool({ onEditProfile }) {
   );
 }
 
-function SidebarItem({
-  icon,
-  children,
-  onClick,
-  active,
-}) {
+function SidebarItem({ icon, children, onClick }) {
   return (
     <li
       onClick={onClick}
-      className={`group px-3 py-2 rounded-xl cursor-pointer flex items-center justify-between gap-2 transition ${
-        active
-          ? "bg-indigo-50 text-indigo-700"
-          : "text-gray-700 hover:bg-gray-100"
-      }`}
+      className="group px-3 py-2 rounded-xl cursor-pointer flex items-center justify-between gap-2 transition text-gray-700 hover:bg-gray-100"
     >
       <div className="flex items-center gap-2">
-        <span
-          className={`transition ${
-            active
-              ? "text-indigo-600"
-              : "text-gray-400 group-hover:text-gray-700"
-          }`}
-        >
+        <span className="text-gray-400 group-hover:text-gray-700 transition">
           {icon}
         </span>
-        <span className="font-medium">
-          {children}
-        </span>
+        <span className="font-medium">{children}</span>
       </div>
 
       <ChevronRight
         size={14}
-        className={`transition ${
-          active
-            ? "text-indigo-400"
-            : "text-gray-300 group-hover:text-gray-500"
-        }`}
+        className="text-gray-300 group-hover:text-gray-500 transition"
       />
     </li>
   );

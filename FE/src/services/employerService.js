@@ -35,6 +35,22 @@ const updateProfile = async (data) => {
 };
 
 // ======================
+// UPLOAD LOGO (EMPLOYER) ⭐ NEW
+// ======================
+
+const updateLogo = async (file) => {
+  const formData = new FormData();
+  formData.append("logo", file);
+
+  const res = await axios.put(`${API_URL}/logo`, formData, {
+    headers: getAuthHeader(),
+    // ❌ KHÔNG set Content-Type
+  });
+
+  return res.data;
+};
+
+// ======================
 // JOBS (EMPLOYER)
 // ======================
 
@@ -82,9 +98,12 @@ export default {
   getProfile,
   updateProfile,
 
+  // upload logo
+  updateLogo, // ✅ EXPORT
+
   // jobs
   getMyJobs,
   closeJob,
   reopenJob,
-  resubmitJob, // ⭐ QUAN TRỌNG: re-submit job sau reject
+  resubmitJob,
 };

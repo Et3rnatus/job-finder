@@ -45,6 +45,10 @@ export default function JobList() {
                 : "Thỏa thuận",
             location: job.location || "Chưa cập nhật",
             company: job.company_name || "Chưa cập nhật",
+
+            // ✅ NEW: LOGO COMPANY
+            companyLogo: job.company_logo || null,
+
             skills: job.job_skill || "",
           }))
         );

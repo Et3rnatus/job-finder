@@ -157,9 +157,50 @@ exports.login = async (req, res) => {
   }
 };
 
-/* =====================
-   FORGOT PASSWORD
-===================== */
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'Password confirmation does not match' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const [rows] = await db.execute(
+      'SELECT password FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, rows[0].password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.execute(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, userId]
+    );
+
+    return res.json({ message: 'Change password successful' });
+  } catch (error) {
+    console.error('CHANGE PASSWORD ERROR:', error);
+    return res.status(500).json({ message: 'Change password failed' });
+  }
+};
 /* =====================
    FORGOT PASSWORD
 ===================== */

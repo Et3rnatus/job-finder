@@ -7,6 +7,7 @@ const {
 } = require('../middlewares/candidateProfile.middleware');
 
 const candidateController = require('../controllers/candidate.controller');
+const uploadCandidateImage = require("../middlewares/uploadCandidateImage");
 
 // Lấy hồ sơ ứng viên
 router.get(
@@ -32,4 +33,11 @@ router.get(
   candidateController.checkProfile
 );
 
+router.put(
+  "/avatar",
+  verifyToken,
+  requireCandidate,
+  uploadCandidateImage.single("avatar"),
+  candidateController.updateCandidateImage
+);
 module.exports = router;

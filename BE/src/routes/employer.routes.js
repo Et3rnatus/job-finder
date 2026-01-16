@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken,requireRole } = require('../middlewares/auth.middleware');
 const employerController = require('../controllers/employer.controller');
+const uploadEmployerLogo = require("../middlewares/uploadEmployerLogo");
 
     router.put('/profile', verifyToken, employerController.updateProfile);
     
@@ -29,5 +30,12 @@ router.patch(
   employerController.resubmitJob
 );
 
+router.put(
+  "/logo",
+  verifyToken,
+  requireEmployer,
+  uploadEmployerLogo.single("logo"),
+  employerController.updateEmployerLogo
+);
 
 module.exports = router;

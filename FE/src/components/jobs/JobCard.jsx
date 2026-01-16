@@ -30,7 +30,17 @@ const HeartIcon = ({ filled }) => (
   </svg>
 );
 
-function JobCard({ id, title, salary, location, company, skills }) {
+const API_URL = "http://127.0.0.1:3001";
+
+function JobCard({
+  id,
+  title,
+  salary,
+  location,
+  company,
+  companyLogo, // 👈 NEW
+  skills,
+}) {
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,6 +87,27 @@ function JobCard({ id, title, salary, location, company, skills }) {
         cursor-pointer
       "
     >
+      {/* =====================
+          LOGO
+      ===================== */}
+      <div className="w-14 h-14 flex-shrink-0">
+        <img
+          src={
+            companyLogo
+              ? `${API_URL}${companyLogo}`
+              : "/default-company.png"
+          }
+          alt={company}
+          className="
+            w-14 h-14
+            rounded-xl
+            object-cover
+            border border-gray-200
+            bg-white
+          "
+        />
+      </div>
+
       {/* =====================
           CONTENT
       ===================== */}

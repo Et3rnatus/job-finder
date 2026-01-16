@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 
 import UserAvatar from "../components/employer/UserAvatar";
 import EmployerSideBarTool from "../components/employer/EmployerSideBarTool";
@@ -10,7 +11,6 @@ import CreateJobForm from "../components/employer/CreateJobForm";
 import EmployerPayment from "../components/employer/EmployerPayment";
 
 import employerService from "../services/employerService";
-import { AlertTriangle } from "lucide-react";
 
 function EmployerPage() {
   const location = useLocation();
@@ -18,8 +18,10 @@ function EmployerPage() {
   const [mode, setMode] = useState("profile");
   const [profileMode, setProfileMode] = useState("view");
 
+  const [profile, setProfile] = useState(null);
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [showWarning, setShowWarning] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   /* =====================
      SYNC MODE FROM ROUTE
@@ -31,19 +33,26 @@ function EmployerPage() {
   }, [location.state]);
 
   /* =====================
-     CHECK PROFILE STATUS
+     LOAD EMPLOYER DATA
   ===================== */
+  const loadEmployerData = async () => {
+    try {
+      setLoading(true);
+      const profileRes = await employerService.getProfile();
+      const checkRes = await employerService.checkProfile();
+
+      setProfile(profileRes);
+      setProfileCompleted(checkRes.completed);
+      setShowWarning(!checkRes.completed);
+    } catch (err) {
+      console.error("LOAD EMPLOYER DATA ERROR:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const checkProfile = async () => {
-      try {
-        const res = await employerService.checkProfile();
-        setProfileCompleted(res.completed);
-        setShowWarning(!res.completed);
-      } catch (err) {
-        console.error("CHECK EMPLOYER PROFILE ERROR:", err);
-      }
-    };
-    checkProfile();
+    loadEmployerData();
   }, []);
 
   /* =====================
@@ -62,6 +71,14 @@ function EmployerPage() {
     setMode(newMode);
   };
 
+  if (loading || !profile) {
+    return (
+      <div className="py-20 text-center text-gray-500">
+        Đang tải hồ sơ nhà tuyển dụng...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
@@ -79,7 +96,17 @@ function EmployerPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* SIDEBAR */}
           <aside className="lg:col-span-3 space-y-6">
-            <UserAvatar />
+            <UserAvatar
+              name={profile.company_name}
+              image={profile.company_logo}
+              label="Thay đổi logo công ty"
+              defaultImage="/default-company.png"
+              onUpload={async (file) => {
+                const res = await employerService.updateLogo(file);
+                await loadEmployerData(); // reload profile
+                return res.company_logo;
+              }}
+            />
 
             <EmployerSideBarTool
               currentMode={mode}
@@ -124,10 +151,12 @@ function EmployerPage() {
               <>
                 {profileMode === "view" ? (
                   <EmployerProfileView
+                    profile={profile}
                     onEdit={() => setProfileMode("edit")}
                   />
                 ) : (
                   <EmployerProfileForm
+                    profile={profile}
                     onProfileCompleted={() => {
                       setProfileCompleted(true);
                       setShowWarning(false);

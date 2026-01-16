@@ -3,12 +3,12 @@ import UserAvatar from "../components/candidate/UserAvatar";
 import UserSidebarTool from "../components/candidate/UserSidebarTool";
 import EditProfileForm from "../components/candidate/EditProfileForm";
 import UserProfileInfo from "../components/candidate/UserProfileInfo";
+import ChangePassword from "../components/candidate/ChangePassword";
 import candidateService from "../services/candidateService";
 
 function CandidatePage() {
-  const [mode, setMode] = useState("view"); // view | edit
+  const [mode, setMode] = useState("view"); // view | edit | password
   const [profile, setProfile] = useState(null);
-
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [missingFields, setMissingFields] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,18 +57,25 @@ function CandidatePage() {
         {/* LEFT */}
         <div className="space-y-6">
           <UserAvatar
-            fullName={profile.full_name}
-            isProfileCompleted={profileCompleted}
+            name={profile.full_name}
+            image={profile.candidate_image}
+            label="Thay đổi ảnh đại diện"
+            onUpload={async (file) => {
+              const res = await candidateService.updateAvatar(file);
+              await loadCandidateData(); // reload profile
+              return res.candidate_image;
+            }}
           />
 
           <UserSidebarTool
             onEditProfile={() => setMode("edit")}
+            onChangePassword={() => setMode("password")}
           />
         </div>
 
         {/* RIGHT */}
         <div className="md:col-span-3 space-y-6">
-          {!profileCompleted && (
+          {!profileCompleted && mode !== "password" && (
             <div className="bg-yellow-50 border border-yellow-300 rounded-2xl p-5">
               <p className="font-semibold text-yellow-800">
                 Hồ sơ chưa hoàn thiện
@@ -105,6 +112,12 @@ function CandidatePage() {
                 await loadCandidateData();
                 setMode("view");
               }}
+              onCancel={() => setMode("view")}
+            />
+          )}
+
+          {mode === "password" && (
+            <ChangePassword
               onCancel={() => setMode("view")}
             />
           )}

@@ -53,6 +53,7 @@ exports.getProfile = async (req, res) => {
       bio: candidate.bio,
       gender: candidate.gender,
       date_of_birth: candidate.date_of_birth,
+      candidate_image: candidate.candidate_image, // ✅ THÊM
       is_profile_completed: candidate.is_profile_completed,
       skills,
       education,
@@ -83,14 +84,12 @@ exports.checkProfile = async (req, res) => {
   if (!c.contact_number) missingFields.push("Số điện thoại");
   if (!c.date_of_birth) missingFields.push("Ngày sinh");
 
-  // Check skills
   const [[skillCount]] = await pool.query(
     "SELECT COUNT(*) AS total FROM candidate_skill WHERE candidate_id = ?",
     [c.id]
   );
   if (skillCount.total === 0) missingFields.push("Kỹ năng");
 
-  // Check education
   const [[eduCount]] = await pool.query(
     "SELECT COUNT(*) AS total FROM education WHERE candidate_id = ?",
     [c.id]
@@ -128,9 +127,7 @@ exports.updateProfile = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    /* =====================
-       VALIDATE BẮT BUỘC
-    ===================== */
+    /* VALIDATE */
     if (!full_name || !contact_number || !date_of_birth) {
       return res.status(400).json({
         message: "Họ tên, số điện thoại và ngày sinh là bắt buộc",
@@ -164,9 +161,6 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    /* =====================
-       VALIDATE SKILL ID
-    ===================== */
     const [skillRows] = await connection.query(
       "SELECT id FROM skill WHERE id IN (?)",
       [skills]
@@ -178,12 +172,9 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    /* =====================
-       TRANSACTION
-    ===================== */
+    /* TRANSACTION */
     await connection.beginTransaction();
 
-    /* UPDATE CANDIDATE */
     await connection.query(
       `
       UPDATE candidate
@@ -208,7 +199,6 @@ exports.updateProfile = async (req, res) => {
       ]
     );
 
-    /* SKILLS */
     await connection.query(
       "DELETE FROM candidate_skill WHERE candidate_id = ?",
       [candidate.id]
@@ -221,7 +211,6 @@ exports.updateProfile = async (req, res) => {
       );
     }
 
-    /* EDUCATION */
     await connection.query(
       "DELETE FROM education WHERE candidate_id = ?",
       [candidate.id]
@@ -245,7 +234,6 @@ exports.updateProfile = async (req, res) => {
       );
     }
 
-    /* EXPERIENCE (OPTIONAL) */
     await connection.query(
       "DELETE FROM work_experience WHERE candidate_id = ?",
       [candidate.id]
@@ -285,5 +273,37 @@ exports.updateProfile = async (req, res) => {
     return res.status(500).json({ message: "Update profile failed" });
   } finally {
     connection.release();
+  }
+};
+
+/* =========================
+   UPDATE CANDIDATE IMAGE
+========================= */
+exports.updateCandidateImage = async (req, res) => {
+  try {
+    const candidate = req.candidate;
+
+    if (!candidate) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Vui lòng chọn ảnh" });
+    }
+
+    const imagePath = `/uploads/candidates/${req.file.filename}`;
+
+    await pool.query(
+      "UPDATE candidate SET candidate_image = ? WHERE id = ?",
+      [imagePath, candidate.id]
+    );
+
+    res.json({
+      message: "Cập nhật ảnh đại diện thành công",
+      candidate_image: imagePath,
+    });
+  } catch (error) {
+    console.error("UPDATE IMAGE ERROR:", error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
