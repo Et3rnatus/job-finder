@@ -291,8 +291,8 @@ exports.getAllJobs = async (req, res) => {
         jc.name AS category_name,
         e.company_name,
 
-        -- ✅ ĐỒNG BỘ TÊN FIELD LOGO
-        e.company_logo,
+        -- ✅ ĐÚNG THEO DB
+        e.logo,
 
         ${
           user && user.role === "candidate"
@@ -307,7 +307,7 @@ exports.getAllJobs = async (req, res) => {
     const params = [];
 
     /* =========================
-       CHECK APPLY (CANDIDATE)
+      CHECK APPLY (CANDIDATE)
     ========================= */
     if (user && user.role === "candidate") {
       sql += `
@@ -321,7 +321,7 @@ exports.getAllJobs = async (req, res) => {
     }
 
     /* =========================
-       ĐIỀU KIỆN HIỂN THỊ JOB
+      ĐIỀU KIỆN HIỂN THỊ JOB
     ========================= */
     sql += `
       WHERE j.status = 'approved'
@@ -329,7 +329,7 @@ exports.getAllJobs = async (req, res) => {
     `;
 
     /* =========================
-       FILTER
+      FILTER
     ========================= */
     if (keyword) {
       sql += " AND j.title LIKE ?";
@@ -343,14 +343,11 @@ exports.getAllJobs = async (req, res) => {
 
     sql += " ORDER BY j.created_at DESC";
 
-    /* =========================
-       QUERY JOBS
-    ========================= */
     const [jobs] = await db.execute(sql, params);
     if (jobs.length === 0) return res.json([]);
 
     /* =========================
-       GET SKILLS
+      GET SKILLS
     ========================= */
     const jobIds = jobs.map((j) => j.id);
 
@@ -365,7 +362,7 @@ exports.getAllJobs = async (req, res) => {
     );
 
     /* =========================
-       MAP SKILLS
+      MAP SKILLS
     ========================= */
     const map = {};
     jobs.forEach((j) => {
@@ -377,13 +374,11 @@ exports.getAllJobs = async (req, res) => {
     });
 
     /* =========================
-       RESPONSE
+      RESPONSE
     ========================= */
     return res.json(
       Object.values(map).map((j) => ({
         ...j,
-
-        // ✅ ĐỒNG BỘ TÊN FIELD FE ĐANG DÙNG
         job_skill: j.skills.join(", "),
       }))
     );

@@ -33,7 +33,7 @@ router.patch(
 router.put(
   "/logo",
   verifyToken,
-  requireEmployer,
+  requireRole("employer"),
   uploadEmployerLogo.single("logo"),
   employerController.updateEmployerLogo
 );

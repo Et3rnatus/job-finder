@@ -310,13 +310,13 @@ exports.updateEmployerLogo = async (req, res) => {
     const logoPath = `/uploads/employers/${req.file.filename}`;
 
     await pool.query(
-      "UPDATE employer SET company_logo = ? WHERE id = ?",
+      "UPDATE employer SET logo = ? WHERE id = ?",
       [logoPath, employer.id]
     );
 
     res.json({
       message: "Cập nhật logo công ty thành công",
-      company_logo: logoPath,
+      logo: logoPath,
     });
   } catch (error) {
     console.error("UPDATE EMPLOYER LOGO ERROR:", error);
