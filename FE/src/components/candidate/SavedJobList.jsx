@@ -22,12 +22,16 @@ export default function SavedJobList() {
   const [loading, setLoading] = useState(true);
   const [confirm, setConfirm] = useState(null);
 
+  /* =====================
+     FETCH DATA
+  ===================== */
   useEffect(() => {
     fetchSavedJobs();
   }, []);
 
   const fetchSavedJobs = async () => {
     try {
+      setLoading(true);
       const data = await getSavedJobs();
       setJobs(Array.isArray(data) ? data : []);
     } finally {
@@ -35,6 +39,9 @@ export default function SavedJobList() {
     }
   };
 
+  /* =====================
+     UNSAVE
+  ===================== */
   const handleUnsave = (jobId) => {
     setConfirm({
       title: "Bỏ lưu công việc",
@@ -53,15 +60,21 @@ export default function SavedJobList() {
     });
   };
 
+  /* =====================
+     LOADING
+  ===================== */
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Loader2 className="animate-spin" size={16} />
+        <Loader2 className="w-4 h-4 animate-spin" />
         Đang tải công việc đã lưu...
       </div>
     );
   }
 
+  /* =====================
+     EMPTY
+  ===================== */
   if (!jobs.length) {
     return (
       <div className="bg-white border border-gray-200 rounded-3xl p-16 text-center shadow-sm">
@@ -88,7 +101,9 @@ export default function SavedJobList() {
   return (
     <>
       <div className="bg-white border border-gray-200 rounded-3xl shadow-sm">
-        {/* HEADER */}
+        {/* =====================
+            HEADER
+        ===================== */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-2">
             <Bookmark size={20} />
@@ -101,12 +116,14 @@ export default function SavedJobList() {
           </div>
         </div>
 
-        {/* LIST */}
+        {/* =====================
+            LIST
+        ===================== */}
         <div className="p-6 grid gap-4">
           {jobs.map((job) => (
             <div
               key={job.job_id}
-              className="group border border-gray-200 rounded-2xl p-5 hover:shadow-md hover:border-indigo-500 transition bg-white"
+              className="group border border-gray-200 rounded-2xl p-5 bg-white hover:shadow-md hover:border-indigo-500 transition"
             >
               <div className="flex justify-between gap-4">
                 <div className="min-w-0">
@@ -134,7 +151,8 @@ export default function SavedJobList() {
                   onClick={() =>
                     handleUnsave(job.job_id)
                   }
-                  className="text-sm text-gray-400 hover:text-red-600"
+                  className="text-sm text-gray-400 hover:text-red-600 transition"
+                  title="Bỏ lưu"
                 >
                   <BookmarkX size={18} />
                 </button>
@@ -147,8 +165,7 @@ export default function SavedJobList() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Banknote size={14} />
-                  {job.min_salary} –{" "}
-                  {job.max_salary}
+                  {job.min_salary} – {job.max_salary}
                 </span>
               </div>
 
@@ -171,6 +188,9 @@ export default function SavedJobList() {
         </div>
       </div>
 
+      {/* =====================
+          CONFIRM MODAL
+      ===================== */}
       {confirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl text-center">

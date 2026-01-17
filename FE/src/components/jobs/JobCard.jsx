@@ -4,7 +4,13 @@ import {
   saveJob,
   unsaveJob,
 } from "../../services/savedJobService";
-import { MapPin, Wallet, Building2 } from "lucide-react";
+import {
+  MapPin,
+  Wallet,
+  Building2,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
 
 /* =====================
    HEART ICON
@@ -38,7 +44,7 @@ function JobCard({
   salary,
   location,
   company,
-  companyLogo, // 👈 NEW
+  companyLogo,
   skills,
 }) {
   const navigate = useNavigate();
@@ -80,13 +86,17 @@ function JobCard({
       onClick={() => navigate(`/jobs/${id}`)}
       className="
         group relative
-        bg-white border border-gray-200 rounded-2xl
+        bg-white border border-gray-200 rounded-3xl
         p-5 flex gap-5
-        hover:border-green-600 hover:shadow-lg
+        hover:border-emerald-600 hover:shadow-xl
         transition-all duration-200
         cursor-pointer
+        overflow-hidden
       "
     >
+      {/* LEFT ACCENT */}
+      <span className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-600 opacity-0 group-hover:opacity-100 transition" />
+
       {/* =====================
           LOGO
       ===================== */}
@@ -100,8 +110,8 @@ function JobCard({
           alt={company}
           className="
             w-14 h-14
-            rounded-xl
-            object-cover
+            rounded-2xl
+            object-contain
             border border-gray-200
             bg-white
           "
@@ -123,7 +133,7 @@ function JobCard({
           className="
             text-base font-semibold text-gray-900
             mt-1 leading-snug
-            group-hover:text-green-600
+            group-hover:text-emerald-600
             transition
             line-clamp-2
           "
@@ -134,12 +144,12 @@ function JobCard({
         {/* META */}
         <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm text-gray-600">
           <span className="flex items-center gap-1.5">
-            <Wallet className="w-4 h-4 text-green-600" />
+            <Wallet className="w-4 h-4 text-emerald-600" />
             {salary}
           </span>
 
           <span className="flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-green-600" />
+            <MapPin className="w-4 h-4 text-emerald-600" />
             {location}
           </span>
         </div>
@@ -152,7 +162,7 @@ function JobCard({
                 key={index}
                 className="
                   text-xs font-medium
-                  bg-green-50 text-green-700
+                  bg-emerald-50 text-emerald-700
                   px-3 py-1 rounded-full
                 "
               >
@@ -183,44 +193,37 @@ function JobCard({
             transition-all duration-200
             ${
               saved
-                ? "bg-green-600 border-green-600 text-white"
-                : "border-gray-300 text-gray-500 hover:border-green-600 hover:text-green-600"
+                ? "bg-emerald-600 border-emerald-600 text-white"
+                : "border-gray-300 text-gray-500 hover:border-emerald-600 hover:text-emerald-600"
             }
             active:scale-95
             disabled:opacity-50
           `}
           title={saved ? "Bỏ lưu công việc" : "Lưu công việc"}
         >
-          <HeartIcon filled={saved} />
+          {saving ? (
+            <Loader2 className="animate-spin" size={18} />
+          ) : (
+            <HeartIcon filled={saved} />
+          )}
         </button>
 
         {/* APPLY */}
         <button
           onClick={handleApply}
           className="
+            inline-flex items-center gap-1.5
             text-sm font-semibold
             px-5 py-2 rounded-full
-            border border-green-600 text-green-600
-            hover:bg-green-600 hover:text-white
+            border border-emerald-600 text-emerald-600
+            hover:bg-emerald-600 hover:text-white
             transition-all duration-200
           "
         >
           Ứng tuyển
+          <ArrowRight size={14} />
         </button>
       </div>
-
-      {/* =====================
-          HOVER ACCENT
-      ===================== */}
-      <span
-        className="
-          absolute left-0 top-0 bottom-0
-          w-1 rounded-l-2xl
-          bg-green-600
-          opacity-0 group-hover:opacity-100
-          transition
-        "
-      />
     </div>
   );
 }

@@ -1,11 +1,14 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, forwardRef } from "react";
 import { login } from "../../services/authService";
 import {
   Mail,
   Lock,
   Loader2,
   XCircle,
+  Briefcase,
+  Users,
+  ShieldCheck,
 } from "lucide-react";
 
 /* =====================
@@ -58,8 +61,7 @@ export default function LoginForm() {
     setErrors(newErrors);
 
     if (newErrors.email) emailRef.current?.focus();
-    else if (newErrors.password)
-      passwordRef.current?.focus();
+    else if (newErrors.password) passwordRef.current?.focus();
 
     return Object.keys(newErrors).length === 0;
   };
@@ -95,9 +97,7 @@ export default function LoginForm() {
         });
       }
     } catch {
-      setErrorMessage(
-        "Email hoặc mật khẩu không chính xác. Vui lòng thử lại."
-      );
+      setErrorMessage("Email hoặc mật khẩu không chính xác.");
     } finally {
       setLoading(false);
     }
@@ -107,33 +107,43 @@ export default function LoginForm() {
      RENDER
   ===================== */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.15)] bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-white rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.15)]">
+        
         {/* ===== LEFT BRAND ===== */}
-        <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-green-600 to-green-700 text-white">
+        <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-green-600 to-green-700 text-white relative">
           <div>
-            <h1 className="text-4xl font-bold mb-4">
+            <h1 className="text-4xl font-extrabold tracking-tight mb-4">
               JobFinder
             </h1>
-            <p className="text-lg opacity-90 mb-8">
+            <p className="text-lg opacity-90 mb-10">
               Nền tảng kết nối ứng viên và nhà tuyển dụng
-              hàng đầu Việt Nam
             </p>
 
-            <ul className="space-y-3 text-sm opacity-90">
-              <li>✔ 10.000+ việc làm mới mỗi ngày</li>
-              <li>✔ Ứng tuyển nhanh – hồ sơ chuyên nghiệp</li>
-              <li>✔ Doanh nghiệp uy tín</li>
+            <ul className="space-y-4 text-sm">
+              <li className="flex items-center gap-3">
+                <Briefcase /> 10.000+ việc làm mỗi ngày
+              </li>
+              <li className="flex items-center gap-3">
+                <Users /> Doanh nghiệp uy tín
+              </li>
+              <li className="flex items-center gap-3">
+                <ShieldCheck /> Bảo mật & minh bạch
+              </li>
             </ul>
           </div>
 
           <p className="text-xs opacity-70">
             © 2025 JobFinder Vietnam
           </p>
+
+          {/* Decorative circles */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full" />
+          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-white/10 rounded-full" />
         </div>
 
         {/* ===== RIGHT FORM ===== */}
-        <div className="p-8 md:p-12">
+        <div className="p-8 md:p-12 flex flex-col justify-center">
           <h2 className="text-2xl font-bold text-gray-900">
             Đăng nhập
           </h2>
@@ -141,11 +151,7 @@ export default function LoginForm() {
             Chào mừng bạn quay trở lại 👋
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
-            {/* EMAIL */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <FormInput
               ref={emailRef}
               icon={<Mail size={18} />}
@@ -157,25 +163,20 @@ export default function LoginForm() {
                 setEmail(v);
                 setErrors((e) => ({ ...e, email: "" }));
               }}
-              type="email"
             />
 
-            {/* PASSWORD */}
             <FormInput
               ref={passwordRef}
               icon={<Lock size={18} />}
               label="Mật khẩu"
               placeholder="••••••••"
               value={password}
+              type="password"
               error={errors.password}
               onChange={(v) => {
                 setPassword(v);
-                setErrors((e) => ({
-                  ...e,
-                  password: "",
-                }));
+                setErrors((e) => ({ ...e, password: "" }));
               }}
-              type="password"
             />
 
             <div className="flex justify-end">
@@ -187,25 +188,17 @@ export default function LoginForm() {
               </Link>
             </div>
 
-            {/* SUBMIT */}
             <button
               type="submit"
               disabled={loading}
-              className={`
-                w-full h-12 rounded-xl
-                flex items-center justify-center gap-2
-                font-semibold
-                transition-all
+              className={`w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all
                 ${
                   loading
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]"
-                }
-              `}
+                    : "bg-green-600 text-white hover:bg-green-700 active:scale-[0.97]"
+                }`}
             >
-              {loading && (
-                <Loader2 className="animate-spin w-5 h-5" />
-              )}
+              {loading && <Loader2 className="w-5 h-5 animate-spin" />}
               {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
 
@@ -225,14 +218,14 @@ export default function LoginForm() {
       {/* ===== ERROR MODAL ===== */}
       {errorMessage && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-sm rounded-2xl bg-white border border-gray-200 shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-6 animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[fadeIn_0.2s_ease-out]">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                <XCircle className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                <XCircle />
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 text-center">
+            <h3 className="text-lg font-semibold text-center">
               Đăng nhập thất bại
             </h3>
             <p className="text-sm text-gray-600 text-center mt-1 mb-6">
@@ -241,7 +234,7 @@ export default function LoginForm() {
 
             <button
               onClick={() => setErrorMessage("")}
-              className="w-full h-11 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+              className="w-full h-11 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700"
             >
               Thử lại
             </button>
@@ -253,52 +246,38 @@ export default function LoginForm() {
 }
 
 /* =====================
-   SMALL COMPONENT
+   FORM INPUT
 ===================== */
+const FormInput = forwardRef(
+  ({ icon, label, error, value, onChange, type = "text", placeholder }, ref) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
 
-const FormInput = ({
-  icon,
-  label,
-  error,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-}, ref) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {label}
-    </label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {icon}
+        </span>
 
-    <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-        {icon}
-      </span>
+        <input
+          ref={ref}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={`w-full h-12 pl-10 pr-4 rounded-xl border text-sm transition focus:outline-none focus:ring-2
+            ${
+              error
+                ? "border-red-500 focus:ring-red-300"
+                : "border-gray-300 focus:ring-green-500"
+            }`}
+        />
+      </div>
 
-      <input
-        ref={ref}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`
-          w-full h-12 pl-10 pr-4
-          rounded-xl border
-          text-sm
-          focus:outline-none focus:ring-2
-          ${
-            error
-              ? "border-red-500 focus:ring-red-300"
-              : "border-gray-300 focus:ring-green-500"
-          }
-        `}
-      />
+      {error && (
+        <p className="text-sm text-red-500 mt-1">{error}</p>
+      )}
     </div>
-
-    {error && (
-      <p className="text-sm text-red-500 mt-1">
-        {error}
-      </p>
-    )}
-  </div>
+  )
 );

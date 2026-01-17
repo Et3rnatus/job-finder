@@ -3,37 +3,43 @@ import {
   History,
   CheckCircle2,
   AlertCircle,
+  XCircle,
 } from "lucide-react";
 
+/* =====================
+   STATUS CONFIG
+===================== */
+const statusConfig = {
+  approved: {
+    label: "Đã duyệt",
+    badge:
+      "bg-green-100 text-green-700 border-green-200",
+    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+  },
+  pending: {
+    label: "Chờ duyệt",
+    badge:
+      "bg-yellow-100 text-yellow-700 border-yellow-200",
+    icon: <AlertCircle className="w-3.5 h-3.5" />,
+  },
+  rejected: {
+    label: "Từ chối",
+    badge:
+      "bg-red-100 text-red-700 border-red-200",
+    icon: <XCircle className="w-3.5 h-3.5" />,
+  },
+};
+
 export default function JobTable({
-  jobs,
+  jobs = [],
   onReview,
   onViewLogs,
 }) {
-  const statusConfig = {
-    approved: {
-      label: "Đã duyệt",
-      badge:
-        "bg-green-100 text-green-700 border-green-200",
-      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-    },
-    pending: {
-      label: "Chờ duyệt",
-      badge:
-        "bg-yellow-100 text-yellow-700 border-yellow-200",
-      icon: <AlertCircle className="w-3.5 h-3.5" />,
-    },
-    rejected: {
-      label: "Từ chối",
-      badge:
-        "bg-red-100 text-red-700 border-red-200",
-      icon: <AlertCircle className="w-3.5 h-3.5" />,
-    },
-  };
-
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* ===== TABLE ===== */}
+      {/* =====================
+          TABLE
+      ===================== */}
       <table className="w-full text-sm">
         {/* ===== HEADER ===== */}
         <thead className="bg-gray-50 border-b">
@@ -59,9 +65,17 @@ export default function JobTable({
             <tr>
               <td
                 colSpan={4}
-                className="p-12 text-center text-gray-500"
+                className="p-14 text-center text-gray-500"
               >
-                Không có tin tuyển dụng nào
+                <div className="flex flex-col items-center gap-2">
+                  <AlertCircle className="w-6 h-6 opacity-40" />
+                  <p className="font-medium">
+                    Không có tin tuyển dụng nào
+                  </p>
+                  <p className="text-xs">
+                    Danh sách sẽ hiển thị khi có dữ liệu
+                  </p>
+                </div>
               </td>
             </tr>
           )}
@@ -90,7 +104,7 @@ export default function JobTable({
                 </td>
 
                 {/* ===== EMPLOYER ===== */}
-                <td className="p-4 text-gray-600 truncate max-w-[240px]">
+                <td className="p-4 text-gray-600 truncate max-w-[260px]">
                   {job.employer_email}
                 </td>
 
@@ -103,8 +117,10 @@ export default function JobTable({
                       rounded-full
                       text-xs font-semibold
                       border
-                      ${status.badge ||
-                        "bg-gray-100 text-gray-600 border-gray-200"}
+                      ${
+                        status.badge ||
+                        "bg-gray-100 text-gray-600 border-gray-200"
+                      }
                     `}
                   >
                     {status.icon}
@@ -140,6 +156,7 @@ export default function JobTable({
                           inline-flex items-center gap-1
                           text-xs text-gray-400
                           px-3 py-1.5
+                          cursor-default
                         "
                       >
                         <CheckCircle2 className="w-4 h-4" />

@@ -42,15 +42,17 @@ export default function KeyIndustries() {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 mt-28">
+    <section className="max-w-7xl mx-auto px-6 mt-32">
       {/* HEADER */}
-      <div className="mb-16 text-center">
+      <div className="mb-18 text-center">
         <span className="inline-block mb-4 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
           Danh mục nổi bật
         </span>
+
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
           Ngành nghề trọng điểm
         </h2>
+
         <p className="text-gray-500 mt-4 max-w-2xl mx-auto leading-relaxed">
           Khám phá những lĩnh vực đang có nhu cầu tuyển dụng
           cao và phát triển mạnh trên thị trường lao động
@@ -62,11 +64,11 @@ export default function KeyIndustries() {
         {industries.map((item, index) => (
           <div
             key={index}
-            className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-transparent cursor-pointer"
+            className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-transparent cursor-pointer"
           >
-            {/* GRADIENT BACKDROP */}
+            {/* GRADIENT BACKGROUND */}
             <div
-              className={`absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br ${item.color} transition`}
+              className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition`}
             />
 
             {/* ICON */}

@@ -2,42 +2,55 @@ import {
   Shield,
   UserX,
   UserCheck,
+  AlertCircle,
 } from "lucide-react";
 
 export default function UserTable({
-  users,
+  users = [],
   onToggleStatus,
 }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <table className="w-full text-sm">
-        {/* ===== HEADER ===== */}
+        {/* =====================
+            HEADER
+        ===================== */}
         <thead className="bg-gray-50 border-b">
           <tr>
             <th className="p-4 text-left font-semibold text-gray-700">
               Email
             </th>
             <th className="p-4 text-left font-semibold text-gray-700">
-              Role
+              Vai trò
             </th>
             <th className="p-4 text-left font-semibold text-gray-700">
-              Status
+              Trạng thái
             </th>
             <th className="p-4 text-right font-semibold text-gray-700">
-              Action
+              Hành động
             </th>
           </tr>
         </thead>
 
-        {/* ===== BODY ===== */}
+        {/* =====================
+            BODY
+        ===================== */}
         <tbody className="divide-y">
           {users.length === 0 && (
             <tr>
               <td
                 colSpan={4}
-                className="p-10 text-center text-gray-500"
+                className="p-14 text-center text-gray-500"
               >
-                Không có người dùng
+                <div className="flex flex-col items-center gap-2">
+                  <AlertCircle className="w-6 h-6 opacity-40" />
+                  <p className="font-medium">
+                    Không có người dùng
+                  </p>
+                  <p className="text-xs">
+                    Danh sách sẽ hiển thị khi có dữ liệu
+                  </p>
+                </div>
               </td>
             </tr>
           )}
@@ -49,11 +62,7 @@ export default function UserTable({
             return (
               <tr
                 key={user.id}
-                className="
-                  group
-                  hover:bg-gray-50
-                  transition
-                "
+                className="group hover:bg-gray-50 transition"
               >
                 {/* ===== EMAIL ===== */}
                 <td className="p-4">
@@ -105,7 +114,9 @@ export default function UserTable({
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        isActive ? "bg-green-600" : "bg-red-600"
+                        isActive
+                          ? "bg-green-600"
+                          : "bg-red-600"
                       }`}
                     />
                     {isActive ? "Active" : "Blocked"}

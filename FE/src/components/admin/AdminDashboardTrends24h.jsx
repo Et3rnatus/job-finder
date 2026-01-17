@@ -8,12 +8,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Clock } from "lucide-react";
+import { Clock, Activity } from "lucide-react";
 
 /* =====================
    FORMATTERS
 ===================== */
-// format HH:mm
+// Format HH:mm
 const formatHour = (value) => {
   const date = new Date(value);
   return date.toLocaleTimeString("vi-VN", {
@@ -28,11 +28,13 @@ const formatHour = (value) => {
 function EmptyState() {
   return (
     <div className="h-[320px] flex flex-col items-center justify-center text-gray-400">
-      <Clock className="w-10 h-10 mb-3 opacity-40" />
-      <p className="text-sm font-medium">
+      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+        <Clock className="w-7 h-7 opacity-50" />
+      </div>
+      <p className="text-sm font-semibold">
         Chưa có dữ liệu 24 giờ gần nhất
       </p>
-      <p className="text-xs mt-1">
+      <p className="text-xs mt-1 text-gray-400">
         Biểu đồ sẽ cập nhật khi có hoạt động mới
       </p>
     </div>
@@ -50,41 +52,34 @@ export default function AdminDashboardTrends24h({ data = [] }) {
         bg-white
         border border-gray-200
         p-6
-        shadow-[0_8px_30px_rgba(0,0,0,0.08)]
+        shadow-[0_10px_40px_rgba(0,0,0,0.08)]
         transition-all
-        hover:shadow-[0_14px_45px_rgba(0,0,0,0.12)]
+        hover:shadow-[0_18px_60px_rgba(0,0,0,0.12)]
       "
     >
       {/* =====================
           HEADER
       ===================== */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-600" />
             Job Trends (24h)
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 mt-1">
             Thống kê hoạt động tuyển dụng trong 24 giờ gần nhất
           </p>
         </div>
 
         {/* BADGE */}
-        <div
-          className="
-            flex items-center gap-2
-            px-3 py-1.5
-            rounded-full
-            bg-indigo-50 text-indigo-600
-            text-xs font-semibold
-          "
-        >
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-semibold">
           <Clock className="w-4 h-4" />
           Last 24 hours
         </div>
       </div>
 
       {/* =====================
-          CHART / EMPTY
+          CHART / EMPTY STATE
       ===================== */}
       {!hasData ? (
         <EmptyState />
@@ -116,16 +111,16 @@ export default function AdminDashboardTrends24h({ data = [] }) {
             <Tooltip
               labelFormatter={formatHour}
               contentStyle={{
-                backgroundColor: "rgba(255,255,255,0.95)",
+                backgroundColor: "rgba(255,255,255,0.96)",
                 borderRadius: "14px",
                 border: "1px solid #e5e7eb",
                 boxShadow:
-                  "0 12px 30px rgba(0,0,0,0.12)",
+                  "0 14px 40px rgba(0,0,0,0.15)",
               }}
               labelStyle={{
                 fontWeight: 600,
                 color: "#111827",
-                marginBottom: 4,
+                marginBottom: 6,
               }}
               itemStyle={{
                 fontSize: 13,

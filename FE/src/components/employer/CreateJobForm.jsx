@@ -11,18 +11,21 @@ import {
   FileText,
   Gift,
   Banknote,
-  MapPin,
   CheckCircle2,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 export default function CreateJobForm() {
   const navigate = useNavigate();
 
   const [districts, setDistricts] = useState([]);
-  const [salaryNegotiable, setSalaryNegotiable] = useState(true);
+  const [salaryNegotiable, setSalaryNegotiable] =
+    useState(true);
   const [skills, setSkills] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -42,71 +45,174 @@ export default function CreateJobForm() {
     skill_ids: [],
   });
 
+  /* =====================
+     LOAD CATEGORIES
+  ===================== */
   useEffect(() => {
     getCategories().then(setCategories);
   }, []);
 
+  /* =====================
+     LOAD SKILLS BY CATEGORY
+  ===================== */
   useEffect(() => {
     if (!form.category_id) {
       setSkills([]);
       setForm((p) => ({ ...p, skill_ids: [] }));
       return;
     }
+
     setForm((p) => ({ ...p, skill_ids: [] }));
-    getSkillsByCategory(form.category_id).then(setSkills);
+    getSkillsByCategory(form.category_id).then(
+      setSkills
+    );
   }, [form.category_id]);
 
+  /* =====================
+     HANDLERS
+  ===================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({
       ...p,
-      [name]: name === "category_id" ? Number(value) : value,
+      [name]:
+        name === "category_id"
+          ? Number(value)
+          : value,
     }));
   };
 
   const handleCityChange = (e) => {
     const cityId = e.target.value;
-    const cityData = vnAddress.find((c) => c.Id === cityId);
-    setForm((p) => ({ ...p, city: cityId, district: "" }));
-    setDistricts(cityData ? cityData.Districts : []);
+    const cityData = vnAddress.find(
+      (c) => c.Id === cityId
+    );
+
+    setForm((p) => ({
+      ...p,
+      city: cityId,
+      district: "",
+    }));
+
+    setDistricts(
+      cityData ? cityData.Districts : []
+    );
   };
 
+  /* =====================
+     SUBMIT
+  ===================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAlert(null);
 
+    /* ===== VALIDATION ===== */
+    if (
+      !form.title ||
+      !form.category_id ||
+      !form.skill_ids.length ||
+      !form.description
+    ) {
+      return setAlert({
+        type: "error",
+        message:
+          "Vui lòng nhập đầy đủ thông tin công việc bắt buộc",
+      });
+    }
+
+    if (
+      !salaryNegotiable &&
+      (!form.min_salary || !form.max_salary)
+    ) {
+      return setAlert({
+        type: "error",
+        message:
+          "Vui lòng nhập đầy đủ mức lương",
+      });
+    }
+
+    if (
+      !salaryNegotiable &&
+      Number(form.min_salary) >
+        Number(form.max_salary)
+    ) {
+      return setAlert({
+        type: "error",
+        message:
+          "Lương tối thiểu không được lớn hơn lương tối đa",
+      });
+    }
+
+    /* ===== BUILD LOCATION ===== */
     let location = null;
-    if (form.city && form.district && form.address_detail) {
+    if (
+      form.city &&
+      form.district &&
+      form.address_detail
+    ) {
       const cityName =
-        vnAddress.find((c) => c.Id === form.city)?.Name || "";
+        vnAddress.find(
+          (c) => c.Id === form.city
+        )?.Name || "";
+
       const districtName =
-        districts.find((d) => d.Id === form.district)?.Name || "";
+        districts.find(
+          (d) => d.Id === form.district
+        )?.Name || "";
+
       location = `${form.address_detail}, ${districtName}, ${cityName}`;
     }
 
-    await createJob({
-      title: form.title,
-      description: form.description,
-      job_requirements: form.job_requirements,
-      benefits: form.benefits,
-      location,
-      employment_type: form.employment_type,
-      experience: form.experience,
-      hiring_quantity: Number(form.hiring_quantity),
-      expired_at: form.expired_at,
-      min_salary: salaryNegotiable ? null : Number(form.min_salary),
-      max_salary: salaryNegotiable ? null : Number(form.max_salary),
-      is_salary_negotiable: salaryNegotiable ? 1 : 0,
-      category_id: form.category_id,
-      skill_ids: form.skill_ids,
-    });
+    try {
+      setLoading(true);
 
-    setSuccess(true);
+      await createJob({
+        title: form.title,
+        description: form.description,
+        job_requirements:
+          form.job_requirements,
+        benefits: form.benefits,
+        location,
+        employment_type:
+          form.employment_type,
+        experience: form.experience,
+        hiring_quantity: Number(
+          form.hiring_quantity
+        ),
+        expired_at: form.expired_at,
+        min_salary: salaryNegotiable
+          ? null
+          : Number(form.min_salary),
+        max_salary: salaryNegotiable
+          ? null
+          : Number(form.max_salary),
+        is_salary_negotiable:
+          salaryNegotiable ? 1 : 0,
+        category_id: form.category_id,
+        skill_ids: form.skill_ids,
+      });
+
+      setAlert({ type: "success" });
+    } catch {
+      setAlert({
+        type: "error",
+        message: "Đăng tin tuyển dụng thất bại",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (success) {
+  /* =====================
+     SUCCESS SCREEN
+  ===================== */
+  if (alert?.type === "success") {
     return (
       <div className="bg-white border border-gray-200 rounded-3xl p-20 text-center shadow-sm">
-        <CheckCircle2 size={56} className="mx-auto text-emerald-600 mb-4" />
+        <CheckCircle2
+          size={56}
+          className="mx-auto text-emerald-600 mb-4"
+        />
         <h2 className="text-2xl font-semibold mb-2">
           Đăng tin thành công
         </h2>
@@ -114,7 +220,9 @@ export default function CreateJobForm() {
           Tin tuyển dụng đang chờ admin duyệt
         </p>
         <button
-          onClick={() => navigate("/account/employer")}
+          onClick={() =>
+            navigate("/account/employer")
+          }
           className="px-10 py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
         >
           Về trang quản lý
@@ -129,41 +237,117 @@ export default function CreateJobForm() {
         Đăng tin tuyển dụng
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-14">
-        <Section icon={<Briefcase />} title="Thông tin công việc">
-          <Input name="title" value={form.title} onChange={handleChange} placeholder="Tên công việc" />
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-14"
+      >
+        {/* =====================
+            JOB INFO
+        ===================== */}
+        <Section
+          icon={<Briefcase />}
+          title="Thông tin công việc"
+        >
+          <Input
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Tên công việc *"
+          />
+
           <Grid>
-            <Select name="employment_type" value={form.employment_type} onChange={handleChange}>
-              <option value="">Hình thức làm việc</option>
-              <option value="fulltime">Toàn thời gian</option>
-              <option value="parttime">Bán thời gian</option>
-              <option value="intern">Thực tập</option>
+            <Select
+              name="employment_type"
+              value={form.employment_type}
+              onChange={handleChange}
+            >
+              <option value="">
+                Hình thức làm việc
+              </option>
+              <option value="fulltime">
+                Toàn thời gian
+              </option>
+              <option value="parttime">
+                Bán thời gian
+              </option>
+              <option value="intern">
+                Thực tập
+              </option>
             </Select>
-            <Select name="experience" value={form.experience} onChange={handleChange}>
-              <option value="">Kinh nghiệm</option>
-              <option value="no_experience">Không yêu cầu</option>
-              <option value="under_1_year">Dưới 1 năm</option>
-              <option value="1_year">1 năm</option>
-              <option value="2_3_years">2–3 năm</option>
-              <option value="over_3_years">Trên 3 năm</option>
+
+            <Select
+              name="experience"
+              value={form.experience}
+              onChange={handleChange}
+            >
+              <option value="">
+                Kinh nghiệm
+              </option>
+              <option value="no_experience">
+                Không yêu cầu
+              </option>
+              <option value="under_1_year">
+                Dưới 1 năm
+              </option>
+              <option value="1_year">
+                1 năm
+              </option>
+              <option value="2_3_years">
+                2–3 năm
+              </option>
+              <option value="over_3_years">
+                Trên 3 năm
+              </option>
             </Select>
           </Grid>
+
           <Grid>
-            <Input type="number" name="hiring_quantity" value={form.hiring_quantity} onChange={handleChange} placeholder="Số lượng tuyển" />
-            <Input type="date" name="expired_at" value={form.expired_at} onChange={handleChange} />
+            <Input
+              type="number"
+              name="hiring_quantity"
+              value={form.hiring_quantity}
+              onChange={handleChange}
+              placeholder="Số lượng tuyển"
+            />
+            <Input
+              type="date"
+              name="expired_at"
+              value={form.expired_at}
+              onChange={handleChange}
+            />
           </Grid>
         </Section>
 
-        <Section icon={<Layers />} title="Ngành nghề">
-          <Select name="category_id" value={form.category_id} onChange={handleChange}>
-            <option value="">Chọn ngành nghề</option>
+        {/* =====================
+            CATEGORY
+        ===================== */}
+        <Section
+          icon={<Layers />}
+          title="Ngành nghề"
+        >
+          <Select
+            name="category_id"
+            value={form.category_id}
+            onChange={handleChange}
+          >
+            <option value="">
+              Chọn ngành nghề *
+            </option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </Select>
         </Section>
 
-        <Section icon={<Wrench />} title="Kỹ năng yêu cầu">
+        {/* =====================
+            SKILLS
+        ===================== */}
+        <Section
+          icon={<Wrench />}
+          title="Kỹ năng yêu cầu"
+        >
           <div className="flex flex-wrap gap-3">
             {skills.map((s) => (
               <label
@@ -177,13 +361,20 @@ export default function CreateJobForm() {
                 <input
                   type="checkbox"
                   className="hidden"
-                  checked={form.skill_ids.includes(s.id)}
+                  checked={form.skill_ids.includes(
+                    s.id
+                  )}
                   onChange={(e) =>
                     setForm((p) => ({
                       ...p,
                       skill_ids: e.target.checked
-                        ? [...p.skill_ids, s.id]
-                        : p.skill_ids.filter((id) => id !== s.id),
+                        ? [
+                            ...p.skill_ids,
+                            s.id,
+                          ]
+                        : p.skill_ids.filter(
+                            (id) => id !== s.id
+                          ),
                     }))
                   }
                 />
@@ -193,54 +384,128 @@ export default function CreateJobForm() {
           </div>
         </Section>
 
-        <Section icon={<FileText />} title="Mô tả & yêu cầu">
-          <Textarea name="description" value={form.description} onChange={handleChange} placeholder="Mô tả công việc" />
-          <Textarea name="job_requirements" value={form.job_requirements} onChange={handleChange} placeholder="Yêu cầu ứng viên" />
+        {/* =====================
+            DESCRIPTION
+        ===================== */}
+        <Section
+          icon={<FileText />}
+          title="Mô tả & yêu cầu"
+        >
+          <Textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Mô tả công việc *"
+          />
+          <Textarea
+            name="job_requirements"
+            value={form.job_requirements}
+            onChange={handleChange}
+            placeholder="Yêu cầu ứng viên"
+          />
         </Section>
 
+        {/* =====================
+            BENEFITS
+        ===================== */}
         <Section icon={<Gift />} title="Quyền lợi">
-          <Textarea name="benefits" value={form.benefits} onChange={handleChange} placeholder="Quyền lợi" />
+          <Textarea
+            name="benefits"
+            value={form.benefits}
+            onChange={handleChange}
+            placeholder="Quyền lợi"
+          />
         </Section>
 
-        <Section icon={<Banknote />} title="Mức lương">
+        {/* =====================
+            SALARY
+        ===================== */}
+        <Section
+          icon={<Banknote />}
+          title="Mức lương"
+        >
           <label className="inline-flex items-center gap-2 text-sm font-medium">
             <input
               type="checkbox"
               checked={salaryNegotiable}
-              onChange={() => setSalaryNegotiable(!salaryNegotiable)}
+              onChange={() =>
+                setSalaryNegotiable(
+                  !salaryNegotiable
+                )
+              }
             />
             Lương thỏa thuận
           </label>
 
           {!salaryNegotiable && (
             <Grid>
-              <Input name="min_salary" value={form.min_salary} onChange={handleChange} placeholder="Lương tối thiểu" />
-              <Input name="max_salary" value={form.max_salary} onChange={handleChange} placeholder="Lương tối đa" />
+              <Input
+                name="min_salary"
+                value={form.min_salary}
+                onChange={handleChange}
+                placeholder="Lương tối thiểu"
+              />
+              <Input
+                name="max_salary"
+                value={form.max_salary}
+                onChange={handleChange}
+                placeholder="Lương tối đa"
+              />
             </Grid>
           )}
         </Section>
 
-        <button className="w-full py-4 rounded-full bg-emerald-600 text-white text-lg font-semibold hover:bg-emerald-700 transition">
-          Đăng tin tuyển dụng
+        {/* =====================
+            ALERT
+        ===================== */}
+        {alert?.type === "error" && (
+          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4">
+            <AlertTriangle size={16} />
+            {alert.message}
+          </div>
+        )}
+
+        {/* =====================
+            SUBMIT
+        ===================== */}
+        <button
+          disabled={loading}
+          className="w-full py-4 rounded-full bg-emerald-600 text-white text-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 transition"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="animate-spin" />
+              Đang đăng tin...
+            </span>
+          ) : (
+            "Đăng tin tuyển dụng"
+          )}
         </button>
       </form>
     </div>
   );
 }
 
-/* UI */
+/* =====================
+   UI HELPERS
+===================== */
+
 const Section = ({ icon, title, children }) => (
   <section>
     <div className="flex items-center gap-2 mb-5 text-gray-800">
       {icon}
-      <h3 className="text-xl font-semibold">{title}</h3>
+      <h3 className="text-xl font-semibold">
+        {title}
+      </h3>
     </div>
     <div className="space-y-4">{children}</div>
   </section>
 );
 
 const Grid = ({ children }) => (
-  <div className="grid md:grid-cols-2 gap-4">{children}</div>
+  <div className="grid md:grid-cols-2 gap-4">
+    {children}
+  </div>
 );
 
 const Input = (props) => (

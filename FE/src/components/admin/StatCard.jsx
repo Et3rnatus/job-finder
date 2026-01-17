@@ -1,4 +1,7 @@
-import { TrendingUp } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 
 export default function StatCard({
   title,
@@ -7,6 +10,8 @@ export default function StatCard({
   trend, // optional: "+12%", "-5%"
   subtitle, // optional: "So với hôm qua"
 }) {
+  const isNegative = trend?.startsWith("-");
+
   return (
     <div
       className={`
@@ -16,7 +21,8 @@ export default function StatCard({
         p-6
         overflow-hidden
         transition-all duration-300
-        hover:-translate-y-0.5 hover:shadow-xl
+        hover:-translate-y-0.5
+        hover:shadow-[0_18px_50px_rgba(0,0,0,0.15)]
         ${
           highlight
             ? "bg-gradient-to-br from-red-50 to-white border-red-200"
@@ -26,7 +32,7 @@ export default function StatCard({
     >
       {/* ===== SOFT GLOW (highlight only) ===== */}
       {highlight && (
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-red-200/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="pointer-events-none absolute -top-12 -right-12 w-44 h-44 rounded-full bg-red-200/30 blur-3xl" />
       )}
 
       {/* ===== HEADER ===== */}
@@ -59,7 +65,11 @@ export default function StatCard({
             }
           `}
         >
-          <TrendingUp className="w-4 h-4" />
+          {isNegative ? (
+            <TrendingDown className="w-4 h-4" />
+          ) : (
+            <TrendingUp className="w-4 h-4" />
+          )}
         </div>
       </div>
 
@@ -78,9 +88,10 @@ export default function StatCard({
         {trend && (
           <span
             className={`
+              inline-flex items-center gap-1
               text-sm font-semibold
               ${
-                trend.startsWith("-")
+                isNegative
                   ? "text-red-600"
                   : "text-green-600"
               }

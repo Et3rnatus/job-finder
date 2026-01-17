@@ -10,6 +10,7 @@ import {
   X,
   Loader2,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function EmployerProfileForm({ onProfileCompleted }) {
@@ -27,7 +28,13 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
 
+  const [lockedLicense, setLockedLicense] = useState(false);
+
+  /* =====================
+     LOAD PROFILE
+  ===================== */
   useEffect(() => {
     employerService
       .getProfile()
@@ -54,10 +61,18 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
         setDistricts(
           cityData ? cityData.Districts : []
         );
+
+        // 🔒 khóa giấy phép nếu đã tồn tại
+        if (data.business_license) {
+          setLockedLicense(true);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
+  /* =====================
+     HANDLERS
+  ===================== */
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     if (errors[e.target.name]) {
@@ -71,47 +86,75 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
       (c) => c.Id === cityId
     );
 
-    setForm({ ...form, city: cityId, district: "" });
+    setForm({
+      ...form,
+      city: cityId,
+      district: "",
+    });
     setDistricts(cityData ? cityData.Districts : []);
     setErrors({ ...errors, city: "", district: "" });
   };
 
+  /* =====================
+     VALIDATION
+  ===================== */
   const validate = () => {
     const e = {};
+
     if (!form.company_name)
       e.company_name = "Tên công ty không được để trống";
+
     if (!form.city)
       e.city = "Vui lòng chọn tỉnh / thành phố";
+
     if (!form.district)
       e.district = "Vui lòng chọn quận / huyện";
+
     if (!form.address_detail)
       e.address_detail = "Vui lòng nhập địa chỉ chi tiết";
+
     setErrors(e);
-    return !Object.keys(e).length;
+    return Object.keys(e).length === 0;
   };
 
+  /* =====================
+     SUBMIT
+  ===================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     const cityName =
-      vnAddress.find((c) => c.Id === form.city)?.Name || "";
+      vnAddress.find((c) => c.Id === form.city)?.Name ||
+      "";
     const districtName =
-      districts.find((d) => d.Id === form.district)?.Name || "";
+      districts.find((d) => d.Id === form.district)
+        ?.Name || "";
 
     try {
       setSaving(true);
+      setSuccess(false);
+
       await employerService.updateProfile({
         ...form,
         city: cityName,
         district: districtName,
       });
-      onProfileCompleted && onProfileCompleted();
+
+      setSuccess(true);
+      setLockedLicense(true);
+
+      setTimeout(() => {
+        onProfileCompleted && onProfileCompleted();
+      }, 1200);
     } finally {
       setSaving(false);
     }
   };
 
+  /* =====================
+     LOADING
+  ===================== */
   if (loading) {
     return (
       <div className="bg-white border rounded-3xl p-16 text-center text-gray-500 flex flex-col items-center gap-3">
@@ -123,7 +166,9 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
 
   return (
     <div className="max-w-5xl mx-auto bg-white border border-gray-200 rounded-3xl p-12 shadow-sm">
-      {/* HEADER */}
+      {/* =====================
+          HEADER
+      ===================== */}
       <div className="flex items-center gap-4 mb-12">
         <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
           <Building2 size={26} />
@@ -138,7 +183,18 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
         </div>
       </div>
 
+      {/* =====================
+          SUCCESS
+      ===================== */}
+      {success && (
+        <div className="mb-10 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+          <CheckCircle2 size={18} />
+          Cập nhật hồ sơ doanh nghiệp thành công
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-14">
+        {/* INFO */}
         <Section icon={<Building2 />} title="Thông tin doanh nghiệp">
           <Input
             label="Tên công ty *"
@@ -147,6 +203,7 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
             onChange={handleChange}
             error={errors.company_name}
           />
+
           <Grid>
             <Input
               label="Website"
@@ -155,16 +212,26 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
               onChange={handleChange}
               icon={<Globe size={16} />}
             />
+
             <Input
               label="Giấy phép kinh doanh"
               name="business_license"
               value={form.business_license}
               onChange={handleChange}
               icon={<FileText size={16} />}
+              disabled={lockedLicense}
             />
           </Grid>
+
+          {lockedLicense && (
+            <p className="text-xs text-amber-600 flex items-center gap-1">
+              <AlertTriangle size={12} />
+              Giấy phép kinh doanh chỉ được nhập một lần
+            </p>
+          )}
         </Section>
 
+        {/* ADDRESS */}
         <Section icon={<MapPin />} title="Địa chỉ công ty">
           <Grid>
             <Select
@@ -207,6 +274,7 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
           />
         </Section>
 
+        {/* DESCRIPTION */}
         <Section icon={<FileText />} title="Giới thiệu công ty">
           <Textarea
             label="Mô tả ngắn gọn về doanh nghiệp"
@@ -216,6 +284,7 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
           />
         </Section>
 
+        {/* ACTIONS */}
         <div className="flex gap-4 pt-6 border-t">
           <button
             type="submit"
@@ -223,7 +292,10 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
             className="inline-flex items-center gap-2 px-10 py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:bg-gray-400"
           >
             {saving ? (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2
+                size={16}
+                className="animate-spin"
+              />
             ) : (
               <Save size={16} />
             )}
@@ -244,7 +316,9 @@ export default function EmployerProfileForm({ onProfileCompleted }) {
   );
 }
 
-/* UI */
+/* =====================
+   UI COMPONENTS
+===================== */
 
 const Section = ({ icon, title, children }) => (
   <section>

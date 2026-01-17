@@ -7,8 +7,8 @@ const API_URL = "http://127.0.0.1:3001";
 
 export default function UserAvatar({
   name = "Người dùng",
-  image,                 // avatar / logo từ DB
-  onUpload,              // function upload(file)
+  image,                 // path ảnh từ DB ("/uploads/...")
+  onUpload,              // async function upload(file) => return image path
   label = "Thay đổi ảnh",
   defaultImage = "/default-avatar.png",
 }) {
@@ -16,12 +16,33 @@ export default function UserAvatar({
   const [avatar, setAvatar] = useState(image);
   const [loading, setLoading] = useState(false);
 
+  /* =====================
+     SYNC IMAGE FROM PROPS
+  ===================== */
   useEffect(() => {
     setAvatar(image);
   }, [image]);
 
+  /* =====================
+     HELPERS
+  ===================== */
+  const getAvatarSrc = () => {
+    if (!avatar) return defaultImage;
+
+    // preview blob
+    if (avatar.startsWith("blob:")) return avatar;
+
+    // image from server
+    return `${API_URL}${avatar}`;
+  };
+
+  /* =====================
+     FILE HANDLERS
+  ===================== */
   const handleSelectFile = () => {
-    if (!loading) fileRef.current?.click();
+    if (!loading) {
+      fileRef.current?.click();
+    }
   };
 
   const handleChange = async (e) => {
@@ -40,13 +61,21 @@ export default function UserAvatar({
       return;
     }
 
-    const preview = URL.createObjectURL(file);
-    setAvatar(preview);
+    // preview ngay
+    const previewUrl = URL.createObjectURL(file);
+    setAvatar(previewUrl);
 
     try {
       setLoading(true);
-      const res = await onUpload(file); // 👈 upload bên ngoài
-      setAvatar(res);                   // 👈 path ảnh trả về
+
+      // upload bên ngoài
+      const uploadedPath = await onUpload(file);
+
+      if (!uploadedPath) {
+        throw new Error("Upload không trả về ảnh");
+      }
+
+      setAvatar(uploadedPath);
       toast.success("Cập nhật ảnh thành công");
     } catch (err) {
       console.error(err);
@@ -54,31 +83,27 @@ export default function UserAvatar({
       setAvatar(image); // rollback
     } finally {
       setLoading(false);
-      URL.revokeObjectURL(preview);
+      URL.revokeObjectURL(previewUrl);
     }
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-8 text-center shadow-sm hover:shadow-lg transition">
-      {/* AVATAR */}
+      {/* =====================
+         AVATAR
+      ===================== */}
       <div
         onClick={handleSelectFile}
-        className="relative w-fit mx-auto group"
+        className={`relative w-fit mx-auto group ${
+          loading ? "cursor-not-allowed" : "cursor-pointer"
+        }`}
       >
         {/* glow */}
         <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 blur-xl opacity-40" />
 
-        <div
-          className={`relative w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 p-1 ${
-            loading ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
-        >
+        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 p-1">
           <img
-            src={
-              avatar
-                ? `${API_URL}${avatar}`
-                : defaultImage
-            }
+            src={getAvatarSrc()}
             alt="avatar"
             className="w-full h-full rounded-full object-cover bg-white"
           />
@@ -88,7 +113,7 @@ export default function UserAvatar({
             className={`absolute inset-0 rounded-full flex flex-col items-center justify-center text-white text-xs font-semibold transition ${
               loading
                 ? "bg-black/60 opacity-100"
-                : "bg-black/0 group-hover:bg-black/50 opacity-0 group-hover:opacity-100"
+                : "bg-black/0 opacity-0 group-hover:bg-black/50 group-hover:opacity-100"
             }`}
           >
             {loading ? (
@@ -110,19 +135,23 @@ export default function UserAvatar({
         accept="image/*"
         hidden
         onChange={handleChange}
+        disabled={loading}
       />
 
-      {/* NAME */}
+      {/* =====================
+         NAME
+      ===================== */}
       <h3 className="mt-5 text-lg font-semibold text-gray-900 truncate">
         {name}
       </h3>
 
-      {/* STATUS */}
       <p className="text-xs text-gray-500 mt-1">
         Hồ sơ cá nhân
       </p>
 
-      {/* ACTION */}
+      {/* =====================
+         ACTION
+      ===================== */}
       <button
         onClick={handleSelectFile}
         disabled={loading}

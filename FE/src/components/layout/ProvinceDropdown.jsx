@@ -3,6 +3,7 @@ import {
   MapPinIcon,
   ChevronDownIcon,
   GlobeAltIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import vnAddress from "../../data/vn-address.json";
 
@@ -18,6 +19,7 @@ const getProvinceKey = (p) =>
 function ProvinceDropdown({ value, onChange }) {
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
+  const listRef = useRef(null);
 
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
@@ -47,7 +49,7 @@ function ProvinceDropdown({ value, onChange }) {
   }, [open]);
 
   /* =====================
-     NORMALIZE + FILTER
+     NORMALIZE + FILTER (MEMO)
   ===================== */
   const items = useMemo(() => {
     const list = vnAddress.map((p) => ({
@@ -57,14 +59,26 @@ function ProvinceDropdown({ value, onChange }) {
 
     if (!keyword.trim()) return list;
 
+    const kw = keyword.toLowerCase();
     return list.filter((p) =>
-      p.name.toLowerCase().includes(keyword.toLowerCase())
+      p.name.toLowerCase().includes(kw)
     );
   }, [keyword]);
 
   useEffect(() => {
     setActiveIndex(0);
   }, [keyword]);
+
+  /* =====================
+     SCROLL ACTIVE ITEM
+  ===================== */
+  useEffect(() => {
+    if (!listRef.current) return;
+    const el = listRef.current.querySelector(
+      `[data-index="${activeIndex}"]`
+    );
+    el?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
 
   /* =====================
      KEYBOARD NAVIGATION
@@ -106,10 +120,10 @@ function ProvinceDropdown({ value, onChange }) {
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="relative w-60 shrink-0"
+      className="relative w-64 shrink-0"
     >
       {/* =====================
-          TRIGGER BUTTON
+          TRIGGER
       ===================== */}
       <button
         type="button"
@@ -117,16 +131,16 @@ function ProvinceDropdown({ value, onChange }) {
         className="
           w-full h-12 px-4
           flex items-center justify-between
-          rounded-xl border
+          rounded-2xl border
           bg-white text-sm
           border-gray-300
-          hover:border-green-500
-          focus:outline-none focus:ring-2 focus:ring-green-500
+          hover:border-emerald-500
+          focus:outline-none focus:ring-2 focus:ring-emerald-500
           transition
         "
       >
         <span className="flex items-center gap-2 truncate text-gray-800">
-          <MapPinIcon className="h-5 w-5 text-green-600 shrink-0" />
+          <MapPinIcon className="h-5 w-5 text-emerald-600 shrink-0" />
           {value || "Tất cả địa điểm"}
         </span>
 
@@ -145,32 +159,46 @@ function ProvinceDropdown({ value, onChange }) {
           className="
             absolute top-full left-0 mt-2 w-full
             bg-white border border-gray-200
-            rounded-2xl shadow-xl z-50
+            rounded-3xl shadow-xl z-50
             overflow-hidden
             animate-fade-in
           "
         >
           {/* SEARCH */}
-          <div className="p-3 border-b bg-gray-50">
+          <div className="p-3 border-b bg-gray-50 flex items-center gap-2">
             <input
               ref={inputRef}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Tìm tỉnh / thành phố..."
               className="
-                w-full px-4 py-2.5 text-sm
+                flex-1 px-4 py-2.5 text-sm
                 border rounded-xl
                 text-gray-800
                 focus:outline-none
-                focus:ring-2 focus:ring-green-500
+                focus:ring-2 focus:ring-emerald-500
               "
             />
+
+            {keyword && (
+              <button
+                onClick={() => setKeyword("")}
+                className="p-2 rounded-lg hover:bg-gray-200 transition"
+                title="Xóa"
+              >
+                <XMarkIcon className="h-4 w-4 text-gray-500" />
+              </button>
+            )}
           </div>
 
           {/* LIST */}
-          <div className="max-h-64 overflow-y-auto py-1">
+          <div
+            ref={listRef}
+            className="max-h-64 overflow-y-auto py-1"
+          >
             {/* ALL */}
             <div
+              data-index={0}
               onMouseEnter={() => setActiveIndex(0)}
               onClick={() => {
                 onChange("");
@@ -182,10 +210,10 @@ function ProvinceDropdown({ value, onChange }) {
                 flex items-center gap-2
                 ${
                   activeIndex === 0
-                    ? "bg-green-100 text-green-700 font-medium"
+                    ? "bg-emerald-100 text-emerald-700 font-medium"
                     : "text-gray-700"
                 }
-                hover:bg-green-50 hover:text-green-700
+                hover:bg-emerald-50 hover:text-emerald-700
               `}
             >
               <GlobeAltIcon className="h-4 w-4 text-gray-400" />
@@ -202,6 +230,7 @@ function ProvinceDropdown({ value, onChange }) {
               return (
                 <div
                   key={p.key}
+                  data-index={index}
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => {
                     onChange(p.name);
@@ -213,10 +242,10 @@ function ProvinceDropdown({ value, onChange }) {
                     transition
                     ${
                       isActive
-                        ? "bg-green-100 text-green-700 font-medium"
+                        ? "bg-emerald-100 text-emerald-700 font-medium"
                         : "text-gray-800"
                     }
-                    hover:bg-green-50 hover:text-green-700
+                    hover:bg-emerald-50 hover:text-emerald-700
                   `}
                 >
                   {p.name}

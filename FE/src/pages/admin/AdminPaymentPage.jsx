@@ -9,20 +9,30 @@ import {
   Clock,
   Loader2,
   ShieldCheck,
+  AlertTriangle,
+  RefreshCcw,
 } from "lucide-react";
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [approvingId, setApprovingId] = useState(null);
 
+  /* =====================
+     FETCH PAYMENTS
+  ===================== */
   const fetchPayments = async () => {
     try {
       setLoading(true);
+      setError(false);
+
       const data = await getPayments();
       setPayments(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("FETCH PAYMENTS ERROR:", error);
-      alert("Không thể tải danh sách thanh toán");
+    } catch (err) {
+      console.error("FETCH PAYMENTS ERROR:", err);
+      setError(true);
+      setPayments([]);
     } finally {
       setLoading(false);
     }
@@ -32,23 +42,76 @@ export default function AdminPaymentsPage() {
     fetchPayments();
   }, []);
 
+  /* =====================
+     APPROVE
+  ===================== */
   const handleApprove = async (orderId) => {
     const ok = window.confirm("Xác nhận duyệt thanh toán?");
     if (!ok) return;
 
     try {
+      setApprovingId(orderId);
       await approvePayment(orderId);
       fetchPayments();
     } catch (error) {
       console.error("APPROVE PAYMENT ERROR:", error);
-      alert("Duyệt thất bại");
+      alert("Duyệt thanh toán thất bại");
+    } finally {
+      setApprovingId(null);
     }
   };
 
+  /* =====================
+     LOADING
+  ===================== */
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-3xl p-20 flex flex-col items-center gap-4 text-gray-500 shadow-sm">
+        <Loader2
+          className="animate-spin text-emerald-600"
+          size={32}
+        />
+        <p className="text-sm">
+          Đang tải danh sách thanh toán...
+        </p>
+      </div>
+    );
+  }
+
+  /* =====================
+     ERROR
+  ===================== */
+  if (error) {
+    return (
+      <div className="bg-white border border-red-200 rounded-3xl p-16 flex flex-col items-center gap-4 text-red-600 shadow-sm">
+        <AlertTriangle size={32} />
+        <p className="font-semibold">
+          Không thể tải danh sách thanh toán
+        </p>
+        <button
+          onClick={fetchPayments}
+          className="
+            mt-3 inline-flex items-center gap-2
+            px-5 py-2 rounded-full
+            text-sm font-semibold
+            bg-red-50 text-red-600
+            hover:bg-red-100
+            transition
+          "
+        >
+          <RefreshCcw size={14} />
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10">
-      {/* HEADER */}
-      <div className="flex items-center gap-4">
+      {/* =====================
+          HEADER
+      ===================== */}
+      <div className="flex items-center gap-5">
         <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
           <CreditCard size={26} />
         </div>
@@ -62,7 +125,9 @@ export default function AdminPaymentsPage() {
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* =====================
+          TABLE
+      ===================== */}
       <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -86,26 +151,11 @@ export default function AdminPaymentsPage() {
           </thead>
 
           <tbody>
-            {loading && (
+            {payments.length === 0 && (
               <tr>
                 <td
                   colSpan="5"
-                  className="px-6 py-12 text-center text-gray-500"
-                >
-                  <Loader2
-                    size={20}
-                    className="inline animate-spin mr-2"
-                  />
-                  Đang tải dữ liệu...
-                </td>
-              </tr>
-            )}
-
-            {!loading && payments.length === 0 && (
-              <tr>
-                <td
-                  colSpan="5"
-                  className="px-6 py-12 text-center text-gray-500"
+                  className="px-6 py-14 text-center text-gray-500"
                 >
                   Chưa có giao dịch nào
                 </td>
@@ -127,12 +177,12 @@ export default function AdminPaymentsPage() {
 
                 <td className="px-6 py-4">
                   {p.status === "SUCCESS" ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
                       <CheckCircle2 size={12} />
                       Đã duyệt
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
                       <Clock size={12} />
                       Chờ duyệt
                     </span>
@@ -151,9 +201,27 @@ export default function AdminPaymentsPage() {
                       onClick={() =>
                         handleApprove(p.orderId)
                       }
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                      disabled={approvingId === p.orderId}
+                      className={`
+                        inline-flex items-center gap-1
+                        px-4 py-2 rounded-full
+                        text-sm font-semibold
+                        transition
+                        ${
+                          approvingId === p.orderId
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        }
+                      `}
                     >
-                      <ShieldCheck size={14} />
+                      {approvingId === p.orderId ? (
+                        <Loader2
+                          size={14}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <ShieldCheck size={14} />
+                      )}
                       Duyệt
                     </button>
                   ) : (

@@ -3,6 +3,7 @@ import {
   GraduationCap,
   Users,
   Clock,
+  Info,
 } from "lucide-react";
 
 const levelMap = {
@@ -61,13 +62,17 @@ function JobGeneralInfo({ job }) {
   ].filter(Boolean);
 
   return (
-    <section className="bg-white border rounded-2xl p-6 shadow-sm">
+    <section className="bg-white border rounded-3xl p-6 shadow-sm">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Thông tin chung
-        </h3>
-        <span className="text-xs px-3 py-1 rounded-full bg-green-50 text-green-600 font-medium">
+        <div className="flex items-center gap-2">
+          <Info className="text-emerald-600" size={18} />
+          <h3 className="text-lg font-semibold text-gray-800">
+            Thông tin chung
+          </h3>
+        </div>
+
+        <span className="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 font-medium">
           Tổng quan
         </span>
       </div>
@@ -95,11 +100,12 @@ function InfoCard({ icon: Icon, label, value }) {
   return (
     <div
       className="
+        group
         flex items-start gap-4
-        p-4 rounded-xl
+        p-4 rounded-2xl
         border border-gray-100
         bg-gray-50
-        hover:bg-white hover:border-green-200
+        hover:bg-white hover:border-emerald-200
         hover:shadow-sm
         transition
       "
@@ -107,10 +113,12 @@ function InfoCard({ icon: Icon, label, value }) {
       {/* ICON */}
       <div
         className="
-          w-10 h-10 flex items-center justify-center
-          rounded-lg
-          bg-green-100 text-green-600
+          w-11 h-11 flex items-center justify-center
+          rounded-xl
+          bg-emerald-100 text-emerald-600
           shrink-0
+          transition
+          group-hover:scale-105
         "
       >
         <Icon size={18} />
@@ -121,7 +129,7 @@ function InfoCard({ icon: Icon, label, value }) {
         <p className="text-xs text-gray-500 mb-1">
           {label}
         </p>
-        <p className="text-sm font-semibold text-gray-800">
+        <p className="text-sm font-semibold text-gray-800 leading-snug">
           {value}
         </p>
       </div>

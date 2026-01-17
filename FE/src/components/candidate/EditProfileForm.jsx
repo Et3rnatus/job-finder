@@ -14,7 +14,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-/* ================= SKILL GROUPS (FE ONLY) ================= */
+/* =====================
+   SKILL GROUPS (FE ONLY)
+===================== */
 const SKILL_GROUPS = {
   technical: {
     title: "🔧 Kỹ năng chuyên môn",
@@ -73,7 +75,9 @@ export default function EditProfileForm({
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
-  /* ================= LOAD PROFILE ================= */
+  /* =====================
+     LOAD PROFILE
+  ===================== */
   useEffect(() => {
     if (!profile) return;
 
@@ -94,7 +98,9 @@ export default function EditProfileForm({
     });
   }, [profile]);
 
-  /* ================= LOAD SKILLS ================= */
+  /* =====================
+     LOAD SKILLS
+  ===================== */
   useEffect(() => {
     getAllSkills()
       .then(setAllSkills)
@@ -110,7 +116,9 @@ export default function EditProfileForm({
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  /* ================= SKILLS ================= */
+  /* =====================
+     SKILLS
+  ===================== */
   const toggleSkill = (skillId) => {
     setForm((prev) => ({
       ...prev,
@@ -120,7 +128,9 @@ export default function EditProfileForm({
     }));
   };
 
-  /* ================= EDUCATION ================= */
+  /* =====================
+     EDUCATION
+  ===================== */
   const addEducation = () =>
     setForm((p) => ({
       ...p,
@@ -139,10 +149,14 @@ export default function EditProfileForm({
   const removeEducation = (i) =>
     setForm({
       ...form,
-      education: form.education.filter((_, idx) => idx !== i),
+      education: form.education.filter(
+        (_, idx) => idx !== i
+      ),
     });
 
-  /* ================= EXPERIENCE ================= */
+  /* =====================
+     EXPERIENCE
+  ===================== */
   const addExperience = () =>
     setForm((p) => ({
       ...p,
@@ -161,10 +175,14 @@ export default function EditProfileForm({
   const removeExperience = (i) =>
     setForm({
       ...form,
-      experiences: form.experiences.filter((_, idx) => idx !== i),
+      experiences: form.experiences.filter(
+        (_, idx) => idx !== i
+      ),
     });
 
-  /* ================= SUBMIT ================= */
+  /* =====================
+     SUBMIT
+  ===================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -232,16 +250,45 @@ export default function EditProfileForm({
     <>
       <div className="max-w-5xl mx-auto bg-white border rounded-2xl shadow-sm p-8">
         <form onSubmit={handleSubmit} className="space-y-14">
-          {/* PERSONAL */}
-          <Section icon={<User size={18} />} title="Thông tin cá nhân">
+          {/* =====================
+              PERSONAL
+          ===================== */}
+          <Section
+            icon={<User size={18} />}
+            title="Thông tin cá nhân"
+          >
             <Grid>
-              <Input label="Họ và tên *" name="full_name" value={form.full_name} onChange={handleChange} />
-              <Input label="Số điện thoại *" name="contact_number" value={form.contact_number} onChange={handleChange} />
-              <Input label="Email" value={profile.email || ""} disabled />
-              <Input label="Địa chỉ" name="address" value={form.address} onChange={handleChange} />
+              <Input
+                label="Họ và tên *"
+                name="full_name"
+                value={form.full_name}
+                onChange={handleChange}
+              />
+              <Input
+                label="Số điện thoại *"
+                name="contact_number"
+                value={form.contact_number}
+                onChange={handleChange}
+              />
+              <Input
+                label="Email"
+                value={profile.email || ""}
+                disabled
+              />
+              <Input
+                label="Địa chỉ"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+              />
             </Grid>
 
-            <Textarea label="Giới thiệu bản thân" name="bio" value={form.bio} onChange={handleChange} />
+            <Textarea
+              label="Giới thiệu bản thân"
+              name="bio"
+              value={form.bio}
+              onChange={handleChange}
+            />
 
             <Grid>
               <Select
@@ -256,11 +303,19 @@ export default function EditProfileForm({
                   { value: "Khác", label: "Khác" },
                 ]}
               />
-              <Input type="date" label="Ngày sinh *" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} />
+              <Input
+                type="date"
+                label="Ngày sinh *"
+                name="date_of_birth"
+                value={form.date_of_birth}
+                onChange={handleChange}
+              />
             </Grid>
           </Section>
 
-          {/* SKILLS */}
+          {/* =====================
+              SKILLS
+          ===================== */}
           <Section icon={<Wrench size={18} />} title="Kỹ năng">
             {Object.values(SKILL_GROUPS).map((group) => {
               const skills = allSkills.filter((s) =>
@@ -270,20 +325,26 @@ export default function EditProfileForm({
 
               return (
                 <div key={group.title}>
-                  <h4 className="font-medium mb-3">{group.title}</h4>
+                  <h4 className="font-medium mb-3">
+                    {group.title}
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {skills.map((skill) => {
-                      const active = form.skills.includes(skill.id);
+                      const active =
+                        form.skills.includes(skill.id);
                       return (
                         <button
                           type="button"
                           key={skill.id}
-                          onClick={() => toggleSkill(skill.id)}
+                          onClick={() =>
+                            toggleSkill(skill.id)
+                          }
                           className={`px-3 py-1.5 rounded-full text-sm border transition
-                            ${active
-                              ? "bg-green-600 text-white border-green-600"
-                              : "bg-gray-100 text-gray-700 hover:border-green-500"}
-                          `}
+                            ${
+                              active
+                                ? "bg-green-600 text-white border-green-600"
+                                : "bg-gray-100 text-gray-700 hover:border-green-500"
+                            }`}
                         >
                           {skill.name}
                         </button>
@@ -295,35 +356,119 @@ export default function EditProfileForm({
             })}
           </Section>
 
-          {/* EDUCATION */}
-          <Section icon={<GraduationCap size={18} />} title="Học vấn">
+          {/* =====================
+              EDUCATION
+          ===================== */}
+          <Section
+            icon={<GraduationCap size={18} />}
+            title="Học vấn"
+          >
             {form.education.map((edu, i) => (
-              <Card key={i} onRemove={() => removeEducation(i)}>
-                <Input label="Trường" value={edu.institution} onChange={(e) => updateEducation(i, "institution", e.target.value)} />
-                <Input label="Trình độ" value={edu.level} onChange={(e) => updateEducation(i, "level", e.target.value)} />
-                <Input label="Ngành" value={edu.major} onChange={(e) => updateEducation(i, "major", e.target.value)} />
+              <Card
+                key={i}
+                onRemove={() => removeEducation(i)}
+              >
+                <Input
+                  label="Trường"
+                  value={edu.institution}
+                  onChange={(e) =>
+                    updateEducation(
+                      i,
+                      "institution",
+                      e.target.value
+                    )
+                  }
+                />
+                <Input
+                  label="Trình độ"
+                  value={edu.level}
+                  onChange={(e) =>
+                    updateEducation(
+                      i,
+                      "level",
+                      e.target.value
+                    )
+                  }
+                />
+                <Input
+                  label="Ngành"
+                  value={edu.major}
+                  onChange={(e) =>
+                    updateEducation(
+                      i,
+                      "major",
+                      e.target.value
+                    )
+                  }
+                />
               </Card>
             ))}
-            <AddButton label="Thêm học vấn" onClick={addEducation} />
+            <AddButton
+              label="Thêm học vấn"
+              onClick={addEducation}
+            />
           </Section>
 
-          {/* EXPERIENCE */}
-          <Section icon={<Briefcase size={18} />} title="Kinh nghiệm">
+          {/* =====================
+              EXPERIENCE
+          ===================== */}
+          <Section
+            icon={<Briefcase size={18} />}
+            title="Kinh nghiệm"
+          >
             {form.experiences.map((exp, i) => (
-              <Card key={i} onRemove={() => removeExperience(i)}>
-                <Input label="Công ty" value={exp.company} onChange={(e) => updateExperience(i, "company", e.target.value)} />
-                <Input label="Vị trí" value={exp.position} onChange={(e) => updateExperience(i, "position", e.target.value)} />
-                <Textarea label="Mô tả công việc" value={exp.description} onChange={(e) => updateExperience(i, "description", e.target.value)} />
+              <Card
+                key={i}
+                onRemove={() => removeExperience(i)}
+              >
+                <Input
+                  label="Công ty"
+                  value={exp.company}
+                  onChange={(e) =>
+                    updateExperience(
+                      i,
+                      "company",
+                      e.target.value
+                    )
+                  }
+                />
+                <Input
+                  label="Vị trí"
+                  value={exp.position}
+                  onChange={(e) =>
+                    updateExperience(
+                      i,
+                      "position",
+                      e.target.value
+                    )
+                  }
+                />
+                <Textarea
+                  label="Mô tả công việc"
+                  value={exp.description}
+                  onChange={(e) =>
+                    updateExperience(
+                      i,
+                      "description",
+                      e.target.value
+                    )
+                  }
+                />
               </Card>
             ))}
-            <AddButton label="Thêm kinh nghiệm" onClick={addExperience} />
+            <AddButton
+              label="Thêm kinh nghiệm"
+              onClick={addExperience}
+            />
           </Section>
 
-          {/* ACTIONS */}
+          {/* =====================
+              ACTIONS
+          ===================== */}
           <div className="flex gap-3 pt-6 border-t">
             <button
               disabled={saving}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg flex gap-2 hover:bg-green-700"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg flex gap-2 hover:bg-green-700 disabled:opacity-50"
             >
               <Save size={16} />
               {saving ? "Đang lưu..." : "Lưu thay đổi"}
@@ -340,15 +485,23 @@ export default function EditProfileForm({
         </form>
       </div>
 
-      {/* ALERT MODAL */}
+      {/* =====================
+          ALERT MODAL
+      ===================== */}
       {alert && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-white rounded-2xl p-6 text-center shadow-xl">
             <div className="flex justify-center mb-4">
               {alert.type === "success" ? (
-                <CheckCircle2 className="text-green-600" size={36} />
+                <CheckCircle2
+                  className="text-green-600"
+                  size={36}
+                />
               ) : (
-                <AlertTriangle className="text-red-600" size={36} />
+                <AlertTriangle
+                  className="text-red-600"
+                  size={36}
+                />
               )}
             </div>
             <h3 className="text-lg font-semibold mb-2">
@@ -360,7 +513,8 @@ export default function EditProfileForm({
             <button
               onClick={() => {
                 setAlert(null);
-                if (alert.type === "success") onUpdated();
+                if (alert.type === "success")
+                  onUpdated();
               }}
               className="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
             >
@@ -373,49 +527,61 @@ export default function EditProfileForm({
   );
 }
 
-/* ================= UI HELPERS ================= */
+/* =====================
+   UI HELPERS
+===================== */
 
 const Section = ({ icon, title, children }) => (
   <section>
     <div className="flex items-center gap-2 mb-4">
       {icon}
-      <h3 className="font-semibold text-lg">{title}</h3>
+      <h3 className="font-semibold text-lg">
+        {title}
+      </h3>
     </div>
     {children}
   </section>
 );
 
 const Grid = ({ children }) => (
-  <div className="grid md:grid-cols-2 gap-4">{children}</div>
+  <div className="grid md:grid-cols-2 gap-4">
+    {children}
+  </div>
 );
 
 const Input = ({ label, ...props }) => (
   <div>
-    <label className="text-sm text-gray-600">{label}</label>
+    <label className="text-sm text-gray-600">
+      {label}
+    </label>
     <input
       {...props}
-      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500"
+      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
     />
   </div>
 );
 
 const Textarea = ({ label, ...props }) => (
   <div>
-    <label className="text-sm text-gray-600">{label}</label>
+    <label className="text-sm text-gray-600">
+      {label}
+    </label>
     <textarea
       {...props}
       rows={4}
-      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500"
+      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
     />
   </div>
 );
 
 const Select = ({ label, options, ...props }) => (
   <div>
-    <label className="text-sm text-gray-600">{label}</label>
+    <label className="text-sm text-gray-600">
+      {label}
+    </label>
     <select
       {...props}
-      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500"
+      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>

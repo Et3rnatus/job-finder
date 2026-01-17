@@ -1,56 +1,92 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { CheckCircle2, ArrowRight, Home } from "lucide-react";
 
-function PaymentSuccess() {
+function PaymentSuccessPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [orderId, setOrderId] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const orderId = params.get("orderId");
-
-    if (orderId) {
-      console.log("PAYMENT SUCCESS ORDER:", orderId);
+    const id = params.get("orderId");
+    if (id) {
+      setOrderId(id);
+      console.log("PAYMENT SUCCESS ORDER:", id);
     }
   }, [location.search]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white border rounded-xl p-8 max-w-md w-full text-center space-y-4">
-        <div className="text-5xl">✅</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+      <div className="bg-white border border-gray-200 rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
+        {/* ICON */}
+        <div className="w-20 h-20 mx-auto rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-6">
+          <CheckCircle2 size={40} />
+        </div>
 
-        <h2 className="text-xl font-semibold text-gray-800">
+        {/* TITLE */}
+        <h2 className="text-2xl font-bold text-gray-900">
           Thanh toán thành công
         </h2>
 
-        <p className="text-sm text-gray-600">
-          Giao dịch của bạn đã được ghi nhận.
+        {/* DESC */}
+        <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+          Giao dịch của bạn đã được ghi nhận thành công.
           <br />
-          Hệ thống đang xử lý và kích hoạt quyền cho tài khoản.
+          Hệ thống sẽ tự động kích hoạt quyền sử dụng cho
+          tài khoản nhà tuyển dụng.
         </p>
 
-        <div className="pt-4 space-y-2">
+        {/* ORDER ID */}
+        {orderId && (
+          <div className="mt-4 text-sm bg-gray-50 border rounded-xl px-4 py-2 text-gray-700">
+            <span className="text-gray-500">Mã giao dịch:</span>{" "}
+            <span className="font-semibold">{orderId}</span>
+          </div>
+        )}
+
+        {/* ACTIONS */}
+        <div className="mt-8 space-y-3">
           <button
             onClick={() => navigate("/employer")}
-            className="w-full px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            className="
+              w-full inline-flex items-center justify-center gap-2
+              px-6 py-3 rounded-xl
+              bg-green-600 text-white
+              font-semibold
+              hover:bg-green-700
+              transition
+            "
           >
             Quay về trang quản lý
+            <ArrowRight size={16} />
           </button>
 
           <button
             onClick={() => navigate("/")}
-            className="w-full px-4 py-2 rounded border text-gray-700 hover:bg-gray-100"
+            className="
+              w-full inline-flex items-center justify-center gap-2
+              px-6 py-3 rounded-xl
+              border border-gray-300
+              text-gray-700
+              font-semibold
+              hover:bg-gray-100
+              transition
+            "
           >
+            <Home size={16} />
             Về trang chủ
           </button>
         </div>
 
-        <p className="text-xs text-gray-400 pt-2">
-          Nếu có sự cố, vui lòng liên hệ bộ phận hỗ trợ.
+        {/* FOOT NOTE */}
+        <p className="text-xs text-gray-400 mt-6">
+          Nếu có bất kỳ sự cố nào, vui lòng liên hệ bộ phận hỗ trợ
+          để được trợ giúp kịp thời.
         </p>
       </div>
     </div>
   );
 }
 
-export default PaymentSuccess;
+export default PaymentSuccessPage;

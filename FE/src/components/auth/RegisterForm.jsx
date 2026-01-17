@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, forwardRef } from "react";
 import { register } from "../../services/authService";
 import {
   Mail,
@@ -8,6 +8,8 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Briefcase,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function RegisterForm() {
@@ -36,10 +38,7 @@ export default function RegisterForm() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setErrors((prev) => ({
-      ...prev,
-      [e.target.name]: "",
-    }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
   };
 
   const validate = () => {
@@ -58,18 +57,15 @@ export default function RegisterForm() {
     }
 
     if (!form.confirmPassword.trim()) {
-      newErrors.confirmPassword =
-        "Vui lòng nhập lại mật khẩu";
+      newErrors.confirmPassword = "Vui lòng nhập lại mật khẩu";
     } else if (form.password !== form.confirmPassword) {
-      newErrors.confirmPassword =
-        "Mật khẩu nhập lại không khớp";
+      newErrors.confirmPassword = "Mật khẩu nhập lại không khớp";
     }
 
     setErrors(newErrors);
 
     if (newErrors.email) emailRef.current?.focus();
-    else if (newErrors.password)
-      passwordRef.current?.focus();
+    else if (newErrors.password) passwordRef.current?.focus();
     else if (newErrors.confirmPassword)
       confirmPasswordRef.current?.focus();
 
@@ -111,34 +107,43 @@ export default function RegisterForm() {
      RENDER
   ===================== */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.15)] bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-white rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.15)]">
+
         {/* ===== LEFT BRAND ===== */}
-        <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-green-600 to-green-700 text-white">
+        <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-green-600 to-green-700 text-white relative">
           <div>
-            <UserPlus className="w-10 h-10 mb-4" />
-            <h1 className="text-4xl font-bold mb-4">
+            <h1 className="text-4xl font-extrabold mb-4">
               Tham gia JobFinder
             </h1>
-            <p className="text-lg opacity-90 mb-8">
-              Tạo hồ sơ chuyên nghiệp – tiếp cận
-              hàng nghìn cơ hội việc làm
+            <p className="text-lg opacity-90 mb-10">
+              Tạo hồ sơ – Kết nối – Phát triển sự nghiệp
             </p>
 
-            <ul className="space-y-3 text-sm opacity-90">
-              <li>✔ Ứng tuyển nhanh chóng</li>
-              <li>✔ Doanh nghiệp uy tín</li>
-              <li>✔ Miễn phí cho ứng viên</li>
+            <ul className="space-y-4 text-sm">
+              <li className="flex items-center gap-3">
+                <Briefcase /> Hàng nghìn việc làm chất lượng
+              </li>
+              <li className="flex items-center gap-3">
+                <ShieldCheck /> Bảo mật & minh bạch
+              </li>
+              <li className="flex items-center gap-3">
+                <UserPlus /> Miễn phí cho ứng viên
+              </li>
             </ul>
           </div>
 
           <p className="text-xs opacity-70">
             © 2025 JobFinder Vietnam
           </p>
+
+          {/* Decorative */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full" />
+          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-white/10 rounded-full" />
         </div>
 
         {/* ===== RIGHT FORM ===== */}
-        <div className="p-8 md:p-12">
+        <div className="p-8 md:p-12 flex flex-col justify-center">
           <h2 className="text-2xl font-bold text-gray-900">
             Đăng ký tài khoản
           </h2>
@@ -146,10 +151,7 @@ export default function RegisterForm() {
             Bắt đầu hành trình nghề nghiệp 🚀
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmit} className="space-y-5">
             <InputField
               ref={emailRef}
               icon={<Mail size={18} />}
@@ -195,38 +197,25 @@ export default function RegisterForm() {
                 name="role"
                 value={form.role}
                 onChange={handleChange}
-                className="w-full h-12 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
+                className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                <option value="candidate">
-                  Ứng viên
-                </option>
-                <option value="employer">
-                  Nhà tuyển dụng
-                </option>
+                <option value="candidate">Ứng viên</option>
+                <option value="employer">Nhà tuyển dụng</option>
               </select>
             </div>
 
-            {/* SUBMIT */}
             <button
               type="submit"
               disabled={loading}
-              className={`
-                w-full h-12 rounded-xl
-                flex items-center justify-center gap-2
-                font-semibold transition-all
+              className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold transition-all
                 ${
                   loading
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]"
-                }
-              `}
+                    : "bg-green-600 text-white hover:bg-green-700 active:scale-[0.97]"
+                }`}
             >
-              {loading && (
-                <Loader2 className="animate-spin w-5 h-5" />
-              )}
-              {loading
-                ? "Đang đăng ký..."
-                : "Đăng ký"}
+              {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+              {loading ? "Đang đăng ký..." : "Đăng ký"}
             </button>
 
             <p className="text-sm text-center text-gray-600">
@@ -245,7 +234,7 @@ export default function RegisterForm() {
       {/* ===== MODAL ===== */}
       {modal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-sm rounded-2xl bg-white border border-gray-200 shadow-[0_20px_60px_rgba(0,0,0,0.25)] p-6 text-center animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)] text-center animate-[fadeIn_0.2s_ease-out]">
             <div className="flex justify-center mb-4">
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center
@@ -256,14 +245,14 @@ export default function RegisterForm() {
                   }`}
               >
                 {modal.type === "success" ? (
-                  <CheckCircle2 className="w-6 h-6" />
+                  <CheckCircle2 />
                 ) : (
-                  <XCircle className="w-6 h-6" />
+                  <XCircle />
                 )}
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold">
               {modal.title}
             </h3>
             <p className="text-sm text-gray-600 mt-1 mb-6">
@@ -276,7 +265,7 @@ export default function RegisterForm() {
                 if (modal.type === "success")
                   navigate("/login");
               }}
-              className="w-full h-11 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+              className="w-full h-11 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700"
             >
               OK
             </button>
@@ -288,44 +277,36 @@ export default function RegisterForm() {
 }
 
 /* =====================
-   SMALL COMPONENT
+   INPUT FIELD
 ===================== */
+const InputField = forwardRef(
+  ({ icon, label, error, ...props }, ref) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
 
-const InputField = ({
-  icon,
-  label,
-  error,
-  ...props
-}, ref) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {label}
-    </label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          {icon}
+        </span>
+        <input
+          ref={ref}
+          {...props}
+          className={`w-full h-12 pl-10 pr-4 rounded-xl border text-sm transition focus:outline-none focus:ring-2
+            ${
+              error
+                ? "border-red-500 focus:ring-red-300"
+                : "border-gray-300 focus:ring-green-500"
+            }`}
+        />
+      </div>
 
-    <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-        {icon}
-      </span>
-      <input
-        ref={ref}
-        {...props}
-        className={`
-          w-full h-12 pl-10 pr-4
-          rounded-xl border text-sm
-          focus:outline-none focus:ring-2
-          ${
-            error
-              ? "border-red-500 focus:ring-red-300"
-              : "border-gray-300 focus:ring-green-500"
-          }
-        `}
-      />
+      {error && (
+        <p className="text-sm text-red-500 mt-1">
+          {error}
+        </p>
+      )}
     </div>
-
-    {error && (
-      <p className="text-sm text-red-500 mt-1">
-        {error}
-      </p>
-    )}
-  </div>
+  )
 );

@@ -11,10 +11,11 @@ import {
   Building2,
   Briefcase,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 /* =====================
-   ENUM MAPS (HIỂN THỊ)
+   ENUM MAPS
 ===================== */
 const employmentMap = {
   fulltime: "Toàn thời gian",
@@ -39,6 +40,7 @@ export default function JobReviewModal({
   const [loading, setLoading] = useState(true);
   const [rejectNote, setRejectNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirm, setConfirm] = useState(null); // approve | reject
 
   /* =====================
      LOAD JOB
@@ -46,6 +48,7 @@ export default function JobReviewModal({
   useEffect(() => {
     const loadJob = async () => {
       try {
+        setLoading(true);
         const res = await getJobDetailForAdmin(jobId);
         setJob(res);
       } catch {
@@ -54,20 +57,13 @@ export default function JobReviewModal({
         setLoading(false);
       }
     };
-    loadJob();
+    if (jobId) loadJob();
   }, [jobId]);
 
   /* =====================
      ACTIONS
   ===================== */
-  const handleApprove = async () => {
-    if (
-      !window.confirm(
-        "Xác nhận DUYỆT tin tuyển dụng này?"
-      )
-    )
-      return;
-
+  const approve = async () => {
     try {
       setSubmitting(true);
       await approveJob(jobId);
@@ -78,19 +74,8 @@ export default function JobReviewModal({
     }
   };
 
-  const handleReject = async () => {
-    if (!rejectNote.trim()) {
-      alert("Vui lòng nhập lý do từ chối");
-      return;
-    }
-
-    if (
-      !window.confirm(
-        "Xác nhận TỪ CHỐI tin tuyển dụng này?"
-      )
-    )
-      return;
-
+  const reject = async () => {
+    if (!rejectNote.trim()) return;
     try {
       setSubmitting(true);
       await rejectJob(jobId, {
@@ -105,20 +90,14 @@ export default function JobReviewModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-      <div
-        className="
-          bg-white w-full max-w-6xl
-          max-h-[90vh] overflow-y-auto
-          rounded-2xl border border-gray-200
-          shadow-[0_24px_70px_rgba(0,0,0,0.28)]
-        "
-      >
+      <div className="bg-white w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 shadow-[0_26px_80px_rgba(0,0,0,0.28)]">
+
         {/* ===== HEADER ===== */}
         <div className="sticky top-0 z-10 bg-white border-b p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Briefcase className="w-6 h-6 text-indigo-600" />
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold">
                 Duyệt tin tuyển dụng
               </h2>
               <p className="text-sm text-gray-500">
@@ -130,20 +109,16 @@ export default function JobReviewModal({
           <button
             onClick={onClose}
             disabled={submitting}
-            className="
-              p-2 rounded-lg
-              text-gray-400
-              hover:bg-gray-100 hover:text-gray-600
-              disabled:opacity-50
-            "
+            className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
           >
-            <X className="w-5 h-5" />
+            <X />
           </button>
         </div>
 
         {/* ===== LOADING ===== */}
         {loading && (
-          <div className="p-10 text-center text-gray-500">
+          <div className="p-12 flex items-center justify-center gap-2 text-gray-500">
+            <Loader2 className="w-5 h-5 animate-spin" />
             Đang tải dữ liệu công việc...
           </div>
         )}
@@ -151,9 +126,10 @@ export default function JobReviewModal({
         {/* ===== CONTENT ===== */}
         {!loading && job && (
           <div className="p-8 space-y-10">
+
             {/* BASIC */}
             <section>
-              <h3 className="text-2xl font-semibold text-gray-900">
+              <h3 className="text-2xl font-semibold">
                 {job.title}
               </h3>
               <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
@@ -162,7 +138,6 @@ export default function JobReviewModal({
               </div>
             </section>
 
-            {/* CONTENT */}
             <ContentSection title="Mô tả công việc">
               {job.description}
             </ContentSection>
@@ -177,34 +152,16 @@ export default function JobReviewModal({
 
             {/* META */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Info
-                label="Hình thức"
-                value={
-                  employmentMap[job.employment_type]
-                }
-              />
-              <Info
-                label="Kinh nghiệm"
-                value={
-                  experienceMap[job.experience]
-                }
-              />
+              <Info label="Hình thức" value={employmentMap[job.employment_type]} />
+              <Info label="Kinh nghiệm" value={experienceMap[job.experience]} />
               <Info label="Cấp bậc" value={job.level} />
+              <Info label="Học vấn" value={job.education_level} />
+              <Info label="Số lượng tuyển" value={job.hiring_quantity} />
               <Info
-                label="Học vấn"
-                value={job.education_level}
-              />
-              <Info
-                label="Số lượng tuyển"
-                value={job.hiring_quantity}
-              />
-              <Info
-                label="Hạn nộp hồ sơ"
+                label="Hạn nộp"
                 value={
                   job.expired_at
-                    ? new Date(
-                        job.expired_at
-                      ).toLocaleDateString("vi-VN")
+                    ? new Date(job.expired_at).toLocaleDateString("vi-VN")
                     : "—"
                 }
               />
@@ -220,11 +177,7 @@ export default function JobReviewModal({
                   {job.skills.map((s) => (
                     <span
                       key={s.id}
-                      className="
-                        px-3 py-1 rounded-full text-sm
-                        bg-indigo-50 text-indigo-700
-                        border border-indigo-200
-                      "
+                      className="px-3 py-1 rounded-full text-sm bg-indigo-50 text-indigo-700 border border-indigo-200"
                     >
                       {s.name}
                     </span>
@@ -243,14 +196,12 @@ export default function JobReviewModal({
               </p>
               {job.company_website && (
                 <p className="text-sm">
-                  <strong>Website:</strong>{" "}
-                  {job.company_website}
+                  <strong>Website:</strong> {job.company_website}
                 </p>
               )}
               {job.company_address && (
                 <p className="text-sm">
-                  <strong>Địa chỉ:</strong>{" "}
-                  {job.company_address}
+                  <strong>Địa chỉ:</strong> {job.company_address}
                 </p>
               )}
               {job.company_description && (
@@ -264,54 +215,31 @@ export default function JobReviewModal({
             <section className="border-t pt-6 space-y-4">
               <div className="flex items-start gap-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                 <AlertTriangle className="w-4 h-4 mt-0.5" />
-                <p>
-                  Quyết định duyệt hoặc từ chối sẽ ảnh
-                  hưởng trực tiếp đến việc hiển thị tin
-                  tuyển dụng cho ứng viên.
-                </p>
+                Quyết định duyệt hoặc từ chối sẽ ảnh hưởng trực tiếp đến việc hiển thị tin tuyển dụng.
               </div>
 
               <textarea
                 value={rejectNote}
-                onChange={(e) =>
-                  setRejectNote(e.target.value)
-                }
+                onChange={(e) => setRejectNote(e.target.value)}
                 rows={3}
                 placeholder="Lý do từ chối (bắt buộc nếu từ chối)"
-                className="
-                  w-full rounded-xl border border-gray-300
-                  p-3 text-sm
-                  focus:ring-2 focus:ring-red-200
-                "
+                className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-red-200"
               />
 
               <div className="flex justify-end gap-3">
                 <button
-                  onClick={handleReject}
+                  onClick={() => setConfirm("reject")}
                   disabled={submitting}
-                  className="
-                    inline-flex items-center gap-2
-                    px-4 py-2 rounded-xl
-                    border border-red-300
-                    text-red-600
-                    hover:bg-red-50
-                    disabled:opacity-50
-                  "
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
                 >
                   <XCircle className="w-4 h-4" />
                   Từ chối
                 </button>
 
                 <button
-                  onClick={handleApprove}
+                  onClick={() => setConfirm("approve")}
                   disabled={submitting}
-                  className="
-                    inline-flex items-center gap-2
-                    px-5 py-2 rounded-xl
-                    bg-green-600 text-white
-                    hover:bg-green-700
-                    disabled:opacity-50
-                  "
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Duyệt tin
@@ -321,6 +249,16 @@ export default function JobReviewModal({
           </div>
         )}
       </div>
+
+      {/* ===== CONFIRM MODAL ===== */}
+      {confirm && (
+        <ConfirmModal
+          type={confirm}
+          onCancel={() => setConfirm(null)}
+          onConfirm={confirm === "approve" ? approve : reject}
+          disabled={submitting || (confirm === "reject" && !rejectNote.trim())}
+        />
+      )}
     </div>
   );
 }
@@ -341,8 +279,48 @@ const ContentSection = ({ title, children }) => (
 const Info = ({ label, value }) => (
   <div className="rounded-xl border p-3 bg-white text-sm">
     <p className="text-gray-500">{label}</p>
-    <p className="font-medium text-gray-900">
-      {value || "—"}
-    </p>
+    <p className="font-medium">{value || "—"}</p>
+  </div>
+);
+
+const ConfirmModal = ({
+  type,
+  onCancel,
+  onConfirm,
+  disabled,
+}) => (
+  <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl text-center">
+      <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
+      <h3 className="text-lg font-semibold mb-1">
+        {type === "approve"
+          ? "Xác nhận duyệt tin?"
+          : "Xác nhận từ chối?"}
+      </h3>
+      <p className="text-sm text-gray-600 mb-6">
+        Hành động này không thể hoàn tác.
+      </p>
+
+      <div className="flex justify-center gap-3">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-100"
+        >
+          Hủy
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={disabled}
+          className={`px-4 py-2 rounded-lg font-medium text-white
+            ${
+              type === "approve"
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700"
+            } disabled:opacity-50`}
+        >
+          Xác nhận
+        </button>
+      </div>
+    </div>
   </div>
 );

@@ -1,14 +1,17 @@
-import { Globe, MapPin } from "lucide-react";
+import { Globe, MapPin, Building2, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function JobSidebar({ job }) {
+  if (!job) return null;
+
   return (
     <aside
       className="
         bg-white border border-gray-200
-        rounded-2xl p-6
+        rounded-3xl p-6
         shadow-sm
-        space-y-7
+        space-y-8
+        sticky top-6
       "
     >
       {/* =====================
@@ -22,7 +25,7 @@ function JobSidebar({ job }) {
             alt="Company logo"
             className="
               w-14 h-14 object-contain
-              border rounded-xl bg-white
+              border rounded-2xl bg-white
             "
           />
         ) : (
@@ -30,13 +33,11 @@ function JobSidebar({ job }) {
             className="
               w-14 h-14
               flex items-center justify-center
-              rounded-xl border
+              rounded-2xl border
               bg-gray-50 text-gray-400
-              text-xs font-semibold
-              tracking-wide
             "
           >
-            LOGO
+            <Building2 size={22} />
           </div>
         )}
 
@@ -55,7 +56,7 @@ function JobSidebar({ job }) {
           COMPANY INFO
       ===================== */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-900 mb-4">
+        <h4 className="text-sm font-semibold text-gray-900 mb-5">
           Thông tin công ty
         </h4>
 
@@ -64,13 +65,13 @@ function JobSidebar({ job }) {
           <div className="flex items-start gap-3">
             <div
               className="
-                w-8 h-8 rounded-lg
-                bg-green-50
+                w-9 h-9 rounded-xl
+                bg-emerald-50
                 flex items-center justify-center
                 flex-shrink-0
               "
             >
-              <Globe className="w-4 h-4 text-green-600" />
+              <Globe className="w-4 h-4 text-emerald-600" />
             </div>
 
             <div className="min-w-0">
@@ -84,7 +85,7 @@ function JobSidebar({ job }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="
-                    text-green-600 hover:underline
+                    text-emerald-600 hover:underline
                     break-all text-sm
                   "
                 >
@@ -102,13 +103,13 @@ function JobSidebar({ job }) {
           <div className="flex items-start gap-3">
             <div
               className="
-                w-8 h-8 rounded-lg
-                bg-green-50
+                w-9 h-9 rounded-xl
+                bg-emerald-50
                 flex items-center justify-center
                 flex-shrink-0
               "
             >
-              <MapPin className="w-4 h-4 text-green-600" />
+              <MapPin className="w-4 h-4 text-emerald-600" />
             </div>
 
             <div className="min-w-0">
@@ -134,26 +135,23 @@ function JobSidebar({ job }) {
           COMPANY DESCRIPTION
       ===================== */}
       {job.company_description && (
-        <div className="pt-5 border-t">
+        <div className="pt-6 border-t space-y-4">
           <p className="text-sm text-gray-600 leading-relaxed line-clamp-5">
             {job.company_description}
           </p>
 
-          {/* VIEW COMPANY */}
-          <div className="mt-4">
-            <Link
-              to={`/companies/${job.company_id}`}
-              className="
-                inline-flex items-center gap-1
-                text-sm font-medium
-                text-green-600 hover:text-green-700
-                hover:underline
-              "
-            >
-              Xem trang công ty
-              <span className="text-base">→</span>
-            </Link>
-          </div>
+          <Link
+            to={`/companies/${job.company_id}`}
+            className="
+              inline-flex items-center gap-1
+              text-sm font-semibold
+              text-emerald-600 hover:text-emerald-700
+              transition
+            "
+          >
+            Xem trang công ty
+            <ArrowRight size={14} />
+          </Link>
         </div>
       )}
     </aside>

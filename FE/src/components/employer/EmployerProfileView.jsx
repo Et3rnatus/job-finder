@@ -7,6 +7,8 @@ import {
   FileText,
   Pencil,
   Loader2,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function EmployerProfileView({ onEdit }) {
@@ -37,13 +39,22 @@ export default function EmployerProfileView({ onEdit }) {
     );
   }
 
+  const isCompleted =
+    profile.company_name &&
+    profile.city &&
+    profile.district &&
+    profile.address_detail &&
+    profile.business_license;
+
   const fullAddress = profile.address_detail
     ? `${profile.address_detail}, ${profile.district}, ${profile.city}`
     : "—";
 
   return (
     <div className="max-w-6xl mx-auto bg-white border border-gray-200 rounded-3xl p-12 shadow-sm">
-      {/* HEADER */}
+      {/* =====================
+          HEADER
+      ===================== */}
       <div className="flex flex-wrap items-start justify-between gap-6 mb-12">
         <div className="flex items-start gap-5">
           <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
@@ -57,6 +68,24 @@ export default function EmployerProfileView({ onEdit }) {
             <p className="text-sm text-gray-500 mt-1">
               Hồ sơ doanh nghiệp
             </p>
+
+            {/* STATUS */}
+            <span
+              className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1 text-xs font-semibold rounded-full border ${
+                isCompleted
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}
+            >
+              {isCompleted ? (
+                <CheckCircle2 size={14} />
+              ) : (
+                <AlertTriangle size={14} />
+              )}
+              {isCompleted
+                ? "Hồ sơ đã hoàn thiện"
+                : "Hồ sơ chưa hoàn thiện"}
+            </span>
           </div>
         </div>
 
@@ -69,7 +98,9 @@ export default function EmployerProfileView({ onEdit }) {
         </button>
       </div>
 
-      {/* INFO GRID */}
+      {/* =====================
+          INFO GRID
+      ===================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm mb-12">
         <InfoItem
           icon={<Globe size={18} />}
@@ -99,11 +130,22 @@ export default function EmployerProfileView({ onEdit }) {
         <InfoItem
           icon={<FileText size={18} />}
           label="Giấy phép kinh doanh"
-          value={profile.business_license || "—"}
+          value={
+            profile.business_license ? (
+              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
+                <CheckCircle2 size={14} />
+                {profile.business_license}
+              </span>
+            ) : (
+              "—"
+            )
+          }
         />
       </div>
 
-      {/* DESCRIPTION */}
+      {/* =====================
+          DESCRIPTION
+      ===================== */}
       <div>
         <h3 className="text-xl font-semibold text-gray-900 mb-5">
           Giới thiệu công ty
@@ -115,11 +157,24 @@ export default function EmployerProfileView({ onEdit }) {
           </p>
         </div>
       </div>
+
+      {/* =====================
+          FOOTER NOTE
+      ===================== */}
+      {!isCompleted && (
+        <div className="mt-10 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 flex items-start gap-2">
+          <AlertTriangle size={18} />
+          Hồ sơ doanh nghiệp chưa đầy đủ. Một số chức năng
+          (đăng tin, thanh toán) có thể bị hạn chế.
+        </div>
+      )}
     </div>
   );
 }
 
-/* SUB COMPONENT */
+/* =====================
+   SUB COMPONENT
+===================== */
 
 function InfoItem({ icon, label, value }) {
   return (

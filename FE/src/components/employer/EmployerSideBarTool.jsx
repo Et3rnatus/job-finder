@@ -5,6 +5,7 @@ import {
   PlusCircle,
   CreditCard,
   LogOut,
+  ChevronRight,
 } from "lucide-react";
 
 export default function EmployerSideBarTool({
@@ -25,12 +26,18 @@ export default function EmployerSideBarTool({
 
   const isActive = (mode) => currentMode === mode;
 
-  const Item = ({ icon, label, mode, onClick }) => (
+  const Item = ({
+    icon,
+    label,
+    mode,
+    onClick,
+    badge,
+  }) => (
     <li
       onClick={onClick}
-      className={`group flex items-center justify-between px-4 py-3 rounded-2xl cursor-pointer transition ${
+      className={`group flex items-center justify-between px-4 py-3 rounded-2xl cursor-pointer transition-all ${
         isActive(mode)
-          ? "bg-emerald-50 text-emerald-700"
+          ? "bg-emerald-50 text-emerald-700 shadow-sm"
           : "text-gray-700 hover:bg-gray-100"
       }`}
     >
@@ -44,10 +51,26 @@ export default function EmployerSideBarTool({
         >
           {icon}
         </span>
+
         <span className="font-semibold">
           {label}
         </span>
+
+        {badge && (
+          <span className="ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700">
+            {badge}
+          </span>
+        )}
       </div>
+
+      <ChevronRight
+        size={14}
+        className={`transition ${
+          isActive(mode)
+            ? "text-emerald-500"
+            : "text-gray-300 group-hover:text-gray-500"
+        }`}
+      />
     </li>
   );
 
@@ -63,6 +86,7 @@ export default function EmployerSideBarTool({
           icon={<Building2 size={18} />}
           label="Hồ sơ công ty"
           mode="profile"
+          badge="Bắt buộc"
           onClick={() => {
             setMode("profile");
             setProfileMode?.("view");
@@ -87,6 +111,7 @@ export default function EmployerSideBarTool({
           icon={<CreditCard size={18} />}
           label="Nâng cấp tài khoản"
           mode="payment"
+          badge="Pro"
           onClick={() => setMode("payment")}
         />
 

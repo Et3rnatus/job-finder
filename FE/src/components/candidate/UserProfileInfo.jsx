@@ -26,12 +26,16 @@ export default function UserProfileInfo({ profile }) {
   } = profile;
 
   const formattedDob = date_of_birth
-    ? new Date(date_of_birth).toLocaleDateString("vi-VN")
+    ? new Date(date_of_birth).toLocaleDateString(
+        "vi-VN"
+      )
     : "Chưa cập nhật";
 
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-10 shadow-sm">
-      {/* HEADER */}
+      {/* =====================
+          HEADER
+      ===================== */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-12">
         <div>
           <h2 className="text-3xl font-semibold text-gray-900">
@@ -48,22 +52,50 @@ export default function UserProfileInfo({ profile }) {
         </span>
       </div>
 
-      {/* BASIC INFO */}
+      {/* =====================
+          BASIC INFO
+      ===================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <InfoCard title="Thông tin cá nhân">
-          <InfoRow icon={<User size={15} />} label="Họ và tên" value={full_name} />
-          <InfoRow icon={<Calendar size={15} />} label="Ngày sinh" value={formattedDob} />
-          <InfoRow icon={<User size={15} />} label="Giới tính" value={gender} />
-          <InfoRow icon={<MapPin size={15} />} label="Địa chỉ" value={address} />
+          <InfoRow
+            icon={<User size={15} />}
+            label="Họ và tên"
+            value={full_name}
+          />
+          <InfoRow
+            icon={<Calendar size={15} />}
+            label="Ngày sinh"
+            value={formattedDob}
+          />
+          <InfoRow
+            icon={<User size={15} />}
+            label="Giới tính"
+            value={gender}
+          />
+          <InfoRow
+            icon={<MapPin size={15} />}
+            label="Địa chỉ"
+            value={address}
+          />
         </InfoCard>
 
         <InfoCard title="Thông tin liên hệ">
-          <InfoRow icon={<Mail size={15} />} label="Email" value={email} />
-          <InfoRow icon={<Phone size={15} />} label="Số điện thoại" value={contact_number} />
+          <InfoRow
+            icon={<Mail size={15} />}
+            label="Email"
+            value={email}
+          />
+          <InfoRow
+            icon={<Phone size={15} />}
+            label="Số điện thoại"
+            value={contact_number}
+          />
         </InfoCard>
       </div>
 
-      {/* SKILLS */}
+      {/* =====================
+          SKILLS
+      ===================== */}
       <Section title="Kỹ năng">
         {skills?.length ? (
           <div className="flex flex-wrap gap-2">
@@ -81,7 +113,9 @@ export default function UserProfileInfo({ profile }) {
         )}
       </Section>
 
-      {/* BIO */}
+      {/* =====================
+          BIO
+      ===================== */}
       <Section title="Giới thiệu bản thân">
         {bio ? (
           <p className="text-gray-700 leading-relaxed whitespace-pre-line max-w-3xl">
@@ -92,7 +126,9 @@ export default function UserProfileInfo({ profile }) {
         )}
       </Section>
 
-      {/* EDUCATION */}
+      {/* =====================
+          EDUCATION
+      ===================== */}
       <Section title="Học vấn">
         {education?.length ? (
           <div className="space-y-5">
@@ -101,7 +137,9 @@ export default function UserProfileInfo({ profile }) {
                 key={index}
                 icon={<GraduationCap size={14} />}
                 title={edu.school}
-                subtitle={`${edu.degree}${edu.major ? ` – ${edu.major}` : ""}`}
+                subtitle={`${edu.degree || ""}${
+                  edu.major ? ` – ${edu.major}` : ""
+                }`}
               />
             ))}
           </div>
@@ -110,7 +148,9 @@ export default function UserProfileInfo({ profile }) {
         )}
       </Section>
 
-      {/* EXPERIENCE */}
+      {/* =====================
+          EXPERIENCE
+      ===================== */}
       <Section title="Kinh nghiệm làm việc">
         {experiences?.length ? (
           <div className="space-y-5">
@@ -118,7 +158,11 @@ export default function UserProfileInfo({ profile }) {
               <Timeline
                 key={index}
                 icon={<Briefcase size={14} />}
-                title={`${exp.position} – ${exp.company}`}
+                title={`${exp.position || ""}${
+                  exp.company
+                    ? ` – ${exp.company}`
+                    : ""
+                }`}
                 description={exp.description}
               />
             ))}
@@ -149,9 +193,13 @@ function InfoCard({ title, children }) {
 function InfoRow({ icon, label, value }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-1 text-gray-400">{icon}</div>
+      <div className="mt-1 text-gray-400">
+        {icon}
+      </div>
       <div>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xs text-gray-500">
+          {label}
+        </p>
         <p className="text-sm font-medium text-gray-900">
           {value || "Chưa cập nhật"}
         </p>
@@ -171,23 +219,31 @@ function Section({ title, children }) {
   );
 }
 
-function Timeline({ title, subtitle, description, icon }) {
+function Timeline({
+  title,
+  subtitle,
+  description,
+  icon,
+}) {
   return (
     <div className="relative pl-10">
       <span className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-white">
         {icon}
       </span>
+
       <div>
         <p className="font-medium text-gray-900">
-          {title}
+          {title || "—"}
         </p>
+
         {subtitle && (
           <p className="text-sm text-gray-600">
             {subtitle}
           </p>
         )}
+
         {description && (
-          <p className="text-sm text-gray-600 mt-1 max-w-3xl">
+          <p className="text-sm text-gray-600 mt-1 max-w-3xl whitespace-pre-line">
             {description}
           </p>
         )}

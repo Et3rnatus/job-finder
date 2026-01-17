@@ -6,12 +6,14 @@ import {
   ShieldCheck,
   Loader2,
   CheckCircle2,
+  Send,
 } from "lucide-react";
 
 function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
   const [coverLetter, setCoverLetter] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
+  const MAX_LENGTH = 1000;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,12 +24,15 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
 
       await applyJob({
         job_id: jobId,
-        cover_letter: coverLetter,
+        cover_letter: coverLetter.trim(),
       });
 
       onSuccess && onSuccess();
     } catch (err) {
-      alert(err.response?.data?.message || "Ứng tuyển thất bại");
+      alert(
+        err.response?.data?.message ||
+          "Ứng tuyển thất bại. Vui lòng thử lại."
+      );
     } finally {
       setLoading(false);
     }
@@ -58,11 +63,11 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
       {/* =====================
           HEADER
       ===================== */}
-      <div className="mb-8">
+      <div className="mb-10">
         <h2 className="text-2xl font-semibold text-gray-800">
           Ứng tuyển công việc
         </h2>
-        <p className="mt-2 text-green-600 font-medium truncate">
+        <p className="mt-2 text-emerald-600 font-medium truncate">
           {jobTitle}
         </p>
       </div>
@@ -73,7 +78,7 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
         ===================== */}
         <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border bg-gray-50">
           <div className="flex items-center gap-3">
-            <FileText className="text-green-600" size={22} />
+            <FileText className="text-emerald-600" size={22} />
             <div>
               <p className="text-sm font-medium text-gray-800">
                 Hồ sơ sử dụng
@@ -84,7 +89,7 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
             </div>
           </div>
 
-          <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+          <span className="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
             Mặc định
           </span>
         </div>
@@ -103,19 +108,28 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
           <textarea
             rows={6}
             value={coverLetter}
+            maxLength={MAX_LENGTH}
             onChange={(e) => setCoverLetter(e.target.value)}
             placeholder="Giới thiệu ngắn gọn về kinh nghiệm, kỹ năng phù hợp và lý do bạn ứng tuyển vị trí này..."
             className="
               w-full rounded-2xl border px-4 py-3
               text-sm leading-relaxed
-              focus:outline-none focus:ring-2 focus:ring-green-500
+              focus:outline-none focus:ring-2 focus:ring-emerald-500
               resize-none
             "
           />
 
           <div className="flex justify-between text-xs text-gray-500 mt-2">
             <span>Gợi ý: 2–3 đoạn ngắn, súc tích</span>
-            <span>{coverLetter.length} ký tự</span>
+            <span
+              className={
+                coverLetter.length > MAX_LENGTH * 0.9
+                  ? "text-orange-500 font-medium"
+                  : ""
+              }
+            >
+              {coverLetter.length}/{MAX_LENGTH}
+            </span>
           </div>
         </div>
 
@@ -127,12 +141,12 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
             type="checkbox"
             checked={agree}
             onChange={(e) => setAgree(e.target.checked)}
-            className="mt-1 accent-green-600"
+            className="mt-1 accent-emerald-600"
           />
           <span>
             Tôi đồng ý cho phép hệ thống sử dụng thông tin cá nhân
             phục vụ mục đích tuyển dụng theo{" "}
-            <span className="text-green-600 font-medium cursor-pointer hover:underline">
+            <span className="text-emerald-600 font-medium cursor-pointer hover:underline">
               điều khoản sử dụng
             </span>
           </span>
@@ -141,7 +155,7 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
         {/* =====================
             ACTION
         ===================== */}
-        <div className="pt-2 space-y-3">
+        <div className="pt-2 space-y-4">
           <button
             type="submit"
             disabled={!agree || loading}
@@ -153,7 +167,7 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
               ${
                 !agree || loading
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-green-700 active:scale-[0.97]"
+                  : "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-green-700 active:scale-[0.97]"
               }
             `}
           >
@@ -164,7 +178,7 @@ function ApplyForm({ jobId, jobTitle, onSuccess, onClose }) {
               </>
             ) : (
               <>
-                <CheckCircle2 size={18} />
+                <Send size={18} />
                 Nộp hồ sơ ứng tuyển
               </>
             )}

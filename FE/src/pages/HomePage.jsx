@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, AlertTriangle, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  AlertTriangle,
+  ArrowRight,
+} from "lucide-react";
 
 import HeroSection from "../components/home/HeroSection";
 import JobList from "../components/home/JobList";
@@ -13,6 +17,9 @@ function HomePage() {
   const [showEmployerModal, setShowEmployerModal] = useState(false);
   const navigate = useNavigate();
 
+  /* =====================
+     CHECK EMPLOYER PROFILE
+  ===================== */
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role !== "employer") return;
@@ -35,67 +42,83 @@ function HomePage() {
 
   return (
     <>
-      {/* HERO */}
+      {/* =====================
+          HERO
+      ===================== */}
       <HeroSection />
 
-      {/* CONTENT */}
+      {/* =====================
+          MAIN CONTENT
+      ===================== */}
       <main className="bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-20 space-y-28">
-          {/* JOB LIST */}
+          {/* ===== JOB LIST ===== */}
           <section>
             <SectionHeader
               badge="Gợi ý hôm nay"
               title="Việc làm mới nhất"
-              subtitle="Cập nhật liên tục những cơ hội nghề nghiệp phù hợp"
+              subtitle="Cập nhật liên tục những cơ hội nghề nghiệp phù hợp với bạn"
             />
             <JobList />
           </section>
 
-          {/* INDUSTRIES */}
+          {/* ===== INDUSTRIES ===== */}
           <section>
             <SectionHeader
-              badge="Xu hướng"
+              badge="Xu hướng tuyển dụng"
               title="Ngành nghề nổi bật"
               subtitle="Những lĩnh vực đang tuyển dụng mạnh nhất hiện nay"
             />
             <KeyIndustries />
           </section>
 
-          {/* COMPANIES */}
+          {/* ===== COMPANIES ===== */}
           <section>
             <SectionHeader
-              badge="Đối tác"
+              badge="Đối tác tuyển dụng"
               title="Nhà tuyển dụng hàng đầu"
-              subtitle="Doanh nghiệp uy tín được ứng viên tin tưởng"
+              subtitle="Doanh nghiệp uy tín được ứng viên tin tưởng và lựa chọn"
             />
             <TopCompanies />
           </section>
         </div>
       </main>
 
-      {/* EMPLOYER WARNING MODAL */}
+      {/* =====================
+          EMPLOYER WARNING MODAL
+      ===================== */}
       {showEmployerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8">
+            {/* HEADER */}
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center">
                 <AlertTriangle size={24} />
               </div>
+
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">
                   Hồ sơ công ty chưa hoàn thiện
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Hoàn thiện hồ sơ để đăng tin tuyển dụng và quản lý
-                  ứng viên hiệu quả hơn.
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                  Hoàn thiện hồ sơ doanh nghiệp để đăng tin tuyển dụng,
+                  tiếp cận ứng viên chất lượng và quản lý quy trình
+                  tuyển dụng hiệu quả hơn.
                 </p>
               </div>
             </div>
 
+            {/* ACTIONS */}
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowEmployerModal(false)}
-                className="px-5 py-2 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
+                className="
+                  px-5 py-2 rounded-full
+                  text-sm font-semibold
+                  text-gray-600
+                  hover:bg-gray-100
+                  transition
+                "
               >
                 Để sau
               </button>
@@ -105,7 +128,14 @@ function HomePage() {
                   setShowEmployerModal(false);
                   navigate("/account/employer");
                 }}
-                className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition"
+                className="
+                  inline-flex items-center gap-2
+                  px-6 py-2 rounded-full
+                  text-sm font-semibold
+                  bg-green-600 text-white
+                  hover:bg-green-700
+                  transition
+                "
               >
                 Hoàn thiện ngay
                 <ArrowRight size={16} />
@@ -118,7 +148,9 @@ function HomePage() {
   );
 }
 
-/* UI */
+/* =====================
+   UI COMPONENT
+===================== */
 const SectionHeader = ({ badge, title, subtitle }) => (
   <div className="mb-10 text-center">
     {badge && (
@@ -127,11 +159,13 @@ const SectionHeader = ({ badge, title, subtitle }) => (
         {badge}
       </div>
     )}
+
     <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
       {title}
     </h2>
+
     {subtitle && (
-      <p className="text-gray-500 mt-3 max-w-xl mx-auto">
+      <p className="text-gray-500 mt-3 max-w-xl mx-auto leading-relaxed">
         {subtitle}
       </p>
     )}

@@ -8,7 +8,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Activity } from "lucide-react";
 
 /* =====================
    FORMATTERS
@@ -27,12 +27,14 @@ const formatDate = (value) => {
 function EmptyState() {
   return (
     <div className="h-[320px] flex flex-col items-center justify-center text-gray-400">
-      <TrendingUp className="w-10 h-10 mb-3 opacity-40" />
-      <p className="text-sm font-medium">
+      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+        <Activity className="w-7 h-7 opacity-50" />
+      </div>
+      <p className="text-sm font-semibold">
         Chưa có dữ liệu thống kê
       </p>
-      <p className="text-xs mt-1">
-        Dữ liệu sẽ hiển thị khi có job phát sinh
+      <p className="text-xs mt-1 text-gray-400">
+        Dữ liệu sẽ hiển thị khi có hoạt động tuyển dụng
       </p>
     </div>
   );
@@ -48,42 +50,35 @@ export default function AdminDashboardTrends({ data = [] }) {
         rounded-2xl
         bg-white
         border border-gray-200
-        shadow-[0_8px_30px_rgba(0,0,0,0.08)]
+        shadow-[0_10px_40px_rgba(0,0,0,0.08)]
         p-6
         transition-all
-        hover:shadow-[0_14px_45px_rgba(0,0,0,0.12)]
+        hover:shadow-[0_18px_60px_rgba(0,0,0,0.12)]
       "
     >
       {/* =====================
           HEADER
       ===================== */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-blue-600" />
             Job Trends
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Thống kê hoạt động tuyển dụng 7 ngày gần nhất
+          <p className="text-sm text-gray-500 mt-1">
+            Thống kê hoạt động tuyển dụng trong 7 ngày gần nhất
           </p>
         </div>
 
         {/* BADGE */}
-        <div
-          className="
-            flex items-center gap-2
-            px-3 py-1.5
-            rounded-full
-            bg-blue-50 text-blue-600
-            text-xs font-semibold
-          "
-        >
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold">
           <TrendingUp className="w-4 h-4" />
           Last 7 days
         </div>
       </div>
 
       {/* =====================
-          CHART / EMPTY
+          CHART / EMPTY STATE
       ===================== */}
       {!hasData ? (
         <EmptyState />
@@ -115,16 +110,16 @@ export default function AdminDashboardTrends({ data = [] }) {
             <Tooltip
               labelFormatter={formatDate}
               contentStyle={{
-                backgroundColor: "rgba(255,255,255,0.95)",
+                backgroundColor: "rgba(255,255,255,0.96)",
                 borderRadius: "14px",
                 border: "1px solid #e5e7eb",
                 boxShadow:
-                  "0 12px 30px rgba(0,0,0,0.12)",
+                  "0 14px 40px rgba(0,0,0,0.15)",
               }}
               labelStyle={{
                 fontWeight: 600,
                 color: "#111827",
-                marginBottom: 4,
+                marginBottom: 6,
               }}
               itemStyle={{
                 fontSize: 13,

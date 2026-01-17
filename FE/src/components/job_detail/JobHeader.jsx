@@ -3,9 +3,13 @@ import {
   DollarSign,
   Clock,
   Briefcase,
+  CalendarDays,
+  Sparkles,
 } from "lucide-react";
 
 function JobHeader({ job }) {
+  if (!job) return null;
+
   /* =====================
      FORMATTERS
   ===================== */
@@ -54,31 +58,38 @@ function JobHeader({ job }) {
   };
 
   return (
-    <section
-      className="
-        bg-white border border-gray-200
-        rounded-2xl p-6 md:p-8
-        shadow-sm
-      "
-    >
+    <section className="relative bg-white border border-gray-200 rounded-3xl p-6 md:p-8 shadow-sm overflow-hidden">
+      {/* DECORATION */}
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl" />
+
       {/* =====================
-          TOP SECTION
+          TOP
       ===================== */}
-      <div className="flex flex-col gap-3 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug">
+      <div className="relative flex flex-col gap-4 mb-8">
+        {/* BADGE */}
+        <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 w-fit">
+          <Sparkles size={12} />
+          Tuyển dụng nổi bật
+        </span>
+
+        {/* TITLE */}
+        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-snug">
           {job.title}
         </h1>
 
-        {/* META LINE */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+        {/* META */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">
           {job.created_at && (
-            <span>Đăng {formatPostedDate()}</span>
+            <span className="flex items-center gap-1">
+              <CalendarDays size={14} />
+              Đăng {formatPostedDate()}
+            </span>
           )}
 
           {job.expired_at && (
             <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              Hạn nộp:{" "}
+              <Clock size={14} />
+              Hạn nộp:
               <span className="font-medium text-gray-700">
                 {formatDeadline()}
               </span>
@@ -144,26 +155,28 @@ function InfoCard({
   return (
     <div
       className={`
+        group
         flex items-start gap-4
-        p-4 rounded-xl border
+        p-4 rounded-2xl border
         transition
         ${
           highlight
-            ? "bg-green-50 border-green-200"
-            : "bg-gray-50 border-gray-100 hover:bg-white hover:border-green-200"
+            ? "bg-emerald-50 border-emerald-200"
+            : "bg-gray-50 border-gray-100 hover:bg-white hover:border-emerald-200"
         }
       `}
     >
       {/* ICON */}
       <div
         className={`
-          w-10 h-10 rounded-lg
+          w-11 h-11 rounded-xl
           flex items-center justify-center
           shrink-0
+          transition
           ${
             highlight
-              ? "bg-green-600 text-white"
-              : "bg-green-100 text-green-600"
+              ? "bg-emerald-600 text-white"
+              : "bg-emerald-100 text-emerald-600 group-hover:scale-105"
           }
         `}
       >
@@ -177,10 +190,10 @@ function InfoCard({
         </p>
         <p
           className={`
-            text-sm font-semibold
+            text-sm font-semibold leading-snug
             ${
               highlight
-                ? "text-green-700"
+                ? "text-emerald-700"
                 : "text-gray-800"
             }
           `}

@@ -1,3 +1,4 @@
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   UserCog,
   FileText,
@@ -12,10 +13,23 @@ export default function UserSidebarTool({
   onEditProfile,
   onChangePassword,
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  /* =====================
+     LOGOUT
+  ===================== */
   const handleLogout = () => {
+    if (
+      !window.confirm(
+        "Bạn có chắc chắn muốn đăng xuất?"
+      )
+    )
+      return;
+
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    window.location.href = "/login";
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -27,6 +41,7 @@ export default function UserSidebarTool({
       <ul className="space-y-1 text-sm">
         <SidebarItem
           icon={<UserCog size={16} />}
+          active={false}
           onClick={onEditProfile}
         >
           Cập nhật hồ sơ
@@ -34,9 +49,11 @@ export default function UserSidebarTool({
 
         <SidebarItem
           icon={<FileText size={16} />}
+          active={location.pathname.includes(
+            "/candidate/applications"
+          )}
           onClick={() =>
-            (window.location.href =
-              "/candidate/applications")
+            navigate("/candidate/applications")
           }
         >
           Công việc đã ứng tuyển
@@ -44,9 +61,11 @@ export default function UserSidebarTool({
 
         <SidebarItem
           icon={<Bookmark size={16} />}
+          active={location.pathname.includes(
+            "/candidate/saved-jobs"
+          )}
           onClick={() =>
-            (window.location.href =
-              "/candidate/saved-jobs")
+            navigate("/candidate/saved-jobs")
           }
         >
           Công việc đã lưu
@@ -54,9 +73,11 @@ export default function UserSidebarTool({
 
         <SidebarItem
           icon={<Eye size={16} />}
+          active={location.pathname.includes(
+            "/candidate/viewed-jobs"
+          )}
           onClick={() =>
-            (window.location.href =
-              "/candidate/viewed-jobs")
+            navigate("/candidate/viewed-jobs")
           }
         >
           Công việc đã xem
@@ -66,11 +87,13 @@ export default function UserSidebarTool({
 
         <SidebarItem
           icon={<Lock size={16} />}
+          active={false}
           onClick={onChangePassword}
         >
           Đổi mật khẩu
         </SidebarItem>
 
+        {/* LOGOUT */}
         <li
           onClick={handleLogout}
           className="mt-2 px-3 py-2 rounded-xl flex items-center gap-2 cursor-pointer text-red-600 font-semibold hover:bg-red-50 transition"
@@ -83,22 +106,48 @@ export default function UserSidebarTool({
   );
 }
 
-function SidebarItem({ icon, children, onClick }) {
+/* =====================
+   SUB COMPONENT
+===================== */
+
+function SidebarItem({
+  icon,
+  children,
+  onClick,
+  active,
+}) {
   return (
     <li
       onClick={onClick}
-      className="group px-3 py-2 rounded-xl cursor-pointer flex items-center justify-between gap-2 transition text-gray-700 hover:bg-gray-100"
+      className={`group px-3 py-2 rounded-xl cursor-pointer flex items-center justify-between gap-2 transition
+        ${
+          active
+            ? "bg-indigo-50 text-indigo-700"
+            : "text-gray-700 hover:bg-gray-100"
+        }`}
     >
       <div className="flex items-center gap-2">
-        <span className="text-gray-400 group-hover:text-gray-700 transition">
+        <span
+          className={`transition ${
+            active
+              ? "text-indigo-600"
+              : "text-gray-400 group-hover:text-gray-700"
+          }`}
+        >
           {icon}
         </span>
-        <span className="font-medium">{children}</span>
+        <span className="font-medium">
+          {children}
+        </span>
       </div>
 
       <ChevronRight
         size={14}
-        className="text-gray-300 group-hover:text-gray-500 transition"
+        className={`transition ${
+          active
+            ? "text-indigo-500"
+            : "text-gray-300 group-hover:text-gray-500"
+        }`}
       />
     </li>
   );

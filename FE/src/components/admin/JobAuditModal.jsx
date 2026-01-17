@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   ShieldX,
   Clock,
+  History,
 } from "lucide-react";
 
 export default function JobAuditModal({ jobId, onClose }) {
@@ -35,16 +36,18 @@ export default function JobAuditModal({ jobId, onClose }) {
   useEffect(() => {
     const loadLogs = async () => {
       try {
+        setLoading(true);
         const res = await getJobLogs(jobId);
         setLogs(Array.isArray(res) ? res : []);
       } catch (err) {
         console.error("GET JOB LOGS ERROR:", err);
+        setLogs([]);
       } finally {
         setLoading(false);
       }
     };
 
-    loadLogs();
+    if (jobId) loadLogs();
   }, [jobId]);
 
   return (
@@ -55,7 +58,7 @@ export default function JobAuditModal({ jobId, onClose }) {
           rounded-2xl
           bg-white
           border border-gray-200
-          shadow-[0_24px_70px_rgba(0,0,0,0.28)]
+          shadow-[0_26px_80px_rgba(0,0,0,0.28)]
           p-6
           animate-[fadeIn_0.2s_ease-out]
         "
@@ -65,11 +68,12 @@ export default function JobAuditModal({ jobId, onClose }) {
         ===================== */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <History className="w-5 h-5 text-blue-600" />
               Lịch sử duyệt công việc
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Nhật ký xét duyệt của admin
+            <p className="text-sm text-gray-500 mt-1">
+              Nhật ký xét duyệt của quản trị viên
             </p>
           </div>
 
@@ -91,14 +95,14 @@ export default function JobAuditModal({ jobId, onClose }) {
             CONTENT
         ===================== */}
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500 py-6">
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
             <Clock className="w-4 h-4 animate-pulse" />
             Đang tải lịch sử duyệt...
           </div>
         )}
 
         {!loading && logs.length === 0 && (
-          <div className="py-10 text-center text-gray-400">
+          <div className="py-12 text-center text-gray-400">
             <Clock className="w-8 h-8 mx-auto mb-3 opacity-40" />
             <p className="text-sm font-medium">
               Chưa có lịch sử duyệt
@@ -114,11 +118,12 @@ export default function JobAuditModal({ jobId, onClose }) {
             {logs.map((log, index) => {
               const action =
                 actionMap[log.action] || {};
-              const isLast = index === logs.length - 1;
+              const isLast =
+                index === logs.length - 1;
 
               return (
                 <li
-                  key={log.id}
+                  key={log.id || index}
                   className="
                     relative
                     rounded-xl
@@ -129,7 +134,7 @@ export default function JobAuditModal({ jobId, onClose }) {
                     transition
                   "
                 >
-                  {/* TIMELINE DOT */}
+                  {/* TIMELINE LINE */}
                   {!isLast && (
                     <span className="absolute left-5 top-full h-4 w-px bg-gray-200" />
                   )}

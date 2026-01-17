@@ -26,6 +26,9 @@ function JobDetailPage() {
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
 
+  /* =====================
+     HELPERS
+  ===================== */
   const isJobExpired = (expiredAt) =>
     expiredAt && new Date(expiredAt) < new Date();
 
@@ -53,6 +56,9 @@ function JobDetailPage() {
     localStorage.setItem(KEY, JSON.stringify(updated));
   };
 
+  /* =====================
+     LOAD JOB DETAIL
+  ===================== */
   useEffect(() => {
     const loadJob = async () => {
       try {
@@ -67,6 +73,9 @@ function JobDetailPage() {
     loadJob();
   }, [id]);
 
+  /* =====================
+     LOAD APPLICATION STATUS
+  ===================== */
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -79,14 +88,17 @@ function JobDetailPage() {
           (a) => String(a.job_id) === String(id)
         );
         setApplicationStatus(found?.status || null);
-      } catch (e) {
-        console.error("LOAD APPLICATION STATUS ERROR:", e);
+      } catch (err) {
+        console.error("LOAD APPLICATION STATUS ERROR:", err);
       }
     };
 
     loadStatus();
   }, [id]);
 
+  /* =====================
+     APPLY HANDLER
+  ===================== */
   const handleApplyClick = () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -111,19 +123,28 @@ function JobDetailPage() {
     setShowApplyForm(true);
   };
 
+  /* =====================
+     BACK
+  ===================== */
   const handleBack = () => {
     if (from) navigate(from);
     else navigate("/jobs");
   };
 
+  /* =====================
+     LOADING
+  ===================== */
   if (!job) {
     return (
-      <div className="text-center py-20 text-gray-500">
+      <div className="py-24 text-center text-gray-500">
         Đang tải thông tin công việc...
       </div>
     );
   }
 
+  /* =====================
+     STATUS LOGIC
+  ===================== */
   const expired = isJobExpired(job.expired_at);
   const applied = ["pending", "approved", "rejected"].includes(
     applicationStatus
@@ -141,17 +162,30 @@ function JobDetailPage() {
 
   return (
     <>
+      {/* =====================
+          PAGE CONTENT
+      ===================== */}
       <div className="bg-gray-100 py-8">
         <div className="max-w-7xl mx-auto px-4">
+          {/* BACK */}
           <button
             onClick={handleBack}
-            className="mb-4 px-3 py-1.5 text-sm text-gray-600 border rounded-lg hover:bg-gray-100"
+            className="
+              mb-4 inline-flex items-center gap-1
+              px-3 py-1.5 text-sm
+              text-gray-600 border rounded-lg
+              hover:bg-gray-100 transition
+            "
           >
             ← Quay lại
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* =====================
+                MAIN CONTENT
+            ===================== */}
             <div className="lg:col-span-2 space-y-6">
+              {/* HEADER */}
               <div className="bg-white rounded-xl border p-6">
                 <JobHeader job={job} />
               </div>
@@ -178,7 +212,11 @@ function JobDetailPage() {
               />
             </div>
 
-            <div className="space-y-6 sticky top-6 h-fit">
+            {/* =====================
+                SIDEBAR
+            ===================== */}
+            <div className="space-y-6 lg:sticky lg:top-6 h-fit">
+              {/* APPLY */}
               <div className="bg-white border rounded-xl p-6 space-y-3">
                 <ApplyButton
                   applied={applied}
@@ -201,6 +239,9 @@ function JobDetailPage() {
         </div>
       </div>
 
+      {/* =====================
+          APPLY MODAL
+      ===================== */}
       {showApplyForm && (
         <div
           className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"

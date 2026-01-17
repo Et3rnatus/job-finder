@@ -1,11 +1,23 @@
 import { useState } from "react";
-import { XCircle, X, AlertTriangle } from "lucide-react";
+import {
+  XCircle,
+  X,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
 
-export default function RejectJobModal({ onClose, onSubmit }) {
+export default function RejectJobModal({
+  onClose,
+  onSubmit,
+}) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] =
+    useState(false);
 
+  /* =====================
+     SUBMIT
+  ===================== */
   const handleSubmit = async () => {
     if (!note.trim()) {
       setError("Vui lòng nhập lý do từ chối");
@@ -28,7 +40,7 @@ export default function RejectJobModal({ onClose, onSubmit }) {
           rounded-2xl
           bg-white
           border border-gray-200
-          shadow-[0_20px_60px_rgba(0,0,0,0.25)]
+          shadow-[0_22px_65px_rgba(0,0,0,0.28)]
           p-6
           animate-[fadeIn_0.2s_ease-out]
         "
@@ -38,14 +50,14 @@ export default function RejectJobModal({ onClose, onSubmit }) {
         ===================== */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 flex items-center justify-center rounded-full bg-red-100">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-red-100">
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Từ chối tin tuyển dụng
               </h2>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Hành động này yêu cầu lý do rõ ràng
               </p>
             </div>
@@ -55,7 +67,7 @@ export default function RejectJobModal({ onClose, onSubmit }) {
             onClick={onClose}
             disabled={submitting}
             className="
-              p-1.5 rounded-lg
+              p-2 rounded-lg
               text-gray-400
               hover:bg-gray-100
               hover:text-gray-600
@@ -72,7 +84,7 @@ export default function RejectJobModal({ onClose, onSubmit }) {
         ===================== */}
         <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
           Lý do từ chối sẽ được gửi cho nhà tuyển dụng để họ
-          chỉnh sửa và gửi lại tin tuyển dụng.
+          chỉnh sửa nội dung và gửi lại tin tuyển dụng.
         </div>
 
         {/* =====================
@@ -80,7 +92,8 @@ export default function RejectJobModal({ onClose, onSubmit }) {
         ===================== */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Lý do từ chối <span className="text-red-500">*</span>
+            Lý do từ chối{" "}
+            <span className="text-red-500">*</span>
           </label>
 
           <textarea
@@ -150,8 +163,17 @@ export default function RejectJobModal({ onClose, onSubmit }) {
               disabled:opacity-50
             "
           >
-            <XCircle className="w-4 h-4" />
-            {submitting ? "Đang xử lý..." : "Xác nhận từ chối"}
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4" />
+                Xác nhận từ chối
+              </>
+            )}
           </button>
         </div>
       </div>

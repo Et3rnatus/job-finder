@@ -18,24 +18,25 @@ import {
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-gray-950 text-gray-400">
       {/* =====================
           TOP CONTENT
       ===================== */}
-      <div className="max-w-7xl mx-auto px-6 pt-20 pb-14 grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-6 pt-20 pb-16 grid grid-cols-1 md:grid-cols-4 gap-12">
         {/* ===== BRAND ===== */}
         <div>
-          <h3 className="text-white text-xl font-semibold mb-4">
+          <h3 className="text-white text-xl font-bold mb-4">
             JobFinder Việt Nam
           </h3>
 
-          <p className="text-sm leading-relaxed text-gray-400">
-            JobFinder là nền tảng kết nối ứng viên và nhà tuyển dụng,
-            giúp tìm kiếm việc làm nhanh chóng, minh bạch và hiệu quả.
+          <p className="text-sm leading-relaxed">
+            Nền tảng kết nối ứng viên và nhà tuyển dụng,
+            giúp tìm kiếm việc làm nhanh chóng, minh bạch
+            và hiệu quả.
           </p>
 
           {/* CONTACT */}
-          <div className="mt-5 space-y-2 text-sm text-gray-400">
+          <div className="mt-6 space-y-2 text-sm">
             <p>📍 180 Cao Lỗ, Quận 8, TP. Hồ Chí Minh</p>
             <p>📞 0123 456 789</p>
             <p>✉️ support@jobfinder.vn</p>
@@ -43,24 +44,17 @@ function Footer() {
 
           {/* SOCIAL */}
           <div className="flex gap-3 mt-6">
-            <SocialIcon
-              href="https://facebook.com"
-              hover="hover:bg-blue-600"
-            >
+            <SocialIcon href="https://facebook.com">
               <FaFacebookF />
             </SocialIcon>
-
-            <SocialIcon
-              href="https://linkedin.com"
-              hover="hover:bg-blue-700"
-            >
+            <SocialIcon href="https://linkedin.com">
               <FaLinkedinIn />
             </SocialIcon>
           </div>
         </div>
 
         {/* ===== CANDIDATE ===== */}
-        <FooterGroup title="Dành cho ứng viên">
+        <FooterGroup title="Ứng viên">
           <FooterLink to="/jobs" icon={<FaBriefcase />}>
             Tìm việc làm
           </FooterLink>
@@ -71,7 +65,7 @@ function Footer() {
             Việc làm thực tập
           </FooterLink>
           <FooterLink to="/profile" icon={<FaUser />}>
-            Hồ sơ của tôi
+            Hồ sơ cá nhân
           </FooterLink>
         </FooterGroup>
 
@@ -92,7 +86,7 @@ function Footer() {
         </FooterGroup>
 
         {/* ===== SUPPORT ===== */}
-        <FooterGroup title="Hỗ trợ & Pháp lý">
+        <FooterGroup title="Hỗ trợ & pháp lý">
           <FooterLink to="/support" icon={<FaHeadset />}>
             Trung tâm hỗ trợ
           </FooterLink>
@@ -111,13 +105,13 @@ function Footer() {
       {/* =====================
           BOTTOM BAR
       ===================== */}
-      <div className="border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+      <div className="border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-sm">
           <span>
-            © 2025 JobFinder Việt Nam. All rights reserved.
+            © 2026 JobFinder Việt Nam. All rights reserved.
           </span>
 
-          <span className="text-xs">
+          <span className="text-xs text-gray-500">
             Made with ❤️ for graduation thesis
           </span>
         </div>
@@ -136,7 +130,7 @@ function FooterGroup({ title, children }) {
       <h4 className="text-white text-lg font-semibold mb-4">
         {title}
       </h4>
-      <ul className="space-y-2 text-sm">{children}</ul>
+      <ul className="space-y-3 text-sm">{children}</ul>
     </div>
   );
 }
@@ -162,20 +156,21 @@ function FooterLink({ to, icon, children }) {
   );
 }
 
-function SocialIcon({ href, hover, children }) {
+function SocialIcon({ href, children }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`
+      className="
         w-10 h-10
         flex items-center justify-center
         rounded-full
-        bg-gray-800 text-white
+        bg-gray-800
+        text-white
+        hover:bg-emerald-600
         transition
-        ${hover}
-      `}
+      "
     >
       {children}
     </a>

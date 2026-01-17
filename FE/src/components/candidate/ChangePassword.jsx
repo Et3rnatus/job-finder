@@ -1,22 +1,39 @@
 import { useState } from "react";
 import { changePassword } from "../../services/authService";
-import { Lock, Save, ArrowLeft } from "lucide-react";
+import {
+  Lock,
+  Save,
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function ChangePassword({ onCancel }) {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] =
+    useState("");
+  const [newPassword, setNewPassword] =
+    useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  /* =====================
+     SUBMIT
+  ===================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (
+      !currentPassword ||
+      !newPassword ||
+      !confirmPassword
+    ) {
       setError("Vui lòng nhập đầy đủ thông tin");
       return;
     }
@@ -49,7 +66,7 @@ export default function ChangePassword({ onCancel }) {
       setNewPassword("");
       setConfirmPassword("");
 
-      // 👉 auto quay về trang hồ sơ sau 1.2s (tuỳ thích)
+      // 👉 Tự động quay lại trang trước sau 1.2s
       setTimeout(() => {
         onCancel && onCancel();
       }, 1200);
@@ -65,10 +82,14 @@ export default function ChangePassword({ onCancel }) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm max-w-xl">
-      <div className="flex items-center gap-3 mb-4">
+      {/* =====================
+          HEADER
+      ===================== */}
+      <div className="flex items-center gap-3 mb-5">
         <button
           onClick={onCancel}
-          className="p-2 rounded-lg hover:bg-gray-100 transition"
+          disabled={loading}
+          className="p-2 rounded-lg hover:bg-gray-100 transition disabled:opacity-50"
         >
           <ArrowLeft size={18} />
         </button>
@@ -79,6 +100,9 @@ export default function ChangePassword({ onCancel }) {
         </h2>
       </div>
 
+      {/* =====================
+          FORM
+      ===================== */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Current password */}
         <div>
@@ -88,9 +112,12 @@ export default function ChangePassword({ onCancel }) {
           <input
             type="password"
             value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            onChange={(e) =>
+              setCurrentPassword(e.target.value)
+            }
+            disabled={loading}
             placeholder="Nhập mật khẩu hiện tại"
+            className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
           />
         </div>
 
@@ -102,9 +129,12 @@ export default function ChangePassword({ onCancel }) {
           <input
             type="password"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            onChange={(e) =>
+              setNewPassword(e.target.value)
+            }
+            disabled={loading}
             placeholder="Nhập mật khẩu mới"
+            className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
           />
         </div>
 
@@ -116,38 +146,59 @@ export default function ChangePassword({ onCancel }) {
           <input
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            onChange={(e) =>
+              setConfirmPassword(e.target.value)
+            }
+            disabled={loading}
             placeholder="Nhập lại mật khẩu mới"
+            className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
           />
         </div>
 
+        {/* ERROR */}
         {error && (
-          <p className="text-sm text-red-600">
+          <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+            <AlertTriangle size={16} className="mt-0.5" />
             {error}
-          </p>
+          </div>
         )}
 
+        {/* SUCCESS */}
         {success && (
-          <p className="text-sm text-green-600">
+          <div className="flex items-start gap-2 text-sm text-green-600 bg-green-50 border border-green-200 rounded-xl p-3">
+            <CheckCircle2 size={16} className="mt-0.5" />
             {success}
-          </p>
+          </div>
         )}
 
+        {/* ACTIONS */}
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
             disabled={loading}
             className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
           >
-            <Save size={16} />
-            {loading ? "Đang lưu..." : "Đổi mật khẩu"}
+            {loading ? (
+              <>
+                <Loader2
+                  size={16}
+                  className="animate-spin"
+                />
+                Đang lưu...
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                Đổi mật khẩu
+              </>
+            )}
           </button>
 
           <button
             type="button"
             onClick={onCancel}
-            className="text-sm font-medium text-gray-600 hover:underline"
+            disabled={loading}
+            className="text-sm font-medium text-gray-600 hover:underline disabled:opacity-50"
           >
             Hủy
           </button>

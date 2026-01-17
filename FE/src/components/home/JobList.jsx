@@ -15,8 +15,8 @@ const ITEMS_PER_PAGE = 6;
 export default function JobList() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
+
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function JobList() {
             location: job.location || "Chưa cập nhật",
             company: job.company_name || "Chưa cập nhật",
 
-            // ✅ NEW: LOGO COMPANY
+            // LOGO COMPANY
             companyLogo: job.company_logo || null,
 
             skills: job.job_skill || "",
@@ -95,15 +95,15 @@ export default function JobList() {
       <div className="p-8">
         {/* LOADING */}
         {loading && (
-          <div className="py-28 flex flex-col items-center gap-4 text-gray-500">
-            <Loader2 className="animate-spin" size={28} />
+          <div className="py-32 flex flex-col items-center gap-4 text-gray-500">
+            <Loader2 className="animate-spin text-emerald-500" size={30} />
             <span className="text-sm">
               Đang tải dữ liệu công việc...
             </span>
           </div>
         )}
 
-        {/* LIST */}
+        {/* JOB LIST */}
         {!loading && paginatedJobs.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -114,7 +114,7 @@ export default function JobList() {
 
             {/* PAGINATION */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-6 mt-14">
+              <div className="flex items-center justify-center gap-6 mt-16">
                 <button
                   onClick={() =>
                     setCurrentPage((p) => Math.max(1, p - 1))
@@ -149,9 +149,9 @@ export default function JobList() {
           </>
         )}
 
-        {/* EMPTY */}
+        {/* EMPTY STATE */}
         {!loading && jobs.length === 0 && (
-          <div className="py-28 text-center text-gray-500">
+          <div className="py-32 text-center text-gray-500">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
               <SearchX size={36} />
             </div>

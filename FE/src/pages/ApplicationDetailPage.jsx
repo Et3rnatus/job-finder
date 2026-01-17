@@ -13,12 +13,14 @@ import {
   CheckCircle2,
   XCircle,
   Users,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 const statusMap = {
   pending: {
     label: "Chờ duyệt",
-    className: "bg-yellow-100 text-yellow-700",
+    className: "bg-amber-100 text-amber-700",
   },
   interview: {
     label: "Đang phỏng vấn",
@@ -26,7 +28,7 @@ const statusMap = {
   },
   approved: {
     label: "Đã duyệt",
-    className: "bg-green-100 text-green-700",
+    className: "bg-emerald-100 text-emerald-700",
   },
   rejected: {
     label: "Đã từ chối",
@@ -41,6 +43,7 @@ export default function ApplicationDetailPage() {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -55,9 +58,13 @@ export default function ApplicationDetailPage() {
     else navigate("/employer/jobs");
   };
 
+  /* =====================
+     LOAD DATA
+  ===================== */
   useEffect(() => {
     if (!applicationId) return;
 
+    setLoading(true);
     getApplicationDetail(applicationId)
       .then(setData)
       .catch(() => {
@@ -67,23 +74,37 @@ export default function ApplicationDetailPage() {
       .finally(() => setLoading(false));
   }, [applicationId]);
 
-  if (loading) {
-    return (
-      <div className="p-20 text-center text-gray-500">
-        Đang tải hồ sơ ứng viên...
-      </div>
-    );
-  }
-
+  /* =====================
+     PERMISSION
+  ===================== */
   if (role !== "employer") {
     return (
-      <div className="p-10 text-center text-red-600">
+      <div className="bg-white border border-red-200 rounded-3xl p-12 text-center text-red-600">
         Bạn không có quyền truy cập
       </div>
     );
   }
 
-  if (!data) return null;
+  /* =====================
+     LOADING
+  ===================== */
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-3xl p-20 flex flex-col items-center gap-4 text-gray-500">
+        <Loader2 className="animate-spin" size={28} />
+        Đang tải hồ sơ ứng viên...
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="bg-white border border-red-200 rounded-3xl p-12 flex flex-col items-center gap-3 text-red-600">
+        <AlertTriangle size={28} />
+        Không tìm thấy hồ sơ ứng viên
+      </div>
+    );
+  }
 
   const {
     status,
@@ -102,44 +123,66 @@ export default function ApplicationDetailPage() {
   const education = snapshot?.education || [];
   const experience = snapshot?.experience || [];
 
+  /* =====================
+     ACTIONS
+  ===================== */
   const approve = async () => {
-    await updateApplicationStatus(applicationId, "approved");
-    alert("Ứng viên đã được duyệt");
-    handleBack();
+    if (processing) return;
+    try {
+      setProcessing(true);
+      await updateApplicationStatus(applicationId, "approved");
+      alert("Ứng viên đã được duyệt");
+      handleBack();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const reject = async () => {
-    if (!rejectReason.trim()) return;
-    await updateApplicationStatus(
-      applicationId,
-      "rejected",
-      rejectReason
-    );
-    alert("Đã từ chối ứng viên");
-    handleBack();
+    if (!rejectReason.trim() || processing) return;
+    try {
+      setProcessing(true);
+      await updateApplicationStatus(
+        applicationId,
+        "rejected",
+        rejectReason
+      );
+      alert("Đã từ chối ứng viên");
+      handleBack();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const invite = async () => {
-    if (!interviewTime || !interviewLocation) return;
-    await inviteToInterview(applicationId, {
-      interview_time: interviewTime,
-      interview_location: interviewLocation,
-      interview_note: interviewNote,
-    });
-    alert("Đã gửi lời mời phỏng vấn");
-    handleBack();
+    if (!interviewTime || !interviewLocation || processing) return;
+    try {
+      setProcessing(true);
+      await inviteToInterview(applicationId, {
+        interview_time: interviewTime,
+        interview_location: interviewLocation,
+        interview_note: interviewNote,
+      });
+      alert("Đã gửi lời mời phỏng vấn");
+      handleBack();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
+      {/* =====================
+          HEADER
+      ===================== */}
+      <div className="flex justify-between items-start gap-6">
         <div>
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-gray-900">
             {basic.full_name || "Ứng viên"}
           </h1>
-          <p className="text-sm text-gray-500">
-            Ứng tuyển vị trí: {job_title}
+          <p className="text-sm text-gray-500 mt-1">
+            Ứng tuyển vị trí:{" "}
+            <span className="font-medium">{job_title}</span>
           </p>
           <p className="text-sm text-gray-500">
             Nộp ngày{" "}
@@ -163,7 +206,9 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* INTERVIEW INFO */}
+      {/* =====================
+          INTERVIEW INFO
+      ===================== */}
       {status === "interview" && (
         <Section title="Thông tin phỏng vấn">
           <ul className="text-sm space-y-2">
@@ -175,8 +220,12 @@ export default function ApplicationDetailPage() {
               <MapPin size={14} />
               {interview_location}
             </li>
-            {interview_note && <li>{interview_note}</li>}
-            <li className="text-xs text-gray-500">
+            {interview_note && (
+              <li className="text-sm text-gray-600">
+                {interview_note}
+              </li>
+            )}
+            <li className="text-xs text-gray-400">
               Gửi lúc{" "}
               {new Date(interview_sent_at).toLocaleString("vi-VN")}
             </li>
@@ -185,7 +234,9 @@ export default function ApplicationDetailPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT */}
+        {/* =====================
+            LEFT
+        ===================== */}
         <div className="lg:col-span-2 space-y-6">
           <Section title="Thư xin việc">
             {cover_letter || <Empty />}
@@ -244,23 +295,31 @@ export default function ApplicationDetailPage() {
           </Section>
         </div>
 
-        {/* RIGHT */}
+        {/* =====================
+            RIGHT
+        ===================== */}
         <div className="space-y-6">
           <Section title="Liên hệ">
             <p className="text-sm flex items-center gap-2">
-              <Mail size={14} /> {basic.email}
+              <Mail size={14} /> {basic.email || "—"}
             </p>
             <p className="text-sm flex items-center gap-2">
-              <Phone size={14} /> {basic.contact_number}
+              <Phone size={14} /> {basic.contact_number || "—"}
             </p>
           </Section>
 
           {status === "pending" && (
             <ActionBox>
-              <Primary onClick={() => setShowInterviewModal(true)}>
+              <Primary
+                disabled={processing}
+                onClick={() => setShowInterviewModal(true)}
+              >
                 Mời phỏng vấn
               </Primary>
-              <Danger onClick={() => setShowRejectModal(true)}>
+              <Danger
+                disabled={processing}
+                onClick={() => setShowRejectModal(true)}
+              >
                 Từ chối
               </Danger>
             </ActionBox>
@@ -268,11 +327,14 @@ export default function ApplicationDetailPage() {
 
           {status === "interview" && (
             <ActionBox>
-              <Success onClick={approve}>
+              <Success disabled={processing} onClick={approve}>
                 <CheckCircle2 size={14} />
                 Duyệt hồ sơ
               </Success>
-              <Danger onClick={() => setShowRejectModal(true)}>
+              <Danger
+                disabled={processing}
+                onClick={() => setShowRejectModal(true)}
+              >
                 <XCircle size={14} />
                 Từ chối
               </Danger>
@@ -281,9 +343,14 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* MODALS */}
+      {/* =====================
+          MODALS
+      ===================== */}
       {showInterviewModal && (
-        <Modal title="Mời phỏng vấn" onClose={() => setShowInterviewModal(false)}>
+        <Modal
+          title="Mời phỏng vấn"
+          onClose={() => setShowInterviewModal(false)}
+        >
           <input
             type="datetime-local"
             className="input"
@@ -304,23 +371,35 @@ export default function ApplicationDetailPage() {
             onChange={(e) => setInterviewNote(e.target.value)}
           />
           <ModalActions>
-            <button onClick={() => setShowInterviewModal(false)}>Hủy</button>
-            <Primary onClick={invite}>Gửi</Primary>
+            <button onClick={() => setShowInterviewModal(false)}>
+              Hủy
+            </button>
+            <Primary disabled={processing} onClick={invite}>
+              Gửi
+            </Primary>
           </ModalActions>
         </Modal>
       )}
 
       {showRejectModal && (
-        <Modal title="Lý do từ chối" onClose={() => setShowRejectModal(false)}>
+        <Modal
+          title="Lý do từ chối"
+          onClose={() => setShowRejectModal(false)}
+        >
           <textarea
             rows={4}
             className="input"
+            placeholder="Nhập lý do từ chối..."
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
           />
           <ModalActions>
-            <button onClick={() => setShowRejectModal(false)}>Hủy</button>
-            <Danger onClick={reject}>Xác nhận</Danger>
+            <button onClick={() => setShowRejectModal(false)}>
+              Hủy
+            </button>
+            <Danger disabled={processing} onClick={reject}>
+              Xác nhận
+            </Danger>
           </ModalActions>
         </Modal>
       )}
@@ -328,9 +407,12 @@ export default function ApplicationDetailPage() {
   );
 }
 
-/* UI */
+/* =====================
+   UI COMPONENTS
+===================== */
+
 const Section = ({ title, children }) => (
-  <div className="bg-white border rounded-2xl p-6">
+  <div className="bg-white border border-gray-200 rounded-2xl p-6">
     <h3 className="font-semibold mb-4 flex items-center gap-2">
       <Users size={16} /> {title}
     </h3>
@@ -339,7 +421,7 @@ const Section = ({ title, children }) => (
 );
 
 const Timeline = ({ title, subtitle, time, desc }) => (
-  <div className="border-l-2 pl-4 mb-4">
+  <div className="border-l-2 border-emerald-200 pl-4 mb-4">
     <p className="font-medium">{title}</p>
     <p className="text-sm text-gray-600">{subtitle}</p>
     <p className="text-xs text-gray-500">{time}</p>
@@ -348,41 +430,57 @@ const Timeline = ({ title, subtitle, time, desc }) => (
 );
 
 const ActionBox = ({ children }) => (
-  <div className="bg-white border rounded-2xl p-4 space-y-3">
+  <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
     {children}
   </div>
 );
 
-const Primary = ({ children, onClick }) => (
-  <button onClick={onClick} className="btn-primary">
+const Primary = ({ children, onClick, disabled }) => (
+  <button
+    disabled={disabled}
+    onClick={onClick}
+    className="btn-primary w-full disabled:opacity-50"
+  >
     {children}
   </button>
 );
 
-const Success = ({ children, onClick }) => (
-  <button onClick={onClick} className="btn-success">
+const Success = ({ children, onClick, disabled }) => (
+  <button
+    disabled={disabled}
+    onClick={onClick}
+    className="btn-success w-full disabled:opacity-50"
+  >
     {children}
   </button>
 );
 
-const Danger = ({ children, onClick }) => (
-  <button onClick={onClick} className="btn-danger">
+const Danger = ({ children, onClick, disabled }) => (
+  <button
+    disabled={disabled}
+    onClick={onClick}
+    className="btn-danger w-full disabled:opacity-50"
+  >
     {children}
   </button>
 );
 
 const Empty = () => (
-  <p className="text-sm text-gray-500 italic">Không có dữ liệu</p>
+  <p className="text-sm text-gray-500 italic">
+    Không có dữ liệu
+  </p>
 );
 
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
     <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        {title}
+      </h3>
       {children}
       <button
         onClick={onClose}
-        className="absolute top-3 right-4 text-gray-400"
+        className="absolute top-3 right-4 text-gray-400 hover:text-gray-600"
       >
         ✕
       </button>
@@ -391,5 +489,7 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const ModalActions = ({ children }) => (
-  <div className="flex justify-end gap-3 mt-4">{children}</div>
+  <div className="flex justify-end gap-3 mt-4">
+    {children}
+  </div>
 );

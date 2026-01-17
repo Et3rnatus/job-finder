@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Camera,
+  Loader2,
 } from "lucide-react";
 import candidateService from "../../services/candidateService";
 import { toast } from "react-hot-toast";
@@ -17,26 +18,35 @@ export default function UserAvatar({
   onAvatarUpdated,
 }) {
   const fileRef = useRef(null);
+
+  // avatar hiển thị (có thể là preview hoặc url server)
   const [avatar, setAvatar] = useState(candidateImage);
   const [loading, setLoading] = useState(false);
 
+  /* =====================
+     SYNC AVATAR
+  ===================== */
   useEffect(() => {
     setAvatar(candidateImage);
   }, [candidateImage]);
 
+  /* =====================
+     SELECT FILE
+  ===================== */
   const handleSelectFile = () => {
     if (loading) return;
     fileRef.current?.click();
   };
 
+  /* =====================
+     UPLOAD AVATAR
+  ===================== */
   const handleChangeAvatar = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     e.target.value = null; // reset input
     if (!file) return;
 
-    /* =====================
-       VALIDATE FRONTEND
-    ===================== */
+    /* ===== FRONTEND VALIDATE ===== */
     if (!file.type.startsWith("image/")) {
       toast.error("Chỉ được chọn file ảnh");
       return;
@@ -47,20 +57,28 @@ export default function UserAvatar({
       return;
     }
 
-    // preview ngay
+    // preview ngay cho UX
     const previewUrl = URL.createObjectURL(file);
     setAvatar(previewUrl);
 
     try {
       setLoading(true);
-      const res = await candidateService.updateAvatar(file);
+
+      const res = await candidateService.updateAvatar(
+        file
+      );
+
+      // server trả về đường dẫn ảnh mới
       setAvatar(res.candidate_image);
       toast.success("Cập nhật ảnh đại diện thành công");
+
       onAvatarUpdated?.();
     } catch (err) {
-      console.error(err);
+      console.error("UPLOAD AVATAR ERROR:", err);
       toast.error("Upload ảnh thất bại");
-      setAvatar(candidateImage); // rollback
+
+      // rollback về ảnh cũ
+      setAvatar(candidateImage);
     } finally {
       setLoading(false);
       URL.revokeObjectURL(previewUrl);
@@ -69,9 +87,11 @@ export default function UserAvatar({
 
   return (
     <div className="relative bg-white border border-gray-200 rounded-3xl p-6 text-center shadow-sm hover:shadow-lg transition">
-      {/* AVATAR */}
+      {/* =====================
+          AVATAR
+      ===================== */}
       <div className="relative w-fit mx-auto">
-        {/* gradient ring */}
+        {/* SOFT GLOW */}
         <div
           className={`absolute -inset-1 rounded-full blur-xl opacity-50 ${
             isProfileCompleted
@@ -84,7 +104,9 @@ export default function UserAvatar({
           <img
             src={
               avatar
-                ? `${API_URL}${avatar}`
+                ? avatar.startsWith("blob:")
+                  ? avatar
+                  : `${API_URL}${avatar}`
                 : "/default-avatar.png"
             }
             alt="avatar"
@@ -95,7 +117,7 @@ export default function UserAvatar({
             }`}
           />
 
-          {/* status dot */}
+          {/* STATUS DOT */}
           <span
             className={`absolute bottom-2 right-2 w-4 h-4 rounded-full border-2 border-white ${
               isProfileCompleted
@@ -104,7 +126,7 @@ export default function UserAvatar({
             }`}
           />
 
-          {/* overlay */}
+          {/* OVERLAY */}
           <div
             onClick={handleSelectFile}
             className={`absolute inset-0 rounded-full flex items-center justify-center transition ${
@@ -114,9 +136,7 @@ export default function UserAvatar({
             }`}
           >
             {loading ? (
-              <span className="text-white text-xs">
-                Đang tải...
-              </span>
+              <Loader2 className="w-5 h-5 text-white animate-spin" />
             ) : (
               <Camera className="w-6 h-6 text-white" />
             )}
@@ -124,7 +144,7 @@ export default function UserAvatar({
         </div>
       </div>
 
-      {/* hidden input */}
+      {/* FILE INPUT */}
       <input
         ref={fileRef}
         type="file"
@@ -133,12 +153,16 @@ export default function UserAvatar({
         onChange={handleChangeAvatar}
       />
 
-      {/* NAME */}
+      {/* =====================
+          NAME
+      ===================== */}
       <h3 className="mt-5 text-lg font-semibold text-gray-900 truncate">
         {fullName || "Ứng viên"}
       </h3>
 
-      {/* STATUS */}
+      {/* =====================
+          STATUS
+      ===================== */}
       <div className="mt-2 flex justify-center">
         <span
           className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border ${
@@ -158,9 +182,18 @@ export default function UserAvatar({
         </span>
       </div>
 
-      {/* CTA */}
+      {/* =====================
+          CTA
+      ===================== */}
       {!isProfileCompleted && (
-        <button className="mt-4 px-5 py-2 text-sm font-medium rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white hover:opacity-90 transition">
+        <button
+          onClick={() =>
+            document
+              .getElementById("profile-form")
+              ?.scrollIntoView({ behavior: "smooth" })
+          }
+          className="mt-4 px-5 py-2 text-sm font-medium rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white hover:opacity-90 transition"
+        >
           Hoàn thiện hồ sơ
         </button>
       )}

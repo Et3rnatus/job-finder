@@ -1,4 +1,4 @@
-import { Heart, CheckCircle2, Loader2 } from "lucide-react";
+import { Heart, CheckCircle2, Loader2, Send } from "lucide-react";
 
 function ApplyButton({
   applied = false,
@@ -25,10 +25,10 @@ function ApplyButton({
           transition-all duration-200
           ${
             applied
-              ? "bg-green-50 text-green-700 cursor-default border border-green-200"
+              ? "bg-emerald-50 text-emerald-700 cursor-default border border-emerald-200"
               : disabled
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-green-700 active:scale-[0.97]"
+              : "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-green-700 active:scale-[0.97]"
           }
         `}
       >
@@ -40,7 +40,7 @@ function ApplyButton({
               absolute inset-0
               rounded-2xl
               opacity-0 group-hover:opacity-100
-              bg-gradient-to-r from-white/20 via-white/5 to-transparent
+              bg-gradient-to-r from-white/25 via-white/10 to-transparent
               transition
             "
           />
@@ -52,7 +52,10 @@ function ApplyButton({
             Đã ứng tuyển
           </>
         ) : (
-          buttonText
+          <>
+            <Send size={18} />
+            {buttonText}
+          </>
         )}
       </button>
 
@@ -70,22 +73,22 @@ function ApplyButton({
           transition-all duration-200
           ${
             saved
-              ? "bg-gradient-to-br from-green-50 to-green-100 text-green-600 shadow-inner"
-              : "bg-white border border-gray-300 text-gray-500 hover:border-green-500 hover:text-green-600"
+              ? "bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 shadow-inner"
+              : "bg-white border border-gray-300 text-gray-500 hover:border-emerald-500 hover:text-emerald-600"
           }
           ${saving ? "cursor-not-allowed opacity-60" : "active:scale-95"}
         `}
       >
-        {/* PULSE WHEN SAVED */}
+        {/* PULSE EFFECT WHEN SAVED */}
         {saved && (
-          <span className="absolute inset-0 rounded-2xl bg-green-400/10 animate-pulse" />
+          <span className="absolute inset-0 rounded-2xl bg-emerald-400/10 animate-pulse" />
         )}
 
         {saving ? (
           <Loader2 className="animate-spin" size={20} />
         ) : (
           <Heart
-            className="w-6 h-6 relative z-10"
+            className="w-6 h-6 relative z-10 transition"
             fill={saved ? "currentColor" : "none"}
           />
         )}

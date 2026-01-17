@@ -6,7 +6,13 @@ import {
   deleteReadNotifications,
 } from "../../services/notificationService";
 import { useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  Trash2,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 
 const POLL_INTERVAL = 20000;
 
@@ -46,6 +52,7 @@ function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [processing, setProcessing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const intervalRef = useRef(null);
@@ -57,14 +64,18 @@ function NotificationBell() {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
   const readCount = notifications.filter((n) => n.is_read).length;
 
-  const groupedNotifications = groupNotificationsByDate(notifications);
+  const groupedNotifications =
+    groupNotificationsByDate(notifications);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (silent = false) => {
     try {
+      if (!silent) setLoading(true);
       const data = await getMyNotifications();
       setNotifications(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("GET NOTIFICATIONS ERROR:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,7 +86,10 @@ function NotificationBell() {
     if (!token) return;
 
     fetchNotifications();
-    intervalRef.current = setInterval(fetchNotifications, POLL_INTERVAL);
+    intervalRef.current = setInterval(
+      () => fetchNotifications(true),
+      POLL_INTERVAL
+    );
 
     return () => clearInterval(intervalRef.current);
   }, [token]);
@@ -93,9 +107,13 @@ function NotificationBell() {
       }
     };
 
-    if (open) document.addEventListener("mousedown", handleClickOutside);
+    if (open)
+      document.addEventListener("mousedown", handleClickOutside);
     return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
   }, [open]);
 
   /* =====================
@@ -113,8 +131,13 @@ function NotificationBell() {
       }
 
       if (role === "employer") {
-        if (noti.type === "NEW_APPLICATION" && noti.related_id) {
-          navigate(`/employer/jobs/${noti.related_id}/applications`);
+        if (
+          noti.type === "NEW_APPLICATION" &&
+          noti.related_id
+        ) {
+          navigate(
+            `/employer/jobs/${noti.related_id}/applications`
+          );
         } else {
           navigate("/account/employer");
         }
@@ -122,7 +145,9 @@ function NotificationBell() {
 
       if (role === "candidate") {
         if (
-          ["APPLICATION_APPROVED", "APPLICATION_REJECTED"].includes(noti.type)
+          ["APPLICATION_APPROVED", "APPLICATION_REJECTED"].includes(
+            noti.type
+          )
         ) {
           navigate("/account/candidate/applications");
         } else if (noti.related_id) {
@@ -159,12 +184,15 @@ function NotificationBell() {
   ===================== */
   const handleDeleteRead = async () => {
     if (readCount === 0) return;
-    if (!window.confirm("Xóa tất cả thông báo đã đọc?")) return;
+    if (!window.confirm("Xóa tất cả thông báo đã đọc?"))
+      return;
 
     try {
       setProcessing(true);
       await deleteReadNotifications();
-      setNotifications((prev) => prev.filter((n) => !n.is_read));
+      setNotifications((prev) =>
+        prev.filter((n) => !n.is_read)
+      );
     } finally {
       setProcessing(false);
     }
@@ -212,16 +240,19 @@ function NotificationBell() {
           className="
             absolute right-0 mt-3 w-[420px]
             bg-white border border-gray-200
-            rounded-2xl shadow-xl
+            rounded-3xl shadow-xl
             z-50 overflow-hidden
             animate-fade-in
           "
         >
           {/* HEADER */}
           <div className="px-5 py-4 border-b flex items-center justify-between">
-            <h4 className="font-semibold text-gray-900">
-              Thông báo
-            </h4>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <h4 className="font-semibold text-gray-900">
+                Thông báo
+              </h4>
+            </div>
 
             <div className="flex gap-3 text-xs">
               <button
@@ -229,7 +260,7 @@ function NotificationBell() {
                 disabled={unreadCount === 0 || processing}
                 className="
                   flex items-center gap-1
-                  text-green-600 hover:text-green-700
+                  text-emerald-600 hover:text-emerald-700
                   disabled:opacity-40
                 "
               >
@@ -254,59 +285,78 @@ function NotificationBell() {
 
           {/* CONTENT */}
           <div className="max-h-[420px] overflow-y-auto">
-            {Object.keys(groupedNotifications).length === 0 && (
-              <div className="py-14 text-center text-sm text-gray-500">
-                Không có thông báo
+            {loading && (
+              <div className="py-16 flex flex-col items-center gap-3 text-gray-500">
+                <Loader2
+                  className="animate-spin text-emerald-600"
+                  size={22}
+                />
+                <span className="text-sm">
+                  Đang tải thông báo...
+                </span>
               </div>
             )}
 
-            {Object.entries(groupedNotifications).map(
-              ([dateLabel, items]) => (
-                <div key={dateLabel}>
-                  {/* DATE */}
-                  <div className="px-5 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
-                    {dateLabel}
-                  </div>
-
-                  {/* ITEMS */}
-                  {items.map((noti) => (
-                    <div
-                      key={noti.id}
-                      onClick={() => handleClickNotification(noti)}
-                      className={`
-                        px-5 py-4 flex gap-4 cursor-pointer
-                        transition
-                        ${
-                          noti.is_read
-                            ? "hover:bg-gray-50"
-                            : "bg-green-50/50 hover:bg-green-50"
-                        }
-                      `}
-                    >
-                      {!noti.is_read && (
-                        <span className="w-2 h-2 mt-2 bg-green-600 rounded-full" />
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {noti.title}
-                        </p>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {noti.message}
-                        </p>
-                      </div>
-
-                      <span className="text-xs text-gray-400 whitespace-nowrap">
-                        {new Date(noti.created_at).toLocaleTimeString(
-                          "vi-VN",
-                          { hour: "2-digit", minute: "2-digit" }
-                        )}
-                      </span>
-                    </div>
-                  ))}
+            {!loading &&
+              Object.keys(groupedNotifications).length ===
+                0 && (
+                <div className="py-16 text-center text-sm text-gray-500">
+                  Không có thông báo
                 </div>
-              )
-            )}
+              )}
+
+            {!loading &&
+              Object.entries(groupedNotifications).map(
+                ([dateLabel, items]) => (
+                  <div key={dateLabel}>
+                    {/* DATE */}
+                    <div className="px-5 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
+                      {dateLabel}
+                    </div>
+
+                    {/* ITEMS */}
+                    {items.map((noti) => (
+                      <div
+                        key={noti.id}
+                        onClick={() =>
+                          handleClickNotification(noti)
+                        }
+                        className={`
+                          px-5 py-4 flex gap-4 cursor-pointer
+                          transition
+                          ${
+                            noti.is_read
+                              ? "hover:bg-gray-50"
+                              : "bg-emerald-50/60 hover:bg-emerald-50"
+                          }
+                        `}
+                      >
+                        {!noti.is_read && (
+                          <span className="w-2 h-2 mt-2 bg-emerald-600 rounded-full" />
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {noti.title}
+                          </p>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {noti.message}
+                          </p>
+                        </div>
+
+                        <span className="text-xs text-gray-400 whitespace-nowrap">
+                          {new Date(
+                            noti.created_at
+                          ).toLocaleTimeString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
           </div>
         </div>
       )}

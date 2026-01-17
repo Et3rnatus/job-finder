@@ -57,10 +57,12 @@ export default function AppliedJobList() {
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
+  const [processing, setProcessing] =
+    useState(false);
 
   const [keyword, setKeyword] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] =
+    useState("");
 
   const [showApplyForm, setShowApplyForm] =
     useState(false);
@@ -69,6 +71,9 @@ export default function AppliedJobList() {
 
   const [confirm, setConfirm] = useState(null);
 
+  /* =====================
+     FETCH DATA
+  ===================== */
   useEffect(() => {
     fetchAppliedJobs();
     // eslint-disable-next-line
@@ -90,6 +95,9 @@ export default function AppliedJobList() {
     }
   };
 
+  /* =====================
+     HANDLERS
+  ===================== */
   const handleSearch = () => {
     fetchAppliedJobs({
       keyword,
@@ -143,10 +151,13 @@ export default function AppliedJobList() {
     setShowApplyForm(true);
   };
 
+  /* =====================
+     LOADING
+  ===================== */
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Loader2 className="animate-spin" size={16} />
+        <Loader2 className="animate-spin w-4 h-4" />
         Đang tải dữ liệu...
       </div>
     );
@@ -155,7 +166,9 @@ export default function AppliedJobList() {
   return (
     <>
       <div className="mt-8 bg-white border border-gray-200 rounded-3xl shadow-sm">
-        {/* HEADER */}
+        {/* =====================
+            HEADER
+        ===================== */}
         <div className="flex flex-wrap justify-between gap-4 p-6 border-b">
           <div>
             <button
@@ -182,7 +195,9 @@ export default function AppliedJobList() {
           </button>
         </div>
 
-        {/* FILTER */}
+        {/* =====================
+            FILTER
+        ===================== */}
         <div className="flex flex-wrap gap-3 p-6 border-b bg-gray-50">
           <div className="relative">
             <Search
@@ -223,7 +238,9 @@ export default function AppliedJobList() {
           </button>
         </div>
 
-        {/* LIST */}
+        {/* =====================
+            LIST
+        ===================== */}
         <div className="p-6 space-y-4">
           {!jobs.length && (
             <div className="py-20 text-center text-gray-500">
@@ -244,7 +261,7 @@ export default function AppliedJobList() {
             return (
               <div
                 key={job.id}
-                className="rounded-2xl border border-gray-200 p-5 hover:shadow-md transition bg-white"
+                className="rounded-2xl border border-gray-200 p-5 bg-white hover:shadow-md transition"
               >
                 <div className="flex flex-wrap justify-between gap-4">
                   <div>
@@ -325,6 +342,9 @@ export default function AppliedJobList() {
         </div>
       </div>
 
+      {/* =====================
+          APPLY FORM MODAL
+      ===================== */}
       {showApplyForm && selectedJob && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-xl">
@@ -346,6 +366,9 @@ export default function AppliedJobList() {
         </div>
       )}
 
+      {/* =====================
+          CONFIRM MODAL
+      ===================== */}
       {confirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-xl">

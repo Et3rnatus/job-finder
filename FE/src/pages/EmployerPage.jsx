@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import UserAvatar from "../components/employer/UserAvatar";
 import EmployerSideBarTool from "../components/employer/EmployerSideBarTool";
@@ -15,8 +15,11 @@ import employerService from "../services/employerService";
 function EmployerPage() {
   const location = useLocation();
 
-  const [mode, setMode] = useState("profile");
-  const [profileMode, setProfileMode] = useState("view");
+  /* =====================
+     STATE
+  ===================== */
+  const [mode, setMode] = useState("profile"); // profile | jobs | create | payment
+  const [profileMode, setProfileMode] = useState("view"); // view | edit
 
   const [profile, setProfile] = useState(null);
   const [profileCompleted, setProfileCompleted] = useState(true);
@@ -71,6 +74,9 @@ function EmployerPage() {
     setMode(newMode);
   };
 
+  /* =====================
+     LOADING
+  ===================== */
   if (loading || !profile) {
     return (
       <div className="py-20 text-center text-gray-500">
@@ -82,7 +88,9 @@ function EmployerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
-        {/* HEADER */}
+        {/* =====================
+            HEADER
+        ===================== */}
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold text-gray-900">
             Bảng điều khiển nhà tuyển dụng
@@ -90,11 +98,32 @@ function EmployerPage() {
           <p className="text-sm text-gray-500">
             Quản lý doanh nghiệp, tin tuyển dụng và ứng viên
           </p>
+
+          {/* PROFILE STATUS */}
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            {profileCompleted ? (
+              <>
+                <CheckCircle2 size={16} className="text-green-600" />
+                <span className="text-green-700 font-medium">
+                  Hồ sơ công ty đã hoàn thiện
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle size={16} className="text-yellow-600" />
+                <span className="text-yellow-700 font-medium">
+                  Hồ sơ công ty chưa hoàn thiện
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* LAYOUT */}
+        {/* =====================
+            LAYOUT
+        ===================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* SIDEBAR */}
+          {/* ===== SIDEBAR ===== */}
           <aside className="lg:col-span-3 space-y-6">
             <UserAvatar
               name={profile.company_name}
@@ -103,7 +132,7 @@ function EmployerPage() {
               defaultImage="/default-company.png"
               onUpload={async (file) => {
                 const res = await employerService.updateLogo(file);
-                await loadEmployerData(); // reload profile
+                await loadEmployerData();
                 return res.company_logo;
               }}
             />
@@ -115,9 +144,11 @@ function EmployerPage() {
             />
           </aside>
 
-          {/* CONTENT */}
+          {/* ===== MAIN CONTENT ===== */}
           <main className="lg:col-span-9 space-y-6">
-            {/* WARNING */}
+            {/* =====================
+                WARNING
+            ===================== */}
             {showWarning && !profileCompleted && (
               <div className="flex items-start gap-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-5">
                 <div className="w-10 h-10 rounded-xl bg-yellow-100 text-yellow-700 flex items-center justify-center">
@@ -130,7 +161,7 @@ function EmployerPage() {
                   </p>
                   <p className="text-sm text-yellow-800 mt-1">
                     Bạn cần hoàn thiện hồ sơ doanh nghiệp trước khi đăng tin
-                    tuyển dụng hoặc sử dụng đầy đủ tính năng.
+                    tuyển dụng hoặc sử dụng đầy đủ tính năng hệ thống.
                   </p>
 
                   <button
@@ -146,7 +177,9 @@ function EmployerPage() {
               </div>
             )}
 
-            {/* PROFILE */}
+            {/* =====================
+                PROFILE
+            ===================== */}
             {mode === "profile" && (
               <>
                 {profileMode === "view" ? (
@@ -167,17 +200,29 @@ function EmployerPage() {
               </>
             )}
 
-            {/* JOBS */}
+            {/* =====================
+                JOBS
+            ===================== */}
             {mode === "jobs" && <EmployerJobList />}
 
-            {/* CREATE JOB */}
+            {/* =====================
+                CREATE JOB
+            ===================== */}
             {mode === "create" && profileCompleted && (
               <CreateJobForm />
             )}
 
-            {/* PAYMENT */}
+            {/* =====================
+                PAYMENT
+            ===================== */}
             {mode === "payment" && <EmployerPayment />}
           </main>
+        </div>
+
+        {/* FOOTER NOTE */}
+        <div className="text-xs text-gray-400 italic text-center pt-6">
+          Quy trình nhà tuyển dụng: Hoàn thiện hồ sơ → Đăng tin → Nhận hồ sơ →
+          Phỏng vấn → Tuyển dụng
         </div>
       </div>
     </div>
