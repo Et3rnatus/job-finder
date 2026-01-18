@@ -58,11 +58,14 @@ import AppliedJobList from "./components/candidate/AppliedJobList";
 ===================== */
 function UserLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-700 leading-relaxed">
       <Navbar />
+
+      {/* CONTENT */}
       <main className="flex-1">
         <Outlet />
       </main>
+
       <Footer />
     </div>
   );
@@ -87,7 +90,8 @@ function App() {
   ===================== */
   useEffect(() => {
     AOS.init({
-      duration: 800,
+      duration: 700,
+      easing: "ease-out-cubic",
       once: true,
     });
   }, []);
@@ -135,13 +139,14 @@ function App() {
           duration: 3000,
           style: {
             fontSize: "14px",
+            lineHeight: "1.4",
           },
         }}
       />
 
       <Router>
         <Routes>
-          {/* ===== USER (CÓ NAVBAR + FOOTER) ===== */}
+          {/* ===== USER (NAVBAR + FOOTER) ===== */}
           <Route element={<UserLayout />}>
             {/* PUBLIC */}
             <Route path="/" element={<HomePage />} />

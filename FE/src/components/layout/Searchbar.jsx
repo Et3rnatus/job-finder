@@ -11,7 +11,6 @@ function Searchbar() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const inputRef = useRef(null);
-  const suggestRef = useRef(null);
 
   /* =====================
      STATE
@@ -24,8 +23,7 @@ function Searchbar() {
   );
 
   const [showSuggest, setShowSuggest] = useState(false);
-  const [debouncedKeyword, setDebouncedKeyword] =
-    useState(keyword);
+  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
   const [activeIndex, setActiveIndex] = useState(-1);
 
   /* =====================
@@ -36,13 +34,12 @@ function Searchbar() {
   }, []);
 
   /* =====================
-     DEBOUNCE KEYWORD
+     DEBOUNCE
   ===================== */
   useEffect(() => {
-    const timer = setTimeout(
-      () => setDebouncedKeyword(keyword),
-      300
-    );
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 300);
     return () => clearTimeout(timer);
   }, [keyword]);
 
@@ -69,7 +66,7 @@ function Searchbar() {
   }, [debouncedKeyword]);
 
   /* =====================
-     SEARCH HANDLER
+     SEARCH
   ===================== */
   const handleSearch = (kw = keyword) => {
     if (!kw.trim() && !province.trim()) return;
@@ -90,8 +87,7 @@ function Searchbar() {
      KEYBOARD NAV
   ===================== */
   const handleKeyDown = (e) => {
-    if (!showSuggest || filteredSuggestions.length === 0)
-      return;
+    if (!showSuggest || filteredSuggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -137,20 +133,19 @@ function Searchbar() {
   };
 
   return (
-    <div className="mt-12 px-4">
+    <div className="px-4">
       <div
         className="
           max-w-6xl mx-auto
           bg-white border border-gray-200
-          rounded-3xl shadow-xl
+          rounded-2xl
+          shadow-lg
           p-4
           flex flex-col md:flex-row
-          items-stretch gap-4
+          items-stretch gap-3
         "
       >
-        {/* =====================
-            KEYWORD INPUT
-        ===================== */}
+        {/* ================= KEYWORD ================= */}
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
 
@@ -172,7 +167,7 @@ function Searchbar() {
             placeholder="Tìm kiếm vị trí, kỹ năng, công việc..."
             className="
               w-full h-12 pl-12 pr-10
-              rounded-2xl border border-gray-300
+              rounded-xl border border-gray-300
               text-sm text-gray-800
               focus:outline-none
               focus:ring-2 focus:ring-emerald-500
@@ -194,11 +189,10 @@ function Searchbar() {
           {/* AUTOCOMPLETE */}
           {showSuggest && filteredSuggestions.length > 0 && (
             <div
-              ref={suggestRef}
               className="
                 absolute top-full left-0 w-full mt-2
                 bg-white border border-gray-200
-                rounded-2xl shadow-xl
+                rounded-xl shadow-lg
                 z-50 overflow-hidden
               "
             >
@@ -211,7 +205,7 @@ function Searchbar() {
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
                   className={`
-                    px-4 py-3 text-sm cursor-pointer
+                    px-4 py-2.5 text-sm cursor-pointer
                     flex items-center gap-2
                     ${
                       index === activeIndex
@@ -231,14 +225,12 @@ function Searchbar() {
           )}
         </div>
 
-        {/* =====================
-            LOCATION
-        ===================== */}
-        <ProvinceDropdown value={province} onChange={setProvince} />
+        {/* ================= LOCATION ================= */}
+        <div className="md:w-56">
+          <ProvinceDropdown value={province} onChange={setProvince} />
+        </div>
 
-        {/* =====================
-            SEARCH BUTTON
-        ===================== */}
+        {/* ================= BUTTON ================= */}
         <button
           onClick={() => handleSearch()}
           disabled={isSearchDisabled}
@@ -248,7 +240,7 @@ function Searchbar() {
               : ""
           }
           className={`
-            h-12 px-8 rounded-2xl
+            h-12 px-8 rounded-xl
             font-semibold text-sm
             flex items-center justify-center gap-2
             transition-all
@@ -256,7 +248,7 @@ function Searchbar() {
             ${
               isSearchDisabled
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg"
+                : "bg-emerald-600 text-white hover:bg-emerald-700 shadow hover:shadow-md"
             }
           `}
         >

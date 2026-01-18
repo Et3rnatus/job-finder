@@ -26,7 +26,7 @@ function ProvinceDropdown({ value, onChange }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   /* =====================
-     CLICK OUTSIDE → CLOSE
+     CLICK OUTSIDE
   ===================== */
   useEffect(() => {
     const handler = (e) => {
@@ -49,7 +49,7 @@ function ProvinceDropdown({ value, onChange }) {
   }, [open]);
 
   /* =====================
-     NORMALIZE + FILTER (MEMO)
+     FILTER (MEMO)
   ===================== */
   const items = useMemo(() => {
     const list = vnAddress.map((p) => ({
@@ -70,7 +70,7 @@ function ProvinceDropdown({ value, onChange }) {
   }, [keyword]);
 
   /* =====================
-     SCROLL ACTIVE ITEM
+     SCROLL ACTIVE
   ===================== */
   useEffect(() => {
     if (!listRef.current) return;
@@ -81,7 +81,7 @@ function ProvinceDropdown({ value, onChange }) {
   }, [activeIndex]);
 
   /* =====================
-     KEYBOARD NAVIGATION
+     KEYBOARD
   ===================== */
   const handleKeyDown = (e) => {
     if (!open) return;
@@ -120,20 +120,17 @@ function ProvinceDropdown({ value, onChange }) {
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="relative w-64 shrink-0"
+      className="relative w-full md:w-56 shrink-0"
     >
-      {/* =====================
-          TRIGGER
-      ===================== */}
+      {/* ================= TRIGGER ================= */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="
           w-full h-12 px-4
           flex items-center justify-between
-          rounded-2xl border
+          rounded-xl border border-gray-300
           bg-white text-sm
-          border-gray-300
           hover:border-emerald-500
           focus:outline-none focus:ring-2 focus:ring-emerald-500
           transition
@@ -151,17 +148,14 @@ function ProvinceDropdown({ value, onChange }) {
         />
       </button>
 
-      {/* =====================
-          DROPDOWN
-      ===================== */}
+      {/* ================= DROPDOWN ================= */}
       {open && (
         <div
           className="
             absolute top-full left-0 mt-2 w-full
             bg-white border border-gray-200
-            rounded-3xl shadow-xl z-50
+            rounded-xl shadow-lg z-50
             overflow-hidden
-            animate-fade-in
           "
         >
           {/* SEARCH */}
@@ -172,8 +166,8 @@ function ProvinceDropdown({ value, onChange }) {
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Tìm tỉnh / thành phố..."
               className="
-                flex-1 px-4 py-2.5 text-sm
-                border rounded-xl
+                flex-1 h-10 px-3
+                text-sm border rounded-lg
                 text-gray-800
                 focus:outline-none
                 focus:ring-2 focus:ring-emerald-500
@@ -194,7 +188,7 @@ function ProvinceDropdown({ value, onChange }) {
           {/* LIST */}
           <div
             ref={listRef}
-            className="max-h-64 overflow-y-auto py-1"
+            className="max-h-60 overflow-y-auto py-1"
           >
             {/* ALL */}
             <div
@@ -210,10 +204,10 @@ function ProvinceDropdown({ value, onChange }) {
                 flex items-center gap-2
                 ${
                   activeIndex === 0
-                    ? "bg-emerald-100 text-emerald-700 font-medium"
+                    ? "bg-emerald-50 text-emerald-700 font-medium"
                     : "text-gray-700"
                 }
-                hover:bg-emerald-50 hover:text-emerald-700
+                hover:bg-emerald-50
               `}
             >
               <GlobeAltIcon className="h-4 w-4 text-gray-400" />
@@ -239,13 +233,12 @@ function ProvinceDropdown({ value, onChange }) {
                   }}
                   className={`
                     px-4 py-2.5 text-sm cursor-pointer
-                    transition
                     ${
                       isActive
-                        ? "bg-emerald-100 text-emerald-700 font-medium"
+                        ? "bg-emerald-50 text-emerald-700 font-medium"
                         : "text-gray-800"
                     }
-                    hover:bg-emerald-50 hover:text-emerald-700
+                    hover:bg-emerald-50
                   `}
                 >
                   {p.name}

@@ -23,6 +23,7 @@ const HeartIcon = ({ filled }) => (
     strokeWidth={1.8}
     stroke="currentColor"
     className="w-5 h-5"
+    aria-hidden="true"
   >
     <path
       strokeLinecap="round"
@@ -83,55 +84,73 @@ function JobCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Xem chi tiết công việc ${title}`}
       onClick={() => navigate(`/jobs/${id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          navigate(`/jobs/${id}`);
+        }
+      }}
       className="
         group relative
-        bg-white border border-gray-200 rounded-3xl
-        p-5 flex gap-5
-        hover:border-emerald-600 hover:shadow-xl
-        transition-all duration-200
-        cursor-pointer
-        overflow-hidden
+        bg-white border border-gray-200 rounded-2xl
+        p-4 flex gap-4
+        cursor-pointer overflow-hidden h-full
+
+        transition-all duration-200 ease-out
+        hover:border-emerald-600 hover:shadow-lg
+
+        focus:outline-none
+        focus:ring-2 focus:ring-emerald-500/40
+        focus:ring-offset-2 focus:ring-offset-white
+
+        motion-reduce:transition-none
+        motion-reduce:transform-none
       "
     >
       {/* LEFT ACCENT */}
       <span className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-600 opacity-0 group-hover:opacity-100 transition" />
 
-      {/* =====================
-          LOGO
-      ===================== */}
-      <div className="w-14 h-14 flex-shrink-0">
+      {/* ================= LOGO ================= */}
+      <div className="w-12 h-12 flex-shrink-0">
         <img
           src={
             companyLogo
               ? `${API_URL}${companyLogo}`
               : "/default-company.png"
           }
-          alt={company}
+          alt={`Logo ${company}`}
           className="
-            w-14 h-14
-            rounded-2xl
-            object-contain
-            border border-gray-200
-            bg-white
+            w-12 h-12 rounded-xl
+            object-contain border border-gray-200 bg-white
           "
         />
       </div>
 
-      {/* =====================
-          CONTENT
-      ===================== */}
-      <div className="flex-1 min-w-0">
+      {/* ================= CONTENT ================= */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* BADGES */}
+        <div className="flex flex-wrap gap-2 mb-1">
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+            Mới
+          </span>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
+            Full-time
+          </span>
+        </div>
+
         {/* COMPANY */}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Building2 className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <Building2 className="w-3.5 h-3.5 text-slate-400" />
           <span className="truncate">{company}</span>
         </div>
 
         {/* TITLE */}
         <h3
           className="
-            text-base font-semibold text-gray-900
+            text-sm font-semibold text-gray-900
             mt-1 leading-snug
             group-hover:text-emerald-600
             transition
@@ -142,36 +161,35 @@ function JobCard({
         </h3>
 
         {/* META */}
-        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm text-gray-600">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 mt-2 text-xs text-gray-600">
           <span className="flex items-center gap-1.5">
-            <Wallet className="w-4 h-4 text-emerald-600" />
+            <Wallet className="w-4 h-4 text-emerald-600/80" />
             {salary}
           </span>
 
           <span className="flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-emerald-600" />
+            <MapPin className="w-4 h-4 text-emerald-600/80" />
             {location}
           </span>
         </div>
 
         {/* SKILLS */}
         {skillList.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {skillList.slice(0, 3).map((skill, index) => (
               <span
                 key={index}
                 className="
-                  text-xs font-medium
+                  text-[11px] font-medium
                   bg-emerald-50 text-emerald-700
-                  px-3 py-1 rounded-full
+                  px-2.5 py-0.5 rounded-full
                 "
               >
                 {skill.trim()}
               </span>
             ))}
-
             {skillList.length > 3 && (
-              <span className="text-xs text-gray-400">
+              <span className="text-[11px] text-slate-400">
                 +{skillList.length - 3} kỹ năng
               </span>
             )}
@@ -179,18 +197,20 @@ function JobCard({
         )}
       </div>
 
-      {/* =====================
-          ACTIONS
-      ===================== */}
-      <div className="flex flex-col items-end justify-between gap-3">
+      {/* ================= ACTIONS ================= */}
+      <div className="flex flex-col items-end justify-between gap-2">
         {/* SAVE */}
         <button
           onClick={handleToggleSave}
           disabled={saving}
+          aria-label={
+            saved ? "Bỏ lưu công việc" : "Lưu công việc"
+          }
           className={`
-            w-11 h-11 flex items-center justify-center
+            w-10 h-10 flex items-center justify-center
             rounded-full border
             transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-emerald-500/40
             ${
               saved
                 ? "bg-emerald-600 border-emerald-600 text-white"
@@ -199,10 +219,13 @@ function JobCard({
             active:scale-95
             disabled:opacity-50
           `}
-          title={saved ? "Bỏ lưu công việc" : "Lưu công việc"}
         >
           {saving ? (
-            <Loader2 className="animate-spin" size={18} />
+            <Loader2
+              className="animate-spin"
+              size={16}
+              aria-hidden="true"
+            />
           ) : (
             <HeartIcon filled={saved} />
           )}
@@ -213,15 +236,16 @@ function JobCard({
           onClick={handleApply}
           className="
             inline-flex items-center gap-1.5
-            text-sm font-semibold
-            px-5 py-2 rounded-full
+            text-xs font-semibold
+            px-4 py-1.5 rounded-full
             border border-emerald-600 text-emerald-600
             hover:bg-emerald-600 hover:text-white
             transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-emerald-500/40
           "
         >
-          Ứng tuyển
-          <ArrowRight size={14} />
+          Ứng tuyển nhanh
+          <ArrowRight size={12} />
         </button>
       </div>
     </div>

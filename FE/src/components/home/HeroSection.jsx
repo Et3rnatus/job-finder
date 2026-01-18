@@ -10,15 +10,15 @@ import {
 export default function HeroSection() {
   return (
     <section
-      className="relative overflow-hidden text-white"
+      className="relative text-white"
       style={{
         backgroundImage: "url('/images/hero-section.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      {/* BACKGROUND LAYERS */}
-      <div className="absolute inset-0">
+      {/* ================= BACKGROUND ================= */}
+      <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/70 to-black/90" />
 
         <div className="absolute -top-40 -left-40 w-[420px] h-[420px] bg-emerald-500/25 rounded-full blur-[120px]" />
@@ -27,16 +27,16 @@ export default function HeroSection() {
         <div className="absolute inset-0 opacity-[0.04] bg-[url('/images/noise.jpg')]" />
       </div>
 
-      {/* CONTENT */}
-      <div className="relative max-w-7xl mx-auto px-6 py-24 md:py-28 text-center">
+      {/* ================= CONTENT ================= */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 md:py-24 text-center">
         {/* BADGE */}
-        <div className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs backdrop-blur">
+        <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs backdrop-blur">
           <Sparkles size={13} className="text-emerald-400" />
           Nền tảng tìm kiếm việc làm hiện đại
         </div>
 
         {/* TITLE */}
-        <h1 className="text-3xl md:text-5xl xl:text-6xl font-extrabold leading-tight mb-6 tracking-tight">
+        <h1 className="text-3xl md:text-5xl xl:text-6xl font-extrabold leading-tight tracking-tight mb-5">
           Cơ hội nghề nghiệp
           <br className="hidden md:block" />
           <span className="bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
@@ -46,14 +46,14 @@ export default function HeroSection() {
         </h1>
 
         {/* DESCRIPTION */}
-        <p className="text-gray-300 text-sm md:text-base max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-gray-300 text-sm md:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
           Kết nối ứng viên với hàng nghìn cơ hội việc làm
           chất lượng từ các doanh nghiệp uy tín trên
           toàn quốc.
         </p>
 
         {/* SEARCH */}
-        <div className="flex justify-center mb-10">
+        <div className="flex justify-center mb-8">
           <div className="w-full max-w-3xl">
             <Searchbar />
           </div>
