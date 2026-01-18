@@ -163,14 +163,12 @@ function CandidatePage() {
         {/* LEFT */}
         <div className="space-y-6">
           <UserAvatar
-            name={profile.full_name}
-            image={profile.candidate_image}
-            label="Thay đổi ảnh đại diện"
-            onUpload={async (file) => {
-              await candidateService.updateAvatar(file);
-              await loadCandidateData();
-            }}
-          />
+  fullName={profile.full_name}
+  isProfileCompleted={profileCompleted}
+  candidateImage={profile.candidate_image}
+  onAvatarUpdated={loadCandidateData}
+/>
+
 
           <UserSidebarTool
             onEditProfile={() => setMode("edit")}

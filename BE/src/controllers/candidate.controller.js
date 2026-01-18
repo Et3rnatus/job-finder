@@ -127,7 +127,10 @@ exports.updateProfile = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
-    /* VALIDATE */
+    /* =====================
+       VALIDATION
+    ===================== */
+
     if (!full_name || !contact_number || !date_of_birth) {
       return res.status(400).json({
         message: "Họ tên, số điện thoại và ngày sinh là bắt buộc",
@@ -136,7 +139,16 @@ exports.updateProfile = async (req, res) => {
 
     const dob = new Date(date_of_birth);
     if (isNaN(dob.getTime())) {
-      return res.status(400).json({ message: "Ngày sinh không hợp lệ" });
+      return res.status(400).json({
+        message: "Ngày sinh không hợp lệ",
+      });
+    }
+
+    const allowedGenders = ["Nam", "Nữ", "Khác"];
+    if (gender && !allowedGenders.includes(gender)) {
+      return res.status(400).json({
+        message: "Giới tính không hợp lệ",
+      });
     }
 
     if (!Array.isArray(skills) || skills.length === 0) {
@@ -161,6 +173,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
+    /* Validate skills tồn tại trong DB */
     const [skillRows] = await connection.query(
       "SELECT id FROM skill WHERE id IN (?)",
       [skills]
@@ -172,9 +185,12 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    /* TRANSACTION */
+    /* =====================
+       TRANSACTION
+    ===================== */
     await connection.beginTransaction();
 
+    /* Update candidate info */
     await connection.query(
       `
       UPDATE candidate
@@ -184,8 +200,7 @@ exports.updateProfile = async (req, res) => {
         address = ?,
         bio = ?,
         gender = ?,
-        date_of_birth = ?,
-        is_profile_completed = 1
+        date_of_birth = ?
       WHERE id = ?
       `,
       [
@@ -199,18 +214,23 @@ exports.updateProfile = async (req, res) => {
       ]
     );
 
+    /* Update skills */
     await connection.query(
       "DELETE FROM candidate_skill WHERE candidate_id = ?",
       [candidate.id]
     );
 
-    for (const skillId of skills) {
-      await connection.query(
-        "INSERT INTO candidate_skill (candidate_id, skill_id) VALUES (?, ?)",
-        [candidate.id, skillId]
-      );
-    }
+    const skillValues = skills.map((skillId) => [
+      candidate.id,
+      skillId,
+    ]);
 
+    await connection.query(
+      "INSERT INTO candidate_skill (candidate_id, skill_id) VALUES ?",
+      [skillValues]
+    );
+
+    /* Update education */
     await connection.query(
       "DELETE FROM education WHERE candidate_id = ?",
       [candidate.id]
@@ -234,6 +254,7 @@ exports.updateProfile = async (req, res) => {
       );
     }
 
+    /* Update experience */
     await connection.query(
       "DELETE FROM work_experience WHERE candidate_id = ?",
       [candidate.id]
@@ -261,20 +282,55 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
+    /* =====================
+       CHECK PROFILE COMPLETED
+    ===================== */
+    const [[check]] = await connection.query(
+      `
+      SELECT
+        CASE
+          WHEN
+            full_name IS NOT NULL
+            AND contact_number IS NOT NULL
+            AND date_of_birth IS NOT NULL
+            AND EXISTS (
+              SELECT 1 FROM candidate_skill WHERE candidate_id = ?
+            )
+            AND EXISTS (
+              SELECT 1 FROM education
+              WHERE candidate_id = ?
+              AND TRIM(school) <> ''
+            )
+          THEN 1 ELSE 0
+        END AS completed
+      FROM candidate
+      WHERE id = ?
+      `,
+      [candidate.id, candidate.id, candidate.id]
+    );
+
+    await connection.query(
+      "UPDATE candidate SET is_profile_completed = ? WHERE id = ?",
+      [check.completed, candidate.id]
+    );
+
     await connection.commit();
 
     return res.json({
       message: "Cập nhật hồ sơ thành công",
-      is_profile_completed: 1,
+      is_profile_completed: !!check.completed,
     });
   } catch (error) {
     await connection.rollback();
     console.error("UPDATE PROFILE ERROR:", error);
-    return res.status(500).json({ message: "Update profile failed" });
+    return res.status(500).json({
+      message: "Update profile failed",
+    });
   } finally {
     connection.release();
   }
 };
+
 
 /* =========================
    UPDATE CANDIDATE IMAGE
