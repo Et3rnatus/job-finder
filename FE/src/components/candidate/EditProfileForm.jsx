@@ -15,50 +15,30 @@ import {
 } from "lucide-react";
 
 /* =====================
-   SKILL GROUPS (FE ONLY)
+   DISPLAY GROUP (UI ONLY)
+   Phục vụ hiển thị – KHÔNG phải schema
 ===================== */
-const SKILL_GROUPS = {
-  technical: {
-    title: "🔧 Kỹ năng chuyên môn",
-    match: [
-      "JavaScript",
-      "ReactJS",
-      "NodeJS",
-      "HTML",
-      "CSS",
-      "Java",
-      "MySQL",
-      "PostgreSQL",
-      "REST API",
-    ],
-  },
-  marketing: {
-    title: "📊 Marketing / Kinh doanh",
-    match: [
-      "Digital Marketing",
-      "SEO",
-      "Facebook Ads",
-      "Google Ads",
-      "Content Marketing",
-    ],
-  },
-  soft: {
-    title: "🤝 Kỹ năng mềm",
-    match: [
-      "Giao tiếp",
-      "Làm việc nhóm",
-      "Quản lý thời gian",
-      "Giải quyết vấn đề",
-      "Thuyết trình",
-    ],
-  },
+const SKILL_DISPLAY_GROUPS = {
+  IT: [
+    "JavaScript",
+    "Node.js",
+    "React",
+    "HTML",
+    "CSS",
+    "MySQL",
+    "PostgreSQL",
+    "REST API",
+  ],
+  SOFT: [
+    "Giao tiếp",
+    "Làm việc nhóm",
+    "Quản lý thời gian",
+    "Giải quyết vấn đề",
+    "Thuyết trình",
+  ],
 };
 
-export default function EditProfileForm({
-  profile,
-  onUpdated,
-  onCancel,
-}) {
+export default function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [form, setForm] = useState({
     full_name: "",
     contact_number: "",
@@ -72,6 +52,7 @@ export default function EditProfileForm({
   });
 
   const [allSkills, setAllSkills] = useState([]);
+  const [skillFilter, setSkillFilter] = useState("IT"); // IT | SOFT | OTHER | ALL
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -128,6 +109,24 @@ export default function EditProfileForm({
     }));
   };
 
+  const visibleSkills = allSkills.filter((skill) => {
+    if (skillFilter === "ALL") return true;
+
+    if (skillFilter === "IT")
+      return SKILL_DISPLAY_GROUPS.IT.includes(skill.name);
+
+    if (skillFilter === "SOFT")
+      return SKILL_DISPLAY_GROUPS.SOFT.includes(skill.name);
+
+    if (skillFilter === "OTHER")
+      return (
+        !SKILL_DISPLAY_GROUPS.IT.includes(skill.name) &&
+        !SKILL_DISPLAY_GROUPS.SOFT.includes(skill.name)
+      );
+
+    return true;
+  });
+
   /* =====================
      EDUCATION
   ===================== */
@@ -149,9 +148,7 @@ export default function EditProfileForm({
   const removeEducation = (i) =>
     setForm({
       ...form,
-      education: form.education.filter(
-        (_, idx) => idx !== i
-      ),
+      education: form.education.filter((_, idx) => idx !== i),
     });
 
   /* =====================
@@ -175,9 +172,7 @@ export default function EditProfileForm({
   const removeExperience = (i) =>
     setForm({
       ...form,
-      experiences: form.experiences.filter(
-        (_, idx) => idx !== i
-      ),
+      experiences: form.experiences.filter((_, idx) => idx !== i),
     });
 
   /* =====================
@@ -186,11 +181,7 @@ export default function EditProfileForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !form.full_name ||
-      !form.contact_number ||
-      !form.date_of_birth
-    ) {
+    if (!form.full_name || !form.contact_number || !form.date_of_birth) {
       return setAlert({
         type: "error",
         title: "Thiếu thông tin",
@@ -253,10 +244,7 @@ export default function EditProfileForm({
           {/* =====================
               PERSONAL
           ===================== */}
-          <Section
-            icon={<User size={18} />}
-            title="Thông tin cá nhân"
-          >
+          <Section icon={<User size={18} />} title="Thông tin cá nhân">
             <Grid>
               <Input
                 label="Họ và tên *"
@@ -270,11 +258,7 @@ export default function EditProfileForm({
                 value={form.contact_number}
                 onChange={handleChange}
               />
-              <Input
-                label="Email"
-                value={profile.email || ""}
-                disabled
-              />
+              <Input label="Email" value={profile.email || ""} disabled />
               <Input
                 label="Địa chỉ"
                 name="address"
@@ -317,171 +301,152 @@ export default function EditProfileForm({
               SKILLS
           ===================== */}
           <Section icon={<Wrench size={18} />} title="Kỹ năng">
-            {Object.values(SKILL_GROUPS).map((group) => {
-              const skills = allSkills.filter((s) =>
-                group.match.includes(s.name)
-              );
-              if (!skills.length) return null;
+            {/* FILTER */}
+            <div className="flex gap-2 mb-4">
+              {[
+                { key: "IT", label: "💻 IT" },
+                { key: "SOFT", label: "🤝 Kỹ năng mềm" },
+                { key: "OTHER", label: "📦 Khác" },
+                { key: "ALL", label: "Tất cả" },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setSkillFilter(f.key)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium border
+                    ${
+                      skillFilter === f.key
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
-              return (
-                <div key={group.title}>
-                  <h4 className="font-medium mb-3">
-                    {group.title}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {skills.map((skill) => {
-                      const active =
-                        form.skills.includes(skill.id);
-                      return (
-                        <button
-                          type="button"
-                          key={skill.id}
-                          onClick={() =>
-                            toggleSkill(skill.id)
-                          }
-                          className={`px-3 py-1.5 rounded-full text-sm border transition
-                            ${
-                              active
-                                ? "bg-green-600 text-white border-green-600"
-                                : "bg-gray-100 text-gray-700 hover:border-green-500"
-                            }`}
-                        >
-                          {skill.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+            {/* SKILL LIST */}
+            <div className="flex flex-wrap gap-2">
+              {visibleSkills.map((skill) => {
+                const active = form.skills.includes(skill.id);
+                return (
+                  <button
+                    type="button"
+                    key={skill.id}
+                    onClick={() => toggleSkill(skill.id)}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition
+                      ${
+                        active
+                          ? "bg-green-600 text-white border-green-600"
+                          : "bg-gray-100 text-gray-700 hover:border-green-500"
+                      }`}
+                  >
+                    {skill.name}
+                  </button>
+                );
+              })}
+            </div>
           </Section>
 
           {/* =====================
               EDUCATION
           ===================== */}
-          <Section
-            icon={<GraduationCap size={18} />}
-            title="Học vấn"
-          >
+          <Section icon={<GraduationCap size={18} />} title="Học vấn">
             {form.education.map((edu, i) => (
-              <Card
-                key={i}
-                onRemove={() => removeEducation(i)}
-              >
+              <Card key={i} onRemove={() => removeEducation(i)}>
                 <Input
                   label="Trường"
                   value={edu.institution}
                   onChange={(e) =>
-                    updateEducation(
-                      i,
-                      "institution",
-                      e.target.value
-                    )
+                    updateEducation(i, "institution", e.target.value)
                   }
                 />
                 <Input
                   label="Trình độ"
                   value={edu.level}
                   onChange={(e) =>
-                    updateEducation(
-                      i,
-                      "level",
-                      e.target.value
-                    )
+                    updateEducation(i, "level", e.target.value)
                   }
                 />
                 <Input
                   label="Ngành"
                   value={edu.major}
                   onChange={(e) =>
-                    updateEducation(
-                      i,
-                      "major",
-                      e.target.value
-                    )
+                    updateEducation(i, "major", e.target.value)
                   }
                 />
               </Card>
             ))}
-            <AddButton
-              label="Thêm học vấn"
-              onClick={addEducation}
-            />
+            <AddButton label="Thêm học vấn" onClick={addEducation} />
           </Section>
 
           {/* =====================
               EXPERIENCE
           ===================== */}
-          <Section
-            icon={<Briefcase size={18} />}
-            title="Kinh nghiệm"
-          >
+          <Section icon={<Briefcase size={18} />} title="Kinh nghiệm">
             {form.experiences.map((exp, i) => (
-              <Card
-                key={i}
-                onRemove={() => removeExperience(i)}
-              >
+              <Card key={i} onRemove={() => removeExperience(i)}>
                 <Input
                   label="Công ty"
                   value={exp.company}
                   onChange={(e) =>
-                    updateExperience(
-                      i,
-                      "company",
-                      e.target.value
-                    )
+                    updateExperience(i, "company", e.target.value)
                   }
                 />
                 <Input
                   label="Vị trí"
                   value={exp.position}
                   onChange={(e) =>
-                    updateExperience(
-                      i,
-                      "position",
-                      e.target.value
-                    )
+                    updateExperience(i, "position", e.target.value)
                   }
                 />
                 <Textarea
                   label="Mô tả công việc"
                   value={exp.description}
                   onChange={(e) =>
-                    updateExperience(
-                      i,
-                      "description",
-                      e.target.value
-                    )
+                    updateExperience(i, "description", e.target.value)
                   }
                 />
               </Card>
             ))}
-            <AddButton
-              label="Thêm kinh nghiệm"
-              onClick={addExperience}
-            />
+            <AddButton label="Thêm kinh nghiệm" onClick={addExperience} />
           </Section>
 
           {/* =====================
               ACTIONS
           ===================== */}
-          <div className="flex gap-3 pt-6 border-t">
-            <button
-              disabled={saving}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg flex gap-2 hover:bg-green-700 disabled:opacity-50"
-            >
-              <Save size={16} />
-              {saving ? "Đang lưu..." : "Lưu thay đổi"}
-            </button>
+          <div className="flex gap-3 pt-8 mt-10 border-t">
+  <button
+    disabled={saving}
+    className="
+      inline-flex items-center justify-center gap-2
+      h-11 px-6
+      rounded-lg text-sm font-semibold
+      bg-green-600 text-white
+      hover:bg-green-700
+      disabled:opacity-50
+    "
+  >
+    <Save size={16} />
+    {saving ? "Đang lưu..." : "Lưu thay đổi"}
+  </button>
 
-            <button
-              type="button"
-              onClick={onCancel}
-              className="bg-gray-200 px-6 py-2 rounded-lg flex gap-2 hover:bg-gray-300"
-            >
-              <X size={16} /> Hủy
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={onCancel}
+    className="
+      inline-flex items-center justify-center gap-2
+      h-11 px-6
+      rounded-lg text-sm font-semibold
+      bg-gray-200 text-gray-800
+      hover:bg-gray-300
+    "
+  >
+    <X size={16} />
+    Hủy
+  </button>
+</div>
+
         </form>
       </div>
 
@@ -493,28 +458,17 @@ export default function EditProfileForm({
           <div className="w-full max-w-sm bg-white rounded-2xl p-6 text-center shadow-xl">
             <div className="flex justify-center mb-4">
               {alert.type === "success" ? (
-                <CheckCircle2
-                  className="text-green-600"
-                  size={36}
-                />
+                <CheckCircle2 className="text-green-600" size={36} />
               ) : (
-                <AlertTriangle
-                  className="text-red-600"
-                  size={36}
-                />
+                <AlertTriangle className="text-red-600" size={36} />
               )}
             </div>
-            <h3 className="text-lg font-semibold mb-2">
-              {alert.title}
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              {alert.message}
-            </p>
+            <h3 className="text-lg font-semibold mb-2">{alert.title}</h3>
+            <p className="text-sm text-gray-600 mb-6">{alert.message}</p>
             <button
               onClick={() => {
                 setAlert(null);
-                if (alert.type === "success")
-                  onUpdated();
+                if (alert.type === "success") onUpdated();
               }}
               className="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
             >
@@ -535,25 +489,19 @@ const Section = ({ icon, title, children }) => (
   <section>
     <div className="flex items-center gap-2 mb-4">
       {icon}
-      <h3 className="font-semibold text-lg">
-        {title}
-      </h3>
+      <h3 className="font-semibold text-lg">{title}</h3>
     </div>
     {children}
   </section>
 );
 
 const Grid = ({ children }) => (
-  <div className="grid md:grid-cols-2 gap-4">
-    {children}
-  </div>
+  <div className="grid md:grid-cols-2 gap-4">{children}</div>
 );
 
 const Input = ({ label, ...props }) => (
   <div>
-    <label className="text-sm text-gray-600">
-      {label}
-    </label>
+    <label className="text-sm text-gray-600">{label}</label>
     <input
       {...props}
       className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
@@ -563,9 +511,7 @@ const Input = ({ label, ...props }) => (
 
 const Textarea = ({ label, ...props }) => (
   <div>
-    <label className="text-sm text-gray-600">
-      {label}
-    </label>
+    <label className="text-sm text-gray-600">{label}</label>
     <textarea
       {...props}
       rows={4}
@@ -576,9 +522,7 @@ const Textarea = ({ label, ...props }) => (
 
 const Select = ({ label, options, ...props }) => (
   <div>
-    <label className="text-sm text-gray-600">
-      {label}
-    </label>
+    <label className="text-sm text-gray-600">{label}</label>
     <select
       {...props}
       className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
