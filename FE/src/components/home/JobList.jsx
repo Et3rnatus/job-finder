@@ -45,11 +45,15 @@ export default function JobList() {
                 : "Thỏa thuận",
             location: job.location || "Chưa cập nhật",
             company: job.company_name || "Chưa cập nhật",
-            companyLogo: job.company_logo || null,
+
+            // 🔥 FIX QUAN TRỌNG: LOGO EMPLOYER
+            companyLogo: job.logo || null,
+
             skills: job.job_skill || "",
           }))
         );
-      } catch {
+      } catch (error) {
+        console.error("FETCH JOBS ERROR:", error);
         setJobs([]);
       } finally {
         setLoading(false);

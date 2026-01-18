@@ -34,7 +34,7 @@ router.put(
   "/logo",
   verifyToken,
   requireRole("employer"),
-  uploadEmployerLogo.single("logo"),
+  uploadEmployerLogo, // ✅ KHÔNG .single() nữa
   employerController.updateEmployerLogo
 );
 

@@ -43,12 +43,15 @@ const updateLogo = async (file) => {
   formData.append("logo", file);
 
   const res = await axios.put(`${API_URL}/logo`, formData, {
-    headers: getAuthHeader(),
-    // ❌ KHÔNG set Content-Type
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "multipart/form-data",
+    },
   });
 
-  return res.data;
+  return res.data; // 👈 trả nguyên object { message, logo }
 };
+
 
 // ======================
 // JOBS (EMPLOYER)

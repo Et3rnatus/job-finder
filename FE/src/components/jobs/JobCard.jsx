@@ -45,7 +45,7 @@ function JobCard({
   salary,
   location,
   company,
-  companyLogo,
+  companyLogo, // 👈 LOGO EMPLOYER (job.logo từ API)
   skills,
 }) {
   const navigate = useNavigate();
@@ -82,6 +82,15 @@ function JobCard({
 
   const skillList = skills ? skills.split(",") : [];
 
+  /* =====================
+     LOGO SRC (EMPLOYER)
+  ===================== */
+  const logoSrc = companyLogo
+    ? companyLogo.startsWith("http")
+      ? companyLogo
+      : `${API_URL}${companyLogo}`
+    : "/default-company.png";
+
   return (
     <div
       role="button"
@@ -105,27 +114,23 @@ function JobCard({
         focus:outline-none
         focus:ring-2 focus:ring-emerald-500/40
         focus:ring-offset-2 focus:ring-offset-white
-
-        motion-reduce:transition-none
-        motion-reduce:transform-none
       "
     >
       {/* LEFT ACCENT */}
       <span className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-600 opacity-0 group-hover:opacity-100 transition" />
 
-      {/* ================= LOGO ================= */}
+      {/* ================= LOGO EMPLOYER ================= */}
       <div className="w-12 h-12 flex-shrink-0">
         <img
-          src={
-            companyLogo
-              ? `${API_URL}${companyLogo}`
-              : "/default-company.png"
-          }
-          alt={`Logo ${company}`}
+          src={logoSrc}
+          alt=""
           className="
             w-12 h-12 rounded-xl
             object-contain border border-gray-200 bg-white
           "
+          onError={(e) => {
+            e.currentTarget.src = "/default-company.png";
+          }}
         />
       </div>
 
@@ -148,15 +153,13 @@ function JobCard({
         </div>
 
         {/* TITLE */}
-        <h3
-          className="
+        <h3 className="
             text-sm font-semibold text-gray-900
             mt-1 leading-snug
             group-hover:text-emerald-600
             transition
             line-clamp-2
-          "
-        >
+          ">
           {title}
         </h3>
 
@@ -203,9 +206,7 @@ function JobCard({
         <button
           onClick={handleToggleSave}
           disabled={saving}
-          aria-label={
-            saved ? "Bỏ lưu công việc" : "Lưu công việc"
-          }
+          aria-label={saved ? "Bỏ lưu công việc" : "Lưu công việc"}
           className={`
             w-10 h-10 flex items-center justify-center
             rounded-full border
@@ -221,11 +222,7 @@ function JobCard({
           `}
         >
           {saving ? (
-            <Loader2
-              className="animate-spin"
-              size={16}
-              aria-hidden="true"
-            />
+            <Loader2 className="animate-spin" size={16} />
           ) : (
             <HeartIcon filled={saved} />
           )}

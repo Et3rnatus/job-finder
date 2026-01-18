@@ -126,16 +126,17 @@ function EmployerPage() {
           {/* ===== SIDEBAR ===== */}
           <aside className="lg:col-span-3 space-y-6">
             <UserAvatar
-              name={profile.company_name}
-              image={profile.company_logo}
-              label="Thay đổi logo công ty"
-              defaultImage="/default-company.png"
-              onUpload={async (file) => {
-                const res = await employerService.updateLogo(file);
-                await loadEmployerData();
-                return res.company_logo;
-              }}
-            />
+  name={profile.company_name}
+  image={profile.logo}          // ✅ ĐÚNG FIELD
+  label="Thay đổi logo công ty"
+  defaultImage="/default-company.png"
+  onUpload={async (file) => {
+    const res = await employerService.updateLogo(file);
+    await loadEmployerData();
+    return res; // { logo }
+  }}
+/>
+
 
             <EmployerSideBarTool
               currentMode={mode}

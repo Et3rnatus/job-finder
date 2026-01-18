@@ -297,10 +297,10 @@ exports.resubmitJob = async (req, res) => {
 
 exports.updateEmployerLogo = async (req, res) => {
   try {
-    const employer = req.employer;
+    const user = req.user; // 👈 dùng user từ authMiddleware
 
-    if (!employer) {
-      return res.status(403).json({ message: "Forbidden" });
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     if (!req.file) {
@@ -309,10 +309,11 @@ exports.updateEmployerLogo = async (req, res) => {
 
     const logoPath = `/uploads/employers/${req.file.filename}`;
 
-    await pool.query(
-      "UPDATE employer SET logo = ? WHERE id = ?",
-      [logoPath, employer.id]
-    );
+    await db.execute(
+  "UPDATE employer SET logo = ? WHERE user_id = ?",
+  [logoPath, req.user.id]
+);
+
 
     res.json({
       message: "Cập nhật logo công ty thành công",

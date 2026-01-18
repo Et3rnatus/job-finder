@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const authRoutes = require("./routes/auth.routes");
 const jobRoutes = require("./routes/job.routes");
@@ -41,6 +42,10 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../public/uploads"))
+);
 
 /* =====================
    HEALTH CHECK

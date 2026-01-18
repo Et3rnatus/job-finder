@@ -7,32 +7,44 @@ const API_URL = "http://127.0.0.1:3001";
 
 export default function UserAvatar({
   name = "Người dùng",
-  image,                 // path ảnh từ DB ("/uploads/...")
-  onUpload,              // async function upload(file) => return image path
+  image,                 // "/uploads/..." | full URL | null
+  onUpload,              // async (file) => { logo }
   label = "Thay đổi ảnh",
   defaultImage = "/default-avatar.png",
 }) {
   const fileRef = useRef(null);
-  const [avatar, setAvatar] = useState(image);
+  const [avatar, setAvatar] = useState(null);
   const [loading, setLoading] = useState(false);
 
   /* =====================
      SYNC IMAGE FROM PROPS
   ===================== */
   useEffect(() => {
-    setAvatar(image);
+    if (image) {
+      setAvatar(image);
+    } else {
+      setAvatar(null);
+    }
   }, [image]);
 
   /* =====================
-     HELPERS
+     GET IMAGE SRC (FIX CORE)
   ===================== */
   const getAvatarSrc = () => {
+    // 1️⃣ chưa có avatar → dùng ảnh mặc định
     if (!avatar) return defaultImage;
 
-    // preview blob
-    if (avatar.startsWith("blob:")) return avatar;
+    // 2️⃣ preview blob
+    if (typeof avatar === "string" && avatar.startsWith("blob:")) {
+      return avatar;
+    }
 
-    // image from server
+    // 3️⃣ nếu BE trả URL tuyệt đối
+    if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+      return avatar;
+    }
+
+    // 4️⃣ path từ backend (/uploads/...)
     return `${API_URL}${avatar}`;
   };
 
@@ -68,19 +80,19 @@ export default function UserAvatar({
     try {
       setLoading(true);
 
-      // upload bên ngoài
-      const uploadedPath = await onUpload(file);
+      const res = await onUpload(file); // { logo }
 
-      if (!uploadedPath) {
+      if (!res || !res.logo) {
         throw new Error("Upload không trả về ảnh");
       }
 
-      setAvatar(uploadedPath);
+      // set lại ảnh từ server
+      setAvatar(res.logo);
       toast.success("Cập nhật ảnh thành công");
     } catch (err) {
       console.error(err);
       toast.error("Upload ảnh thất bại");
-      setAvatar(image); // rollback
+      setAvatar(image || null);
     } finally {
       setLoading(false);
       URL.revokeObjectURL(previewUrl);
@@ -104,8 +116,11 @@ export default function UserAvatar({
         <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 p-1">
           <img
             src={getAvatarSrc()}
-            alt="avatar"
+            alt=""
             className="w-full h-full rounded-full object-cover bg-white"
+            onError={(e) => {
+              e.currentTarget.src = defaultImage;
+            }}
           />
 
           {/* overlay */}
