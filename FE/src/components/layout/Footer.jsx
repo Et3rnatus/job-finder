@@ -22,10 +22,10 @@ function Footer() {
       {/* =====================
           TOP CONTENT
       ===================== */}
-      <div className="max-w-7xl mx-auto px-6 pt-20 pb-16 grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-14 pb-12 grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* ===== BRAND ===== */}
         <div>
-          <h3 className="text-white text-xl font-bold mb-4">
+          <h3 className="text-white text-lg font-bold mb-3">
             JobFinder Việt Nam
           </h3>
 
@@ -36,19 +36,19 @@ function Footer() {
           </p>
 
           {/* CONTACT */}
-          <div className="mt-6 space-y-2 text-sm">
+          <div className="mt-5 space-y-1.5 text-sm">
             <p>📍 180 Cao Lỗ, Quận 8, TP. Hồ Chí Minh</p>
             <p>📞 0123 456 789</p>
             <p>✉️ support@jobfinder.vn</p>
           </div>
 
           {/* SOCIAL */}
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-3 mt-5">
             <SocialIcon href="https://facebook.com">
-              <FaFacebookF />
+              <FaFacebookF size={14} />
             </SocialIcon>
             <SocialIcon href="https://linkedin.com">
-              <FaLinkedinIn />
+              <FaLinkedinIn size={14} />
             </SocialIcon>
           </div>
         </div>
@@ -106,12 +106,12 @@ function Footer() {
           BOTTOM BAR
       ===================== */}
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2 text-xs">
           <span>
             © 2026 JobFinder Việt Nam. All rights reserved.
           </span>
 
-          <span className="text-xs text-gray-500">
+          <span className="text-gray-500">
             Made with ❤️ for graduation thesis
           </span>
         </div>
@@ -127,10 +127,10 @@ function Footer() {
 function FooterGroup({ title, children }) {
   return (
     <div>
-      <h4 className="text-white text-lg font-semibold mb-4">
+      <h4 className="text-white text-sm font-semibold mb-3">
         {title}
       </h4>
-      <ul className="space-y-3 text-sm">{children}</ul>
+      <ul className="space-y-2 text-sm">{children}</ul>
     </div>
   );
 }
@@ -140,16 +140,9 @@ function FooterLink({ to, icon, children }) {
     <li>
       <Link
         to={to}
-        className="
-          flex items-center gap-2
-          text-gray-400
-          hover:text-white
-          transition
-        "
+        className="flex items-center gap-2 text-gray-400 hover:text-white transition"
       >
-        <span className="text-sm opacity-80">
-          {icon}
-        </span>
+        <span className="text-xs opacity-80">{icon}</span>
         {children}
       </Link>
     </li>
@@ -163,7 +156,7 @@ function SocialIcon({ href, children }) {
       target="_blank"
       rel="noopener noreferrer"
       className="
-        w-10 h-10
+        w-9 h-9
         flex items-center justify-center
         rounded-full
         bg-gray-800

@@ -12,59 +12,60 @@ export default function KeyIndustries() {
     {
       name: "Kinh doanh",
       jobs: 1253,
-      icon: <Briefcase size={28} />,
+      icon: <Briefcase size={22} />,
       color: "from-emerald-400 to-emerald-600",
     },
     {
       name: "Kế toán / Kiểm toán",
       jobs: 912,
-      icon: <BarChart3 size={28} />,
+      icon: <BarChart3 size={22} />,
       color: "from-blue-400 to-blue-600",
     },
     {
       name: "Kiến trúc / Xây dựng",
       jobs: 911,
-      icon: <Building2 size={28} />,
+      icon: <Building2 size={22} />,
       color: "from-orange-400 to-orange-600",
     },
     {
       name: "CNTT / Viễn thông",
       jobs: 817,
-      icon: <Cpu size={28} />,
+      icon: <Cpu size={22} />,
       color: "from-violet-400 to-purple-600",
     },
     {
       name: "Sản xuất",
       jobs: 838,
-      icon: <Factory size={28} />,
+      icon: <Factory size={22} />,
       color: "from-teal-400 to-teal-600",
     },
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 mt-32">
+    <section className="max-w-7xl mx-auto px-4 md:px-6 mt-20">
       {/* HEADER */}
-      <div className="mb-18 text-center">
-        <span className="inline-block mb-4 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+      <div className="mb-10 text-center">
+        <span className="inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
           Danh mục nổi bật
         </span>
 
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
           Ngành nghề trọng điểm
         </h2>
 
-        <p className="text-gray-500 mt-4 max-w-2xl mx-auto leading-relaxed">
-          Khám phá những lĩnh vực đang có nhu cầu tuyển dụng
-          cao và phát triển mạnh trên thị trường lao động
+        <p className="text-gray-500 mt-3 max-w-xl mx-auto text-sm leading-relaxed">
+          Những lĩnh vực đang có nhu cầu tuyển dụng cao
+          trên thị trường lao động
         </p>
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
         {industries.map((item, index) => (
           <div
             key={index}
-            className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-transparent cursor-pointer"
+            className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5
+                       transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:border-transparent cursor-pointer"
           >
             {/* GRADIENT BACKGROUND */}
             <div
@@ -73,26 +74,27 @@ export default function KeyIndustries() {
 
             {/* ICON */}
             <div
-              className={`relative z-10 mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg transition-transform duration-300 group-hover:scale-110`}
+              className={`relative z-10 mx-auto mb-4 flex h-12 w-12 items-center justify-center
+                          rounded-xl bg-gradient-to-br ${item.color} text-white shadow`}
             >
               {item.icon}
             </div>
 
             {/* NAME */}
-            <h4 className="relative z-10 text-base font-semibold text-gray-900 text-center mb-1">
+            <h4 className="relative z-10 text-sm font-semibold text-gray-900 text-center mb-0.5">
               {item.name}
             </h4>
 
             {/* COUNT */}
-            <p className="relative z-10 text-sm text-gray-500 text-center">
+            <p className="relative z-10 text-xs text-gray-500 text-center">
               {item.jobs.toLocaleString()} việc làm
             </p>
 
             {/* CTA */}
-            <div className="absolute inset-x-0 bottom-5 flex justify-center opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition">
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+            <div className="absolute inset-x-0 bottom-3 flex justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
                 Xem việc làm
-                <ArrowRight size={14} />
+                <ArrowRight size={12} />
               </span>
             </div>
           </div>
