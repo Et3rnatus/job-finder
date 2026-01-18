@@ -1,55 +1,10 @@
-import { useEffect, useState } from "react";
-import { getJobLogs } from "../../services/adminService";
 import {
   X,
-  ShieldCheck,
-  ShieldX,
-  Clock,
   History,
+  Clock,
 } from "lucide-react";
 
-export default function JobAuditModal({ jobId, onClose }) {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  /* =====================
-     ACTION CONFIG
-  ===================== */
-  const actionMap = {
-    approved: {
-      text: "Đã duyệt",
-      className:
-        "text-green-700 bg-green-100 border-green-200",
-      icon: <ShieldCheck className="w-4 h-4" />,
-    },
-    rejected: {
-      text: "Đã từ chối",
-      className:
-        "text-red-700 bg-red-100 border-red-200",
-      icon: <ShieldX className="w-4 h-4" />,
-    },
-  };
-
-  /* =====================
-     FETCH LOGS
-  ===================== */
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        setLoading(true);
-        const res = await getJobLogs(jobId);
-        setLogs(Array.isArray(res) ? res : []);
-      } catch (err) {
-        console.error("GET JOB LOGS ERROR:", err);
-        setLogs([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (jobId) loadLogs();
-  }, [jobId]);
-
+export default function JobAuditModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
@@ -94,94 +49,15 @@ export default function JobAuditModal({ jobId, onClose }) {
         {/* =====================
             CONTENT
         ===================== */}
-        {loading && (
-          <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
-            <Clock className="w-4 h-4 animate-pulse" />
-            Đang tải lịch sử duyệt...
-          </div>
-        )}
-
-        {!loading && logs.length === 0 && (
-          <div className="py-12 text-center text-gray-400">
-            <Clock className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm font-medium">
-              Chưa có lịch sử duyệt
-            </p>
-            <p className="text-xs mt-1">
-              Công việc này chưa từng được xét duyệt
-            </p>
-          </div>
-        )}
-
-        {!loading && logs.length > 0 && (
-          <ul className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
-            {logs.map((log, index) => {
-              const action =
-                actionMap[log.action] || {};
-              const isLast =
-                index === logs.length - 1;
-
-              return (
-                <li
-                  key={log.id || index}
-                  className="
-                    relative
-                    rounded-xl
-                    border border-gray-200
-                    bg-white
-                    p-4
-                    hover:shadow-md
-                    transition
-                  "
-                >
-                  {/* TIMELINE LINE */}
-                  {!isLast && (
-                    <span className="absolute left-5 top-full h-4 w-px bg-gray-200" />
-                  )}
-
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {log.admin_email}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {new Date(
-                          log.created_at
-                        ).toLocaleString("vi-VN")}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`
-                        inline-flex items-center gap-1.5
-                        px-2.5 py-1
-                        rounded-full
-                        text-xs font-semibold
-                        border
-                        ${
-                          action.className ||
-                          "text-gray-600 bg-gray-100 border-gray-200"
-                        }
-                      `}
-                    >
-                      {action.icon}
-                      {action.text || log.action}
-                    </span>
-                  </div>
-
-                  {log.note && (
-                    <div className="mt-3 text-sm text-gray-700">
-                      <span className="font-medium">
-                        Ghi chú:
-                      </span>{" "}
-                      {log.note}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <div className="py-12 text-center text-gray-400">
+          <Clock className="w-10 h-10 mx-auto mb-4 opacity-40" />
+          <p className="text-sm font-semibold">
+            Chức năng đang phát triển
+          </p>
+          <p className="text-xs mt-1">
+            Lịch sử duyệt công việc sẽ được bổ sung sau
+          </p>
+        </div>
 
         {/* =====================
             FOOTER

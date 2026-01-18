@@ -21,26 +21,10 @@ export const getDashboard = async () => {
   return res.data;
 };
 
-// GET /api/admin/dashboard/trends
-export const getDashboardTrends = async () => {
-  const res = await axios.get(
-    `${API_URL}/dashboard/trends`,
-    { headers: getAuthHeader() }
-  );
-  return res.data;
-};
-
+// GET /api/admin/dashboard/job-trends
 export const getJobTrends = async () => {
   const res = await axios.get(
-    `${API_URL}/job-trends`,
-    { headers: getAuthHeader() }
-  );
-  return res.data;
-};
-
-export const getJobTrends24h = async () => {
-  const res = await axios.get(
-    `${API_URL}/dashboard/job-trends-24h`,
+    `${API_URL}/dashboard/job-trends`,
     { headers: getAuthHeader() }
   );
   return res.data;
@@ -70,26 +54,19 @@ export const getJobDetailForAdmin = async (jobId) => {
 
 // PATCH /api/admin/jobs/:id/approve
 export const approveJob = async (id) => {
-  await axios.patch(
+  const res = await axios.patch(
     `${API_URL}/jobs/${id}/approve`,
     {},
     { headers: getAuthHeader() }
   );
+  return res.data;
 };
 
 // PATCH /api/admin/jobs/:id/reject
 export const rejectJob = async (id, admin_note) => {
-  await axios.patch(
+  const res = await axios.patch(
     `${API_URL}/jobs/${id}/reject`,
     { admin_note },
-    { headers: getAuthHeader() }
-  );
-};
-
-// GET /api/admin/jobs/:id/logs
-export const getJobLogs = async (jobId) => {
-  const res = await axios.get(
-    `${API_URL}/jobs/${jobId}/logs`,
     { headers: getAuthHeader() }
   );
   return res.data;
@@ -109,11 +86,12 @@ export const getUsers = async () => {
 
 // PATCH /api/admin/users/:id/status
 export const updateUserStatus = async (id, status) => {
-  await axios.patch(
+  const res = await axios.patch(
     `${API_URL}/users/${id}/status`,
     { status },
     { headers: getAuthHeader() }
   );
+  return res.data;
 };
 
 /* =========================
@@ -130,40 +108,19 @@ export const getCategories = async () => {
 
 // POST /api/admin/categories
 export const createCategory = async (name) => {
-  await axios.post(
+  const res = await axios.post(
     `${API_URL}/categories`,
     { name },
-    { headers: getAuthHeader() }
-  );
-};
-
-// PATCH /api/admin/categories/:id/toggle
-export const toggleCategory = async (id) => {
-  await axios.patch(
-    `${API_URL}/categories/${id}/toggle`,
-    {},
-    { headers: getAuthHeader() }
-  );
-};
-
-/* =========================
-   PAYMENT MANAGEMENT (NEW)
-========================= */
-
-// GET /api/admin/payments
-export const getPayments = async () => {
-  const res = await axios.get(
-    `${API_URL}/payments`,
     { headers: getAuthHeader() }
   );
   return res.data;
 };
 
-// POST /api/admin/payments/approve
-export const approvePayment = async (orderId) => {
-  const res = await axios.post(
-    `${API_URL}/payments/approve`,
-    { orderId },
+// PATCH /api/admin/categories/:id/toggle
+export const toggleCategory = async (id) => {
+  const res = await axios.patch(
+    `${API_URL}/categories/${id}/toggle`,
+    {},
     { headers: getAuthHeader() }
   );
   return res.data;

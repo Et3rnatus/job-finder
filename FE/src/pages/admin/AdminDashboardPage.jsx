@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  getDashboard,
-  getDashboardTrends,
-  getJobTrends24h,
-} from "../../services/adminService";
+import { getDashboard, getJobTrends } from "../../services/adminService";
 
 import StatCard from "../../components/admin/StatCard";
 import AdminDashboardTrends from "../../components/admin/AdminDashboardTrends";
-import AdminDashboardTrends24h from "../../components/admin/AdminDashboardTrends24h";
 
 import {
   LayoutDashboard,
@@ -18,7 +13,6 @@ import {
 export default function AdminDashboardPage() {
   const [data, setData] = useState(null);
   const [trendData, setTrendData] = useState([]);
-  const [trend24hData, setTrend24hData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   /* =====================
@@ -34,39 +28,9 @@ export default function AdminDashboardPage() {
         setData(dashboardRes);
 
         /* TRENDS – 7 DAYS */
-        const trendsRes = await getDashboardTrends();
-        const map = {};
-
-        trendsRes.created.forEach((i) => {
-          map[i.date] = {
-            date: i.date,
-            created: i.total,
-            approved: 0,
-          };
-        });
-
-        trendsRes.approved.forEach((i) => {
-          if (!map[i.date]) {
-            map[i.date] = {
-              date: i.date,
-              created: 0,
-              approved: i.total,
-            };
-          } else {
-            map[i.date].approved = i.total;
-          }
-        });
-
+        const trendsRes = await getJobTrends();
         setTrendData(
-          Object.values(map).sort(
-            (a, b) => new Date(a.date) - new Date(b.date)
-          )
-        );
-
-        /* TRENDS – 24H */
-        const trends24hRes = await getJobTrends24h();
-        setTrend24hData(
-          Array.isArray(trends24hRes) ? trends24hRes : []
+          Array.isArray(trendsRes) ? trendsRes : []
         );
       } catch (error) {
         console.error("GET DASHBOARD ERROR:", error);
@@ -137,8 +101,8 @@ export default function AdminDashboardPage() {
           value={data.total_users}
         />
         <StatCard
-          title="Blocked Users"
-          value={data.blocked_users}
+          title="Inactive Users"
+          value={data.inactive_users}
         />
         <StatCard
           title="Pending Jobs"
@@ -153,22 +117,6 @@ export default function AdminDashboardPage() {
           title="Rejected Jobs"
           value={data.rejected_jobs}
         />
-      </div>
-
-      {/* =====================
-          TRENDS – 24H
-      ===================== */}
-      <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
-        <div className="mb-5">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Xu hướng 24 giờ gần nhất
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Biến động tin tuyển dụng theo từng giờ
-          </p>
-        </div>
-
-        <AdminDashboardTrends24h data={trend24hData} />
       </div>
 
       {/* =====================

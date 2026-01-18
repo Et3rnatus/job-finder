@@ -9,43 +9,79 @@ const {
 const adminController = require("../controllers/admin.controller");
 
 /* =====================================
-   ADMIN ROUTES
+   ADMIN AUTH (GLOBAL)
 ===================================== */
-router.use(verifyToken, requireRole("admin"));
+router.use(verifyToken);
+router.use(requireRole("admin"));
 
-/* =====================
+/* =====================================
    DASHBOARD
-===================== */
+===================================== */
+
+// GET /api/admin/dashboard
 router.get("/dashboard", adminController.dashboard);
-router.get("/dashboard/job-trends", adminController.getJobTrends);
 
-/* =====================
+// GET /api/admin/dashboard/job-trends
+router.get(
+  "/dashboard/job-trends",
+  adminController.getJobTrends
+);
+
+/* =====================================
    USER MANAGEMENT
-===================== */
+===================================== */
+
+// GET /api/admin/users
 router.get("/users", adminController.getUsers);
-router.patch("/users/:id/status", adminController.updateUserStatus);
 
-/* =====================
+// PATCH /api/admin/users/:id/status
+router.patch(
+  "/users/:id/status",
+  adminController.updateUserStatus
+);
+
+/* =====================================
    JOB MODERATION
-===================== */
+===================================== */
 
-// danh sách job
+// GET /api/admin/jobs?status=pending
 router.get("/jobs", adminController.getJobs);
 
-// chi tiết job (review)
-router.get("/jobs/:id", adminController.getJobDetailForAdmin);
+// GET /api/admin/jobs/:id
+router.get(
+  "/jobs/:id",
+  adminController.getJobDetailForAdmin
+);
 
-// duyệt
-router.patch("/jobs/:id/approve", adminController.approveJob);
+// PATCH /api/admin/jobs/:id/approve
+router.patch(
+  "/jobs/:id/approve",
+  adminController.approveJob
+);
 
-// từ chối
-router.patch("/jobs/:id/reject", adminController.rejectJob);
+// PATCH /api/admin/jobs/:id/reject
+router.patch(
+  "/jobs/:id/reject",
+  adminController.rejectJob
+);
 
-/* =====================
+/* =====================================
    JOB CATEGORIES
-===================== */
-router.get("/categories", adminController.getCategories);
-router.post("/categories", adminController.createCategory);
+===================================== */
+
+// GET /api/admin/categories
+router.get(
+  "/categories",
+  adminController.getCategories
+);
+
+// POST /api/admin/categories
+router.post(
+  "/categories",
+  adminController.createCategory
+);
+
+// PATCH /api/admin/categories/:id/toggle
 router.patch(
   "/categories/:id/toggle",
   adminController.toggleCategory

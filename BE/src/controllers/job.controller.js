@@ -282,7 +282,7 @@ exports.getAllJobs = async (req, res) => {
       SELECT
         j.id,
         j.title,
-        j.location,
+        e.city AS location,
         j.employment_type,
         j.level,
         j.min_salary,
