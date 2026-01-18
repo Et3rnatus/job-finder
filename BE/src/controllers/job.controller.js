@@ -554,7 +554,7 @@ exports.getJobDetail = async (req, res) => {
         e.id           AS company_id,
         e.company_name AS company_name,
         e.description  AS company_description,
-        e.logo         AS company_logo,
+        e.logo         AS logo,
         e.website      AS company_website,
         CONCAT_WS(', ', e.address_detail, e.district, e.city) AS company_address
       FROM job j

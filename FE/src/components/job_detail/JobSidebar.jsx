@@ -1,8 +1,19 @@
 import { Globe, MapPin, Building2, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const API_URL = "http://127.0.0.1:3001";
+
 function JobSidebar({ job }) {
   if (!job) return null;
+
+  /* =====================
+     LOGO EMPLOYER
+  ===================== */
+  const logoSrc = job.logo
+    ? job.logo.startsWith("http")
+      ? job.logo
+      : `${API_URL}${job.logo}`
+    : null;
 
   return (
     <aside
@@ -11,7 +22,6 @@ function JobSidebar({ job }) {
         rounded-3xl p-6
         shadow-sm
         space-y-8
-        sticky top-6
       "
     >
       {/* =====================
@@ -19,14 +29,17 @@ function JobSidebar({ job }) {
       ===================== */}
       <div className="flex items-center gap-4">
         {/* LOGO */}
-        {job.company_logo ? (
+        {logoSrc ? (
           <img
-            src={job.company_logo}
-            alt="Company logo"
+            src={logoSrc}
+            alt=""
             className="
               w-14 h-14 object-contain
               border rounded-2xl bg-white
             "
+            onError={(e) => {
+              e.currentTarget.src = "/default-company.png";
+            }}
           />
         ) : (
           <div
