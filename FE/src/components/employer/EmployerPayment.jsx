@@ -9,205 +9,248 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const PACKAGE_PRICE = 50000;
+const PACKAGES = [
+  {
+    id: "basic",
+    name: "Gói Cơ Bản",
+    price: 50000,
+    benefits: [
+      "Đăng tối đa 3 tin / 30 ngày",
+      "Quản lý hồ sơ ứng viên",
+      "Hỗ trợ cơ bản",
+    ],
+  },
+  {
+    id: "standard",
+    name: "Gói Tiêu Chuẩn",
+    price: 150000,
+    benefits: [
+      "Đăng tối đa 10 tin / 30 ngày",
+      "Ưu tiên hiển thị tin",
+      "Quản lý & lọc hồ sơ",
+    ],
+  },
+  {
+    id: "premium",
+    name: "Gói Cao Cấp",
+    price: 300000,
+    benefits: [
+      "Đăng tin không giới hạn / 30 ngày",
+      "Ưu tiên hiển thị cao nhất",
+      "Hỗ trợ 1-1",
+    ],
+  },
+];
 
 export default function EmployerPayment() {
+  const [selectedPackage, setSelectedPackage] = useState(PACKAGES[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [qrUrl, setQrUrl] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  // 🔹 Thông tin chuyển tiền (làm cho nó "thật")
+  const [transferInfo, setTransferInfo] = useState(null);
 
   /* =====================
-     HANDLE PAYMENT
+     HANDLE VIETQR PAYMENT
   ===================== */
   const handlePay = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const data =
-        await paymentService.createMoMoPayment(
-          PACKAGE_PRICE
-        );
+      const data = await paymentService.createVietQRPayment(
+        selectedPackage.id // 🔥 QUAN TRỌNG
+      );
 
-      if (!data?.payUrl) {
-        throw new Error("Missing payUrl");
+      if (!data?.qrUrl) {
+        throw new Error("Missing QR data");
       }
 
-      // Redirect sang MoMo
-      window.location.href = data.payUrl;
+      setQrUrl(data.qrUrl);
+      setTransferInfo({
+        accountName: data.accountName,
+        amount: data.amount,
+        content: data.transferContent,
+      });
+
+      setConfirm(false);
     } catch (err) {
       console.error(err);
       setError(
-        "Không thể khởi tạo thanh toán. Vui lòng thử lại sau."
+        "Không thể khởi tạo thanh toán VietQR. Vui lòng thử lại."
       );
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <>
-      <div className="max-w-4xl mx-auto bg-white border border-gray-200 rounded-3xl p-10 shadow-sm">
-        {/* =====================
-            HEADER
-        ===================== */}
+      <div className="max-w-5xl mx-auto bg-white border border-gray-200 rounded-3xl p-10 shadow-sm">
+        {/* HEADER */}
         <div className="flex items-center gap-4 mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white flex items-center justify-center shadow-md">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center">
             <CreditCard size={26} />
           </div>
-
           <div>
-            <h2 className="text-3xl font-semibold text-gray-900">
-              Nâng cấp tài khoản nhà tuyển dụng
+            <h2 className="text-3xl font-semibold">
+              Chọn gói dịch vụ tuyển dụng
             </h2>
             <p className="text-gray-500 mt-1">
-              Mở khóa đầy đủ tính năng tuyển dụng
-              chuyên nghiệp
+              Thanh toán để mở quyền đăng tin cho nhà tuyển dụng
             </p>
           </div>
         </div>
 
-        {/* =====================
-            PACKAGE
-        ===================== */}
-        <div className="relative overflow-hidden border border-gray-200 rounded-3xl p-8 mb-10 bg-gradient-to-br from-white to-pink-50">
-          <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700">
-            Phổ biến nhất
-          </div>
-
-          <div className="flex flex-wrap justify-between gap-8">
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Gói Cơ Bản
+        {/* PACKAGES */}
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
+          {PACKAGES.map((pkg) => (
+            <div
+              key={pkg.id}
+              onClick={() => setSelectedPackage(pkg)}
+              className={`cursor-pointer rounded-3xl border p-6 transition ${
+                selectedPackage.id === pkg.id
+                  ? "border-emerald-500 bg-emerald-50"
+                  : "border-gray-200 hover:border-emerald-300"
+              }`}
+            >
+              <h3 className="text-xl font-semibold mb-2">
+                {pkg.name}
               </h3>
-
-              <ul className="mt-4 space-y-3 text-sm text-gray-600">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2
-                    size={16}
-                    className="text-emerald-600"
-                  />
-                  Đăng tin tuyển dụng không giới hạn
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2
-                    size={16}
-                    className="text-emerald-600"
-                  />
-                  Quản lý & duyệt hồ sơ ứng viên
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2
-                    size={16}
-                    className="text-emerald-600"
-                  />
-                  Thống kê & theo dõi hiệu quả tuyển dụng
-                </li>
+              <p className="text-2xl font-bold mb-4">
+                {pkg.price.toLocaleString("vi-VN")}₫
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                {pkg.benefits.map((b, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle2
+                      size={14}
+                      className="text-emerald-600"
+                    />
+                    {b}
+                  </li>
+                ))}
               </ul>
             </div>
-
-            <div className="text-right">
-              <p className="text-3xl font-bold text-gray-900">
-                {PACKAGE_PRICE.toLocaleString("vi-VN")}₫
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Thanh toán một lần
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* =====================
-            PAYMENT METHOD
-        ===================== */}
-        <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
-              <Zap size={18} />
+        {/* PAYMENT BUTTON */}
+        {!qrUrl && (
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Zap size={16} />
+              Thanh toán bằng{" "}
+              <span className="font-semibold text-emerald-600">
+                VietQR
+              </span>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-800">
-                Phương thức thanh toán
-              </p>
-              <p className="text-xs text-gray-500">
-                Ví điện tử{" "}
-                <span className="font-semibold text-pink-600">
-                  MoMo
-                </span>
-              </p>
-            </div>
-          </div>
 
-          <button
-            onClick={() => setConfirm(true)}
-            disabled={loading}
-            className={`inline-flex items-center gap-2 px-8 py-4 rounded-full text-sm font-semibold text-white transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-pink-600 to-rose-600 hover:opacity-90"
-            }`}
-          >
-            {loading && (
-              <Loader2
-                size={18}
-                className="animate-spin"
-              />
+            <button
+              onClick={() => setConfirm(true)}
+              className="px-8 py-4 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
+            >
+              Thanh toán {selectedPackage.price.toLocaleString()}₫
+            </button>
+          </div>
+        )}
+
+        {/* QR + TRANSFER INFO */}
+        {qrUrl && !success && (
+          <div className="text-center">
+            <img
+              src={qrUrl}
+              alt="VietQR"
+              className="mx-auto w-64 h-64 border rounded-2xl"
+            />
+
+            {/* THÔNG TIN CHUYỂN TIỀN */}
+            {transferInfo && (
+              <div className="mt-6 text-sm text-gray-700 space-y-1">
+                <p>
+                  <b>Người nhận:</b>{" "}
+                  {transferInfo.accountName}
+                </p>
+                <p>
+                  <b>Số tiền:</b>{" "}
+                  {transferInfo.amount.toLocaleString(
+                    "vi-VN"
+                  )}
+                  ₫
+                </p>
+                <p>
+                  <b>Nội dung:</b>{" "}
+                  <span className="font-mono">
+                    {transferInfo.content}
+                  </span>
+                </p>
+              </div>
             )}
-            {loading ? "Đang xử lý..." : "Thanh toán MoMo"}
-          </button>
-        </div>
 
-        {/* =====================
-            SECURITY NOTE
-        ===================== */}
-        <div className="flex items-center gap-2 text-xs text-gray-500 mb-6">
-          <ShieldCheck size={14} />
-          Giao dịch được bảo mật và xử lý trực tiếp
-          qua MoMo
-        </div>
+            <button
+              onClick={() => setSuccess(true)}
+              className="mt-5 px-6 py-3 bg-emerald-600 text-white rounded-xl"
+            >
+              Tôi đã thanh toán
+            </button>
+          </div>
+        )}
 
-        {/* =====================
-            ERROR
-        ===================== */}
+        {success && (
+          <div className="mt-6 flex gap-2 items-center bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-700">
+            <CheckCircle2 size={18} />
+            Thanh toán đã được ghi nhận. Chờ admin xác nhận
+            để mở quyền đăng tin.
+          </div>
+        )}
+
         {error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="mt-6 flex gap-2 items-center bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">
             <AlertTriangle size={18} />
             {error}
           </div>
         )}
+
+        <div className="mt-6 text-xs text-gray-500 flex gap-2 items-center">
+          <ShieldCheck size={14} />
+          Thanh toán VietQR – mô phỏng cho mục đích học thuật
+        </div>
       </div>
 
-      {/* =====================
-          CONFIRM MODAL
-      ===================== */}
+      {/* CONFIRM MODAL */}
       {confirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl text-center">
-            <CheckCircle2
-              size={42}
-              className="mx-auto text-emerald-600 mb-4"
-            />
-            <h3 className="text-lg font-semibold mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-center">
+            <h3 className="font-semibold mb-3">
               Xác nhận thanh toán
             </h3>
             <p className="text-sm text-gray-600 mb-6">
-              Bạn sẽ được chuyển đến cổng thanh toán
-              MoMo để hoàn tất giao dịch.
+              Bạn đang chọn <b>{selectedPackage.name}</b> –{" "}
+              {selectedPackage.price.toLocaleString("vi-VN")}₫
             </p>
-
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setConfirm(false)}
-                disabled={loading}
-                className="px-4 py-2 rounded-xl border hover:bg-gray-100"
+                className="px-4 py-2 border rounded-xl"
               >
                 Hủy
               </button>
               <button
                 onClick={handlePay}
                 disabled={loading}
-                className="px-5 py-2 rounded-xl bg-pink-600 text-white hover:bg-pink-700"
+                className="px-5 py-2 bg-emerald-600 text-white rounded-xl"
               >
-                Tiếp tục
+                {loading ? (
+                  <Loader2
+                    size={16}
+                    className="animate-spin inline"
+                  />
+                ) : (
+                  "Tiếp tục"
+                )}
               </button>
             </div>
           </div>

@@ -4,6 +4,8 @@ const router = express.Router();
 const jobController = require('../controllers/job.controller');
 const { verifyToken, requireRole } = require('../middlewares/auth.middleware');
 const { requireCompletedEmployerProfile } = require('../middlewares/employerProfile.middleware');
+const checkEmployerActive = require("../middlewares/checkEmployerActive");
+
 
 // employer đăng job
 router.post(
@@ -11,6 +13,7 @@ router.post(
   verifyToken,
   requireRole('employer'),
   requireCompletedEmployerProfile,
+  checkEmployerActive,
   jobController.createJob
 );
 

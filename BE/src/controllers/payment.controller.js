@@ -1,158 +1,151 @@
-const https = require("https");
-const crypto = require("crypto");
-const momoConfig = require("../config/momo.config");
+const db = require("../config/db");
 
 /* =====================
    DEMO IN-MEMORY STORE
 ===================== */
-// Giả lập DB để demo luận văn
 const demoPayments = {};
 
 /* =====================
-   CREATE MOMO PAYMENT
+   PACKAGE CONFIG
 ===================== */
-exports.createMoMoPayment = async (req, res) => {
-  try {
-    const { amount } = req.body;
-
-    if (!amount) {
-      return res.status(400).json({
-        message: "Amount is required",
-      });
-    }
-
-    const orderId = "ORDER_" + Date.now();
-    const requestId = orderId;
-    const orderInfo = "Thanh toan goi dich vu";
-    const requestType = "captureWallet";
-    const extraData = "";
-    const amountStr = String(amount);
-
-    /* ===== LƯU GIAO DỊCH (PENDING) ===== */
-    demoPayments[orderId] = {
-      orderId,
-      amount: amountStr,
-      status: "PENDING", // 👈 chờ admin duyệt
-      createdAt: new Date(),
-    };
-
-    /* ===== SIGNATURE ===== */
-    const rawSignature =
-      "accessKey=" + momoConfig.accessKey +
-      "&amount=" + amountStr +
-      "&extraData=" + extraData +
-      "&ipnUrl=" + momoConfig.ipnUrl +
-      "&orderId=" + orderId +
-      "&orderInfo=" + orderInfo +
-      "&partnerCode=" + momoConfig.partnerCode +
-      "&redirectUrl=" + momoConfig.redirectUrl +
-      "&requestId=" + requestId +
-      "&requestType=" + requestType;
-
-    const signature = crypto
-      .createHmac("sha256", momoConfig.secretKey)
-      .update(rawSignature)
-      .digest("hex");
-
-    /* ===== REQUEST BODY ===== */
-    const requestBody = JSON.stringify({
-      partnerCode: momoConfig.partnerCode,
-      accessKey: momoConfig.accessKey,
-      requestId,
-      amount: amountStr,
-      orderId,
-      orderInfo,
-      redirectUrl: momoConfig.redirectUrl,
-      ipnUrl: momoConfig.ipnUrl,
-      extraData,
-      requestType,
-      signature,
-      lang: "vi",
-    });
-
-    const options = {
-      hostname: "test-payment.momo.vn",
-      port: 443,
-      path: "/v2/gateway/api/create",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Length": Buffer.byteLength(requestBody),
-      },
-    };
-
-    const momoReq = https.request(options, (momoRes) => {
-      let body = "";
-
-      momoRes.on("data", (chunk) => {
-        body += chunk;
-      });
-
-      momoRes.on("end", () => {
-        const data = JSON.parse(body);
-
-        return res.json({
-          payUrl: data.payUrl,
-          orderId, // dùng cho admin duyệt
-        });
-      });
-    });
-
-    momoReq.on("error", (error) => {
-      console.error("MOMO REQUEST ERROR:", error);
-      return res.status(500).json({
-        message: "MoMo payment failed",
-      });
-    });
-
-    momoReq.write(requestBody);
-    momoReq.end();
-  } catch (error) {
-    console.error("CREATE MOMO PAYMENT ERROR:", error);
-    return res.status(500).json({
-      message: "Create MoMo payment failed",
-    });
-  }
+const PACKAGES = {
+  basic: {
+    name: "Gói Cơ Bản",
+    price: 50000,
+    postLimit: 3,
+    durationDays: 30,
+  },
+  standard: {
+    name: "Gói Tiêu Chuẩn",
+    price: 150000,
+    postLimit: 10,
+    durationDays: 30,
+  },
+  premium: {
+    name: "Gói Cao Cấp",
+    price: 300000,
+    postLimit: -1,
+    durationDays: 30,
+  },
 };
 
 /* =====================
-   MOMO IPN (LOG ONLY)
+   CREATE VIETQR PAYMENT
 ===================== */
-exports.momoIPN = async (req, res) => {
+exports.createVietQRPayment = async (req, res) => {
   try {
-    console.log("🔔 MOMO IPN RECEIVED (LOG ONLY):", req.body);
+    const { packageId } = req.body;
 
-    // ❌ KHÔNG auto duyệt
-    // ❌ Chỉ dùng để ghi nhận / đối soát nếu cần
+    const pkg = PACKAGES[packageId];
+    if (!pkg) {
+      return res.status(400).json({
+        message: "Invalid package",
+      });
+    }
 
-    return res.status(200).json({ message: "OK" });
+    const orderId = "VIETQR_" + Date.now();
+
+    // 🔹 Lưu giao dịch demo (PENDING)
+    const payment = {
+      orderId,
+      userId: req.user.id,
+      packageId,
+      packageName: pkg.name,
+      amount: pkg.price,
+      postLimit: pkg.postLimit,
+      durationDays: pkg.durationDays,
+      status: "PENDING",
+      createdAt: new Date(),
+    };
+
+    demoPayments[orderId] = payment;
+
+    /* =====================
+       TRANSFER INFO (REALISTIC)
+    ===================== */
+
+    // Nội dung chuyển tiền (chuẩn ngân hàng)
+    const transferContent = `JOBFINDER ${packageId.toUpperCase()} U${payment.userId} ${orderId}`;
+
+    // Tên người nhận
+    const accountName = "CONG TY JOBFINDER";
+
+    // 🔹 Sinh QR VietQR (chuẩn Napas)
+    const qrUrl = `https://img.vietqr.io/image/970422-0000000000-compact.png` +
+      `?amount=${pkg.price}` +
+      `&addInfo=${encodeURIComponent(transferContent)}` +
+      `&accountName=${encodeURIComponent(accountName)}`;
+
+    return res.json({
+      message: "Tạo mã VietQR thành công",
+      orderId,
+      qrUrl,
+      amount: pkg.price,
+      transferContent,
+      accountName,
+      package: {
+        id: packageId,
+        name: pkg.name,
+        durationDays: pkg.durationDays,
+        postLimit: pkg.postLimit,
+      },
+    });
   } catch (error) {
-    console.error("MOMO IPN ERROR:", error);
-    return res.status(200).json({ message: "OK" });
+    console.error("CREATE VIETQR PAYMENT ERROR:", error);
+    return res.status(500).json({
+      message: "Create VietQR payment failed",
+    });
   }
 };
+
 
 /* =====================
    ADMIN: APPROVE PAYMENT
 ===================== */
-exports.approvePayment = (req, res) => {
-  const { orderId } = req.body;
+exports.approvePayment = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const payment = demoPayments[orderId];
 
-  if (!orderId || !demoPayments[orderId]) {
-    return res.status(404).json({
-      message: "Payment not found",
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment not found",
+      });
+    }
+
+    // 1️⃣ Update payment demo
+    payment.status = "SUCCESS";
+    payment.approvedAt = new Date();
+    payment.expiredAt = new Date(
+      Date.now() + payment.durationDays * 86400000
+    );
+
+    // 2️⃣ MỞ QUYỀN EMPLOYER (THẬT)
+    await db.execute(
+      `UPDATE users
+       SET status = 'active'
+       WHERE id = ?`,
+      [payment.userId]
+    );
+
+    console.log(
+      "✅ EMPLOYER ACTIVATED:",
+      payment.userId,
+      "EXPIRED AT:",
+      payment.expiredAt
+    );
+
+    return res.json({
+      message:
+        "Payment approved. Employer activated with time-limited access.",
+      payment,
+    });
+  } catch (error) {
+    console.error("APPROVE PAYMENT ERROR:", error);
+    return res.status(500).json({
+      message: "Approve payment failed",
     });
   }
-
-  demoPayments[orderId].status = "SUCCESS";
-  demoPayments[orderId].approvedAt = new Date();
-
-  console.log("✅ ADMIN APPROVED PAYMENT:", orderId);
-
-  return res.json({
-    message: "Payment approved",
-    payment: demoPayments[orderId],
-  });
 };
 
 /* =====================
