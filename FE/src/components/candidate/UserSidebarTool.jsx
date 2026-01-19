@@ -20,12 +20,7 @@ export default function UserSidebarTool({
      LOGOUT
   ===================== */
   const handleLogout = () => {
-    if (
-      !window.confirm(
-        "Bạn có chắc chắn muốn đăng xuất?"
-      )
-    )
-      return;
+    if (!window.confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
 
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -49,36 +44,24 @@ export default function UserSidebarTool({
 
         <SidebarItem
           icon={<FileText size={16} />}
-          active={location.pathname.includes(
-            "/candidate/applications"
-          )}
-          onClick={() =>
-            navigate("/candidate/applications")
-          }
+          active={location.pathname.includes("/candidate/applications")}
+          onClick={() => navigate("/candidate/applications")}
         >
           Công việc đã ứng tuyển
         </SidebarItem>
 
         <SidebarItem
           icon={<Bookmark size={16} />}
-          active={location.pathname.includes(
-            "/candidate/saved-jobs"
-          )}
-          onClick={() =>
-            navigate("/candidate/saved-jobs")
-          }
+          active={location.pathname.includes("/candidate/saved-jobs")}
+          onClick={() => navigate("/candidate/saved-jobs")}
         >
           Công việc đã lưu
         </SidebarItem>
 
         <SidebarItem
           icon={<Eye size={16} />}
-          active={location.pathname.includes(
-            "/candidate/viewed-jobs"
-          )}
-          onClick={() =>
-            navigate("/candidate/viewed-jobs")
-          }
+          active={location.pathname.includes("/candidate/viewed-jobs")}
+          onClick={() => navigate("/candidate/viewed-jobs")}
         >
           Công việc đã xem
         </SidebarItem>
@@ -99,7 +82,7 @@ export default function UserSidebarTool({
           className="mt-2 px-3 py-2 rounded-xl flex items-center gap-2 cursor-pointer text-red-600 font-semibold hover:bg-red-50 transition"
         >
           <LogOut size={16} />
-          Đăng xuất
+          <span>Đăng xuất</span>
         </li>
       </ul>
     </div>
@@ -119,16 +102,21 @@ function SidebarItem({
   return (
     <li
       onClick={onClick}
-      className={`group px-3 py-2 rounded-xl cursor-pointer flex items-center justify-between gap-2 transition
+      className={`
+        group px-3 py-2 rounded-xl
+        cursor-pointer transition
+        flex items-start
         ${
           active
             ? "bg-indigo-50 text-indigo-700"
             : "text-gray-700 hover:bg-gray-100"
-        }`}
+        }
+      `}
     >
-      <div className="flex items-center gap-2">
+      {/* LEFT */}
+      <div className="flex items-start gap-2">
         <span
-          className={`transition ${
+          className={`mt-0.5 transition ${
             active
               ? "text-indigo-600"
               : "text-gray-400 group-hover:text-gray-700"
@@ -136,14 +124,16 @@ function SidebarItem({
         >
           {icon}
         </span>
-        <span className="font-medium">
+
+        <span className="font-medium leading-snug break-words">
           {children}
         </span>
       </div>
 
+      {/* RIGHT – luôn căn giữa item */}
       <ChevronRight
         size={14}
-        className={`transition ${
+        className={`ml-auto self-center transition ${
           active
             ? "text-indigo-500"
             : "text-gray-300 group-hover:text-gray-500"
