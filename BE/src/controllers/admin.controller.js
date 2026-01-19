@@ -386,7 +386,6 @@ exports.updateSkill = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 exports.deleteSkill = async (req, res) => {
   const { id } = req.params;
 
