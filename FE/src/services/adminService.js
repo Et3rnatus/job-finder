@@ -171,3 +171,16 @@ export const deleteSkill = async (id) => {
   );
   return res.data;
 };
+
+/* =========================
+   SKILL STATS
+========================= */
+
+// GET /api/admin/skills/stats
+export const getSkillStats = async () => {
+  const res = await axios.get(
+    `${API_URL}/skills/stats`,
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};

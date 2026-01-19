@@ -413,3 +413,29 @@ exports.deleteSkill = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// SKILL STATS
+exports.getSkillStats = async (req, res) => {
+  try {
+    const [[total]] = await db.execute(
+      "SELECT COUNT(*) AS total FROM skill"
+    );
+
+    const [[soft]] = await db.execute(
+      "SELECT COUNT(*) AS total FROM skill WHERE skill_type = 'soft'"
+    );
+
+    const [[technical]] = await db.execute(
+      "SELECT COUNT(*) AS total FROM skill WHERE skill_type = 'technical'"
+    );
+
+    res.json({
+      total: total.total,
+      soft: soft.total,
+      technical: technical.total,
+    });
+  } catch (err) {
+    console.error("SKILL STATS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

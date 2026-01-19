@@ -91,5 +91,6 @@ router.get("/skills", adminController.getSkills);
 router.post("/skills", adminController.createSkill);
 router.put("/skills/:id", adminController.updateSkill);
 router.delete("/skills/:id", adminController.deleteSkill);
+router.get("/skills/stats", adminController.getSkillStats);
 
 module.exports = router;
