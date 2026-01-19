@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   getApplicationDetail,
   updateApplicationStatus,
@@ -17,6 +18,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+/* =====================
+   STATUS MAP
+===================== */
 const statusMap = {
   pending: {
     label: "Chờ duyệt",
@@ -52,6 +56,7 @@ export default function ApplicationDetailPage() {
   const [interviewTime, setInterviewTime] = useState("");
   const [interviewLocation, setInterviewLocation] = useState("");
   const [interviewNote, setInterviewNote] = useState("");
+  const [timeError, setTimeError] = useState("");
 
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
@@ -68,15 +73,12 @@ export default function ApplicationDetailPage() {
     getApplicationDetail(applicationId)
       .then(setData)
       .catch(() => {
-        alert("Không thể tải hồ sơ ứng viên");
+        toast.error("Không thể tải hồ sơ ứng viên");
         handleBack();
       })
       .finally(() => setLoading(false));
   }, [applicationId]);
 
-  /* =====================
-     PERMISSION
-  ===================== */
   if (role !== "employer") {
     return (
       <div className="bg-white border border-red-200 rounded-3xl p-12 text-center text-red-600">
@@ -85,12 +87,9 @@ export default function ApplicationDetailPage() {
     );
   }
 
-  /* =====================
-     LOADING
-  ===================== */
   if (loading) {
     return (
-      <div className="bg-white border border-gray-200 rounded-3xl p-20 flex flex-col items-center gap-4 text-gray-500">
+      <div className="bg-white border rounded-3xl p-20 flex flex-col items-center gap-4 text-gray-500">
         <Loader2 className="animate-spin" size={28} />
         Đang tải hồ sơ ứng viên...
       </div>
@@ -131,7 +130,7 @@ export default function ApplicationDetailPage() {
     try {
       setProcessing(true);
       await updateApplicationStatus(applicationId, "approved");
-      alert("Ứng viên đã được duyệt");
+      toast.success("Ứng viên đã được duyệt");
       handleBack();
     } finally {
       setProcessing(false);
@@ -142,12 +141,8 @@ export default function ApplicationDetailPage() {
     if (!rejectReason.trim() || processing) return;
     try {
       setProcessing(true);
-      await updateApplicationStatus(
-        applicationId,
-        "rejected",
-        rejectReason
-      );
-      alert("Đã từ chối ứng viên");
+      await updateApplicationStatus(applicationId, "rejected", rejectReason);
+      toast.success("Đã từ chối ứng viên");
       handleBack();
     } finally {
       setProcessing(false);
@@ -155,7 +150,14 @@ export default function ApplicationDetailPage() {
   };
 
   const invite = async () => {
-    if (!interviewTime || !interviewLocation || processing) return;
+    const selected = new Date(interviewTime);
+    if (selected <= new Date()) {
+      setTimeError("Thời gian phỏng vấn phải lớn hơn thời điểm hiện tại");
+      return;
+    }
+
+    if (!interviewLocation || processing) return;
+
     try {
       setProcessing(true);
       await inviteToInterview(applicationId, {
@@ -163,7 +165,7 @@ export default function ApplicationDetailPage() {
         interview_location: interviewLocation,
         interview_note: interviewNote,
       });
-      alert("Đã gửi lời mời phỏng vấn");
+      toast.success("Đã gửi lời mời phỏng vấn");
       handleBack();
     } finally {
       setProcessing(false);
@@ -172,12 +174,10 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-      {/* =====================
-          HEADER
-      ===================== */}
+      {/* HEADER */}
       <div className="flex justify-between items-start gap-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-semibold">
             {basic.full_name || "Ứng viên"}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -185,8 +185,7 @@ export default function ApplicationDetailPage() {
             <span className="font-medium">{job_title}</span>
           </p>
           <p className="text-sm text-gray-500">
-            Nộp ngày{" "}
-            {new Date(applied_at).toLocaleDateString("vi-VN")}
+            Nộp ngày {new Date(applied_at).toLocaleDateString("vi-VN")}
           </p>
         </div>
 
@@ -196,7 +195,6 @@ export default function ApplicationDetailPage() {
           >
             {statusMap[status].label}
           </span>
-
           <button
             onClick={handleBack}
             className="text-sm text-gray-600 hover:underline"
@@ -206,9 +204,7 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* =====================
-          INTERVIEW INFO
-      ===================== */}
+      {/* INTERVIEW INFO */}
       {status === "interview" && (
         <Section title="Thông tin phỏng vấn">
           <ul className="text-sm space-y-2">
@@ -221,26 +217,19 @@ export default function ApplicationDetailPage() {
               {interview_location}
             </li>
             {interview_note && (
-              <li className="text-sm text-gray-600">
-                {interview_note}
-              </li>
+              <li className="text-sm text-gray-600">{interview_note}</li>
             )}
             <li className="text-xs text-gray-400">
-              Gửi lúc{" "}
-              {new Date(interview_sent_at).toLocaleString("vi-VN")}
+              Gửi lúc {new Date(interview_sent_at).toLocaleString("vi-VN")}
             </li>
           </ul>
         </Section>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* =====================
-            LEFT
-        ===================== */}
+        {/* LEFT */}
         <div className="lg:col-span-2 space-y-6">
-          <Section title="Thư xin việc">
-            {cover_letter || <Empty />}
-          </Section>
+          <Section title="Thư xin việc">{cover_letter || <Empty />}</Section>
 
           <Section title="Kỹ năng">
             {skills.length ? (
@@ -266,9 +255,7 @@ export default function ApplicationDetailPage() {
                   key={i}
                   title={e.position}
                   subtitle={e.company}
-                  time={`${e.start_date} – ${
-                    e.end_date || "Hiện tại"
-                  }`}
+                  time={`${e.start_date} – ${e.end_date || "Hiện tại"}`}
                   desc={e.description}
                 />
               ))
@@ -282,11 +269,8 @@ export default function ApplicationDetailPage() {
               education.map((e, i) => (
                 <Timeline
                   key={i}
-                  title={e.school}
-                  subtitle={`${e.degree} – ${e.major}`}
-                  time={`${e.start_date} – ${
-                    e.end_date || "Hiện tại"
-                  }`}
+                  title={e.institution}
+                  subtitle={`${e.level} – ${e.major}`}
                 />
               ))
             ) : (
@@ -295,9 +279,7 @@ export default function ApplicationDetailPage() {
           </Section>
         </div>
 
-        {/* =====================
-            RIGHT
-        ===================== */}
+        {/* RIGHT */}
         <div className="space-y-6">
           <Section title="Liên hệ">
             <p className="text-sm flex items-center gap-2">
@@ -310,16 +292,10 @@ export default function ApplicationDetailPage() {
 
           {status === "pending" && (
             <ActionBox>
-              <Primary
-                disabled={processing}
-                onClick={() => setShowInterviewModal(true)}
-              >
+              <Primary onClick={() => setShowInterviewModal(true)}>
                 Mời phỏng vấn
               </Primary>
-              <Danger
-                disabled={processing}
-                onClick={() => setShowRejectModal(true)}
-              >
+              <Danger onClick={() => setShowRejectModal(true)}>
                 Từ chối
               </Danger>
             </ActionBox>
@@ -327,14 +303,11 @@ export default function ApplicationDetailPage() {
 
           {status === "interview" && (
             <ActionBox>
-              <Success disabled={processing} onClick={approve}>
+              <Success onClick={approve}>
                 <CheckCircle2 size={14} />
                 Duyệt hồ sơ
               </Success>
-              <Danger
-                disabled={processing}
-                onClick={() => setShowRejectModal(true)}
-              >
+              <Danger onClick={() => setShowRejectModal(true)}>
                 <XCircle size={14} />
                 Từ chối
               </Danger>
@@ -343,62 +316,95 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* =====================
-          MODALS
-      ===================== */}
+      {/* MODAL – MỜI PHỎNG VẤN */}
       {showInterviewModal && (
-        <Modal
-          title="Mời phỏng vấn"
-          onClose={() => setShowInterviewModal(false)}
-        >
-          <input
-            type="datetime-local"
-            className="input"
-            value={interviewTime}
-            onChange={(e) => setInterviewTime(e.target.value)}
-          />
-          <input
-            className="input mt-3"
-            placeholder="Địa điểm"
-            value={interviewLocation}
-            onChange={(e) => setInterviewLocation(e.target.value)}
-          />
-          <textarea
-            rows={3}
-            className="input mt-3"
-            placeholder="Ghi chú"
-            value={interviewNote}
-            onChange={(e) => setInterviewNote(e.target.value)}
-          />
+        <Modal title="Mời phỏng vấn" onClose={() => setShowInterviewModal(false)}>
+          <div className="space-y-4">
+            <FormField label="Thời gian phỏng vấn *">
+              <Input
+                type="datetime-local"
+                value={interviewTime}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setInterviewTime(value);
+
+                  if (!value) {
+                    setTimeError("Vui lòng chọn thời gian phỏng vấn");
+                    return;
+                  }
+
+                  const selected = new Date(value);
+                  if (selected <= new Date()) {
+                    setTimeError(
+                      "Thời gian phỏng vấn phải lớn hơn thời điểm hiện tại"
+                    );
+                  } else {
+                    setTimeError("");
+                  }
+                }}
+              />
+              {timeError && (
+                <p className="text-xs text-red-600 mt-1">{timeError}</p>
+              )}
+            </FormField>
+
+            <FormField label="Địa điểm *">
+              <Input
+                placeholder="VD: Văn phòng công ty / Google Meet"
+                value={interviewLocation}
+                onChange={(e) => setInterviewLocation(e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Ghi chú (tuỳ chọn)">
+              <Textarea
+                rows={3}
+                value={interviewNote}
+                onChange={(e) => setInterviewNote(e.target.value)}
+              />
+            </FormField>
+          </div>
+
           <ModalActions>
-            <button onClick={() => setShowInterviewModal(false)}>
+            <TextButton onClick={() => setShowInterviewModal(false)}>
               Hủy
-            </button>
-            <Primary disabled={processing} onClick={invite}>
-              Gửi
+            </TextButton>
+            <Primary
+              disabled={
+                !interviewTime ||
+                !interviewLocation ||
+                !!timeError ||
+                processing
+              }
+              onClick={invite}
+            >
+              Gửi lời mời
             </Primary>
           </ModalActions>
         </Modal>
       )}
 
+      {/* MODAL – TỪ CHỐI */}
       {showRejectModal && (
         <Modal
-          title="Lý do từ chối"
+          title="Xác nhận từ chối ứng viên"
           onClose={() => setShowRejectModal(false)}
         >
-          <textarea
-            rows={4}
-            className="input"
-            placeholder="Nhập lý do từ chối..."
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-          />
+          <FormField label="Lý do từ chối *">
+            <Textarea
+              rows={4}
+              placeholder="Ví dụ: Chưa phù hợp với yêu cầu vị trí..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </FormField>
+
           <ModalActions>
-            <button onClick={() => setShowRejectModal(false)}>
+            <TextButton onClick={() => setShowRejectModal(false)}>
               Hủy
-            </button>
-            <Danger disabled={processing} onClick={reject}>
-              Xác nhận
+            </TextButton>
+            <Danger disabled={!rejectReason.trim()} onClick={reject}>
+              Xác nhận từ chối
             </Danger>
           </ModalActions>
         </Modal>
@@ -412,7 +418,7 @@ export default function ApplicationDetailPage() {
 ===================== */
 
 const Section = ({ title, children }) => (
-  <div className="bg-white border border-gray-200 rounded-2xl p-6">
+  <div className="bg-white border rounded-2xl p-6">
     <h3 className="font-semibold mb-4 flex items-center gap-2">
       <Users size={16} /> {title}
     </h3>
@@ -423,60 +429,85 @@ const Section = ({ title, children }) => (
 const Timeline = ({ title, subtitle, time, desc }) => (
   <div className="border-l-2 border-emerald-200 pl-4 mb-4">
     <p className="font-medium">{title}</p>
-    <p className="text-sm text-gray-600">{subtitle}</p>
-    <p className="text-xs text-gray-500">{time}</p>
+    {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
+    {time && <p className="text-xs text-gray-500">{time}</p>}
     {desc && <p className="text-sm mt-1">{desc}</p>}
   </div>
 );
 
 const ActionBox = ({ children }) => (
-  <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
+  <div className="bg-white border rounded-2xl p-4 flex flex-col gap-3">
     {children}
   </div>
 );
 
-const Primary = ({ children, onClick, disabled }) => (
+const Input = (props) => (
+  <input
+    {...props}
+    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+);
+
+const Textarea = (props) => (
+  <textarea
+    {...props}
+    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+);
+
+const FormField = ({ label, children }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label}
+    </label>
+    {children}
+  </div>
+);
+
+const Primary = ({ children, ...props }) => (
   <button
-    disabled={disabled}
-    onClick={onClick}
-    className="btn-primary w-full disabled:opacity-50"
+    {...props}
+    className="w-full rounded-xl bg-blue-600 text-white py-2.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
   >
     {children}
   </button>
 );
 
-const Success = ({ children, onClick, disabled }) => (
+const Success = ({ children, ...props }) => (
   <button
-    disabled={disabled}
-    onClick={onClick}
-    className="btn-success w-full disabled:opacity-50"
+    {...props}
+    className="w-full rounded-xl bg-emerald-600 text-white py-2.5 text-sm font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"
   >
     {children}
   </button>
 );
 
-const Danger = ({ children, onClick, disabled }) => (
+const Danger = ({ children, ...props }) => (
   <button
-    disabled={disabled}
-    onClick={onClick}
-    className="btn-danger w-full disabled:opacity-50"
+    {...props}
+    className="w-full rounded-xl bg-red-600 text-white py-2.5 text-sm font-medium hover:bg-red-700 flex items-center justify-center gap-2 disabled:opacity-50"
+  >
+    {children}
+  </button>
+);
+
+const TextButton = ({ children, ...props }) => (
+  <button
+    {...props}
+    className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
   >
     {children}
   </button>
 );
 
 const Empty = () => (
-  <p className="text-sm text-gray-500 italic">
-    Không có dữ liệu
-  </p>
+  <p className="text-sm text-gray-500 italic">Không có dữ liệu</p>
 );
 
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
     <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
-      <h3 className="text-lg font-semibold mb-4">
-        {title}
-      </h3>
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
       {children}
       <button
         onClick={onClose}
@@ -489,7 +520,5 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const ModalActions = ({ children }) => (
-  <div className="flex justify-end gap-3 mt-4">
-    {children}
-  </div>
+  <div className="flex justify-end gap-3 mt-6">{children}</div>
 );

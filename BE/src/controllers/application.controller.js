@@ -384,6 +384,8 @@ exports.getApplicationDetail = async (req, res) => {
    UPDATE RESULT AFTER INTERVIEW
 ========================= */
 exports.updateApplicationStatus = async (req, res) => {
+  const connection = await db.getConnection();
+
   try {
     const employerUserId = req.user.id;
     const { id } = req.params;
@@ -398,12 +400,15 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(400).json({ message: "Reject reason is required" });
     }
 
+    await connection.beginTransaction();
+
     // Check application + permission
-    const [[row]] = await db.execute(
+    const [[row]] = await connection.execute(
       `
       SELECT
         a.id,
         a.status,
+        a.job_id, -- ✅ LẤY job_id (INT)
         c.user_id AS candidate_user_id,
         j.title AS job_title
       FROM application a
@@ -417,11 +422,13 @@ exports.updateApplicationStatus = async (req, res) => {
     );
 
     if (!row) {
+      await connection.rollback();
       return res.status(403).json({ message: "Forbidden" });
     }
 
     // ❌ Đã kết thúc thì không xử lý nữa
     if (["approved", "rejected", "cancelled"].includes(row.status)) {
+      await connection.rollback();
       return res.status(400).json({
         message: "Application already finalized",
       });
@@ -429,13 +436,14 @@ exports.updateApplicationStatus = async (req, res) => {
 
     // ❌ Không cho approve khi chưa phỏng vấn
     if (status === "approved" && row.status !== "interview") {
+      await connection.rollback();
       return res.status(400).json({
         message: "Only interviewed applications can be approved",
       });
     }
 
     // Update status
-    await db.execute(
+    await connection.execute(
       `
       UPDATE application
       SET status = ?, reject_reason = ?
@@ -444,18 +452,56 @@ exports.updateApplicationStatus = async (req, res) => {
       [status, status === "rejected" ? reject_reason : null, id]
     );
 
+    // 🔔 CREATE NOTIFICATION FOR CANDIDATE
+    if (status === "rejected") {
+      await connection.execute(
+        `
+        INSERT INTO notification (user_id, type, title, message, related_id)
+        VALUES (?, 'APPLICATION_REJECTED', 'Hồ sơ bị từ chối', ?, ?)
+        `,
+        [
+          row.candidate_user_id,
+          `Hồ sơ ứng tuyển vị trí "${row.job_title}" đã bị từ chối. Lý do: ${reject_reason}`,
+          row.job_id, // ✅ INT — KHÔNG UUID
+        ]
+      );
+    }
+
+    if (status === "approved") {
+      await connection.execute(
+        `
+        INSERT INTO notification (user_id, type, title, message, related_id)
+        VALUES (?, 'APPLICATION_APPROVED', 'Hồ sơ được duyệt', ?, ?)
+        `,
+        [
+          row.candidate_user_id,
+          `Hồ sơ ứng tuyển vị trí "${row.job_title}" đã được duyệt.`,
+          row.job_id, // ✅ INT — KHÔNG UUID
+        ]
+      );
+    }
+
+    await connection.commit();
+
     res.json({ message: "Application result updated successfully" });
   } catch (error) {
+    await connection.rollback();
     console.error("UPDATE APPLICATION STATUS ERROR:", error);
     res.status(500).json({ message: "Update status failed" });
+  } finally {
+    connection.release();
   }
 };
+
+
 
 
 /* =========================
    INVITE TO INTERVIEW
 ========================= */
 exports.inviteToInterview = async (req, res) => {
+  const connection = await db.getConnection();
+
   try {
     const employerUserId = req.user.id;
     const { id } = req.params;
@@ -467,9 +513,18 @@ exports.inviteToInterview = async (req, res) => {
       });
     }
 
-    const [[app]] = await db.execute(
+    await connection.beginTransaction();
+
+    const [[app]] = await connection.execute(
       `
-      SELECT a.id, a.status, c.full_name, u.email, j.title AS job_title
+      SELECT
+        a.id,
+        a.status,
+        a.job_id, -- ✅ LẤY job_id (INT)
+        c.full_name,
+        c.user_id AS candidate_user_id,
+        u.email,
+        j.title AS job_title
       FROM application a
       JOIN candidate c ON a.candidate_id = c.id
       JOIN users u ON c.user_id = u.id
@@ -481,16 +536,19 @@ exports.inviteToInterview = async (req, res) => {
     );
 
     if (!app) {
+      await connection.rollback();
       return res.status(403).json({ message: "Forbidden" });
     }
 
     if (app.status !== "pending") {
+      await connection.rollback();
       return res.status(400).json({
         message: "Only pending applications can be invited to interview",
       });
     }
 
-    await db.execute(
+    // Update application
+    await connection.execute(
       `
       UPDATE application
       SET
@@ -509,6 +567,24 @@ exports.inviteToInterview = async (req, res) => {
       ]
     );
 
+    // 🔔 NOTIFY CANDIDATE (IN-APP)
+    await connection.execute(
+      `
+      INSERT INTO notification (user_id, type, title, message, related_id)
+      VALUES (?, 'INTERVIEW_INVITE', 'Mời phỏng vấn', ?, ?)
+      `,
+      [
+        app.candidate_user_id,
+        `Bạn được mời phỏng vấn cho vị trí "${app.job_title}". 
+⏰ Thời gian: ${interview_time}
+📍 Địa điểm: ${interview_location}`,
+        app.job_id, // ✅ INT — KHÔNG UUID
+      ]
+    );
+
+    await connection.commit();
+
+    // 📧 SEND EMAIL (KHÔNG ẢNH HƯỞNG TRANSACTION)
     try {
       await transporter.sendMail({
         from: `"JobFinder" <no-reply@jobfinder.dev>`,
@@ -528,10 +604,15 @@ exports.inviteToInterview = async (req, res) => {
 
     res.json({ message: "Interview invitation sent successfully" });
   } catch (error) {
+    await connection.rollback();
     console.error("INVITE INTERVIEW ERROR:", error);
     res.status(500).json({ message: "Invite interview failed" });
+  } finally {
+    connection.release();
   }
 };
+
+
 
 /* =========================
    DELETE ALL APPLICATION HISTORY (SOFT DELETE)

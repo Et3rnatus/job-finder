@@ -137,7 +137,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // Ngày sinh
+    // ✅ Validate ngày sinh
     const dob = new Date(date_of_birth);
     if (isNaN(dob.getTime())) {
       return res.status(400).json({
@@ -145,7 +145,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // Giới tính
+    // ✅ Validate giới tính
     const allowedGenders = ["Nam", "Nữ", "Khác"];
     if (gender && !allowedGenders.includes(gender)) {
       return res.status(400).json({
@@ -153,46 +153,40 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // Số điện thoại VN
+    // ✅ Validate số điện thoại (VN)
     const phoneRegex = /^(0\d{9}|\+84\d{9})$/;
     if (!phoneRegex.test(contact_number.trim())) {
       return res.status(400).json({
         message:
-          "Số điện thoại không hợp lệ (định dạng: 0xxxxxxxxx hoặc +84xxxxxxxxx)",
+          "Số điện thoại không hợp lệ (định dạng hợp lệ: 0xxxxxxxxx hoặc +84xxxxxxxxx)",
       });
     }
 
-    // Skills
+    // ✅ Validate skills
     if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
         message: "Vui lòng chọn ít nhất một kỹ năng",
       });
     }
 
-    // Education
+    // ✅ Validate education
     if (!Array.isArray(education) || education.length === 0) {
       return res.status(400).json({
         message: "Vui lòng nhập ít nhất một học vấn",
       });
     }
 
-    // ✅ Học vấn hợp lệ: có ít nhất 1 thông tin
-    const validEducation = education.filter((edu) => {
-      return (
-        (edu.school && edu.school.trim()) ||
-        (edu.institution && edu.institution.trim()) ||
-        (edu.degree && edu.degree.trim()) ||
-        (edu.major && edu.major.trim())
-      );
-    });
+    const validEducation = education.filter(
+      (edu) => edu.school && edu.school.trim()
+    );
 
     if (validEducation.length === 0) {
       return res.status(400).json({
-        message: "Mỗi học vấn phải có ít nhất một thông tin (trường, bằng cấp hoặc chuyên ngành)",
+        message: "Học vấn phải có ít nhất một trường đào tạo hợp lệ",
       });
     }
 
-    // Validate skill tồn tại
+    // ✅ Validate skill tồn tại trong DB
     const [skillRows] = await connection.query(
       "SELECT id FROM skill WHERE id IN (?)",
       [skills]
@@ -259,27 +253,14 @@ exports.updateProfile = async (req, res) => {
       await connection.query(
         `
         INSERT INTO education
-        (
-          candidate_id,
-          level,
-          institution,
-          school,
-          degree,
-          major,
-          status,
-          start_date,
-          end_date
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (candidate_id, school, degree, major, start_date, end_date)
+        VALUES (?, ?, ?, ?, ?, ?)
         `,
         [
           candidate.id,
-          edu.level || null,
-          edu.institution || null,
-          edu.school || null,
+          edu.school.trim(),
           edu.degree || null,
           edu.major || null,
-          edu.status || null,
           edu.start_date || null,
           edu.end_date || null,
         ]
@@ -329,7 +310,9 @@ exports.updateProfile = async (req, res) => {
               SELECT 1 FROM candidate_skill WHERE candidate_id = ?
             )
             AND EXISTS (
-              SELECT 1 FROM education WHERE candidate_id = ?
+              SELECT 1 FROM education
+              WHERE candidate_id = ?
+              AND TRIM(school) <> ''
             )
           THEN 1 ELSE 0
         END AS completed
