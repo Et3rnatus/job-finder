@@ -1,7 +1,5 @@
 import { useEffect } from "react";
 import axios from "axios";
-import AOS from "aos";
-import "aos/dist/aos.css";
 import { Toaster, toast } from "react-hot-toast";
 
 import {
@@ -88,17 +86,6 @@ function AdminGuard() {
 }
 
 function App() {
-  /* =====================
-     INIT AOS
-  ===================== */
-  useEffect(() => {
-    AOS.init({
-      duration: 700,
-      easing: "ease-out-cubic",
-      once: true,
-    });
-  }, []);
-
   /* =====================
      AXIOS GLOBAL INTERCEPTOR
   ===================== */
