@@ -23,18 +23,31 @@ exports.dashboard = async (req, res) => {
       "SELECT COUNT(*) AS total FROM job WHERE status = 'rejected'"
     );
 
+    // ⭐ JOB HẾT HẠN
+    const [[expiredJobs]] = await db.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM job
+      WHERE expired_at IS NOT NULL
+        AND expired_at < NOW()
+        AND status NOT IN ('expired', 'closed')
+      `
+    );
+
     res.json({
       total_users: totalUsers.total,
       inactive_users: inactiveUsers.total,
       pending_jobs: pendingJobs.total,
       approved_jobs: approvedJobs.total,
       rejected_jobs: rejectedJobs.total,
+      expired_jobs: expiredJobs.total, // ⭐ thêm
     });
   } catch (err) {
     console.error("ADMIN DASHBOARD ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 //JOB TRENDS (7 DAYS)
 exports.getJobTrends = async (req, res) => {
@@ -438,3 +451,4 @@ exports.getSkillStats = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+

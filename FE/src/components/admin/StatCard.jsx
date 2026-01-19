@@ -2,6 +2,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function StatCard({
   title,
@@ -9,11 +10,16 @@ export default function StatCard({
   highlight = false,
   trend, // optional: "+12%", "-5%"
   subtitle, // optional: "So với hôm qua"
+  to, // ⭐ NEW: route khi click (optional)
 }) {
+  const navigate = useNavigate();
   const isNegative = trend?.startsWith("-");
+
+  const clickable = Boolean(to);
 
   return (
     <div
+      onClick={() => clickable && navigate(to)}
       className={`
         relative
         rounded-2xl
@@ -27,6 +33,11 @@ export default function StatCard({
           highlight
             ? "bg-gradient-to-br from-red-50 to-white border-red-200"
             : "bg-white border-gray-200"
+        }
+        ${
+          clickable
+            ? "cursor-pointer hover:ring-2 hover:ring-red-300/40"
+            : ""
         }
       `}
     >

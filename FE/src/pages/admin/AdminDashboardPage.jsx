@@ -49,8 +49,13 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="bg-white border border-gray-200 rounded-3xl p-20 flex flex-col items-center gap-4 text-gray-500 shadow-sm">
-        <Loader2 className="animate-spin text-emerald-600" size={32} />
-        <p className="text-sm">Đang tải dữ liệu dashboard...</p>
+        <Loader2
+          className="animate-spin text-emerald-600"
+          size={32}
+        />
+        <p className="text-sm">
+          Đang tải dữ liệu dashboard...
+        </p>
       </div>
     );
   }
@@ -95,7 +100,7 @@ export default function AdminDashboardPage() {
       {/* =====================
           STAT CARDS
       ===================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
         <StatCard
           title="Total Users"
           value={data.total_users}
@@ -116,6 +121,12 @@ export default function AdminDashboardPage() {
         <StatCard
           title="Rejected Jobs"
           value={data.rejected_jobs}
+        />
+        {/* ⭐ EXPIRED JOBS */}
+        <StatCard
+          title="Expired Jobs"
+          value={data.expired_jobs}
+          danger
         />
       </div>
 
