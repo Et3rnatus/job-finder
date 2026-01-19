@@ -133,33 +133,51 @@ exports.approvePayment = async (req, res) => {
       });
     }
 
-    // 1️⃣ Update trạng thái payment
+    /* =====================
+       1️⃣ UPDATE PAYMENT (DEMO)
+    ===================== */
     payment.status = "SUCCESS";
     payment.approvedAt = new Date();
     payment.expiredAt = new Date(
       Date.now() + payment.durationDays * 86400000
     );
 
-    // 2️⃣ MỞ QUYỀN EMPLOYER (DB THẬT)
-    await db.execute(
-      `UPDATE users
-       SET status = 'active'
-       WHERE id = ?`,
-      [payment.userId]
-    );
+    /* =====================
+       2️⃣ BUILD PAYMENT HISTORY ITEM
+    ===================== */
+    const paymentHistoryItem = {
+      orderId,
+      amount: payment.amount,
+      durationDays: payment.durationDays,
+      method: "MoMo",
+      status: "SUCCESS",
+      approvedAt: payment.approvedAt,
+      expiredAt: payment.expiredAt,
+    };
 
-    console.log(
-      "✅ EMPLOYER ACTIVATED:",
-      payment.userId,
-      "| PACKAGE:",
-      payment.packageId,
-      "| EXPIRED AT:",
-      payment.expiredAt
+    /* =====================
+       3️⃣ UPDATE EMPLOYER (DB THẬT)
+       + LƯU LỊCH SỬ GIAO DỊCH
+    ===================== */
+    await db.execute(
+      `
+      UPDATE employer
+      SET 
+        is_premium = 1,
+        premium_activated_at = NOW(),
+        payment_history = JSON_ARRAY_APPEND(
+          IFNULL(payment_history, JSON_ARRAY()),
+          '$',
+          CAST(? AS JSON)
+        )
+      WHERE user_id = ?
+      `,
+      [JSON.stringify(paymentHistoryItem), payment.userId]
     );
 
     return res.json({
       message:
-        "Payment approved. Employer activated with time-limited access.",
+        "Payment approved. Employer premium activated successfully.",
       payment,
     });
   } catch (error) {

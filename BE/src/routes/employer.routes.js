@@ -1,28 +1,49 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken,requireRole } = require('../middlewares/auth.middleware');
+const { verifyToken, requireRole } = require('../middlewares/auth.middleware');
 const employerController = require('../controllers/employer.controller');
 const uploadEmployerLogo = require("../middlewares/uploadEmployerLogo");
 
-    router.put('/profile', verifyToken, employerController.updateProfile);
-    
-    // Kiểm tra hoàn thành hồ sơ
-    router.get("/check-profile", verifyToken, requireRole("employer"), employerController.checkProfile);
+router.put(
+  '/profile',
+  verifyToken,
+  requireRole("employer"),
+  employerController.updateProfile
+);
 
-    //Lấy hồ sơ nhà tuyển dụng
-    router.get("/profile", verifyToken, requireRole("employer"), employerController.getProfile);
+// Kiểm tra hoàn thành hồ sơ
+router.get(
+  "/check-profile",
+  verifyToken,
+  requireRole("employer"),
+  employerController.checkProfile
+);
 
-    // lấy công việc đã đăng của nhà tuyển dụng
-    router.get("/jobs", verifyToken, requireRole("employer"), employerController.getMyJobs);
+// Lấy hồ sơ nhà tuyển dụng
+router.get(
+  "/profile",
+  verifyToken,
+  requireRole("employer"),
+  employerController.getProfile
+);
 
+// Lấy công việc đã đăng của nhà tuyển dụng
+router.get(
+  "/jobs",
+  verifyToken,
+  requireRole("employer"),
+  employerController.getMyJobs
+);
 
-    router.get(
+// Lấy chi tiết hồ sơ ứng tuyển
+router.get(
   "/applications/:applicationId",
   verifyToken,
   requireRole("employer"),
   employerController.getApplicationDetailForEmployer
 );
 
+// Gửi lại tin tuyển dụng
 router.patch(
   "/jobs/:id/resubmit",
   verifyToken,
@@ -30,12 +51,23 @@ router.patch(
   employerController.resubmitJob
 );
 
+// Cập nhật logo
 router.put(
   "/logo",
   verifyToken,
   requireRole("employer"),
-  uploadEmployerLogo, // ✅ KHÔNG .single() nữa
+  uploadEmployerLogo,
   employerController.updateEmployerLogo
+);
+
+/* =====================
+   🔥 PAYMENT HISTORY
+===================== */
+router.get(
+  "/payment-history",
+  verifyToken,
+  requireRole("employer"),
+  employerController.getPaymentHistory
 );
 
 module.exports = router;

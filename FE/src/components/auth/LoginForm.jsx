@@ -11,18 +11,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-/* =====================
-   DECODE TOKEN
-===================== */
-const decodeToken = (token) => {
-  try {
-    const payload = token.split(".")[1];
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
-};
-
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -81,14 +69,26 @@ export default function LoginForm() {
         password: password.trim(),
       });
 
-      const token = res.token;
-      localStorage.setItem("token", token);
+      /* =========
+         SAVE AUTH
+      ========= */
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("role", res.user.role);
 
-      const decoded = decodeToken(token);
-      const role = decoded?.role;
-      localStorage.setItem("role", role);
+      // 🔥 CỰC KỲ QUAN TRỌNG: sync premium từ BACKEND
+      if (res.user.role === "employer") {
+        localStorage.setItem(
+          "is_premium",
+          res.user.is_premium.toString()
+        );
+      } else {
+        localStorage.removeItem("is_premium");
+      }
 
-      if (role === "admin") {
+      /* =========
+         REDIRECT
+      ========= */
+      if (res.user.role === "admin") {
         navigate("/admin", { replace: true });
       } else {
         navigate(from, {
@@ -109,7 +109,7 @@ export default function LoginForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex items-center justify-center px-4">
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-white rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.15)]">
-        
+
         {/* ===== LEFT BRAND ===== */}
         <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-green-600 to-green-700 text-white relative">
           <div>
@@ -137,7 +137,6 @@ export default function LoginForm() {
             © 2025 JobFinder Vietnam
           </p>
 
-          {/* Decorative circles */}
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full" />
           <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-white/10 rounded-full" />
         </div>
@@ -218,7 +217,7 @@ export default function LoginForm() {
       {/* ===== ERROR MODAL ===== */}
       {errorMessage && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
             <div className="flex justify-center mb-4">
               <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
                 <XCircle />
@@ -249,7 +248,10 @@ export default function LoginForm() {
    FORM INPUT
 ===================== */
 const FormInput = forwardRef(
-  ({ icon, label, error, value, onChange, type = "text", placeholder }, ref) => (
+  (
+    { icon, label, error, value, onChange, type = "text", placeholder },
+    ref
+  ) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {label}

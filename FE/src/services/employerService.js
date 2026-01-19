@@ -95,6 +95,21 @@ const resubmitJob = async (jobId) => {
   return res.data;
 };
 
+// ======================
+// PAYMENT HISTORY ⭐ NEW
+// ======================
+
+const getPaymentHistory = async () => {
+  const res = await axios.get(
+    `${API_URL}/payment-history`,
+    {
+      headers: getAuthHeader(),
+    }
+  );
+  return res.data; // { history: [...] }
+};
+
+
 export default {
   // profile
   checkProfile,
@@ -109,4 +124,5 @@ export default {
   closeJob,
   reopenJob,
   resubmitJob,
+  getPaymentHistory,
 };

@@ -9,6 +9,7 @@ import EmployerProfileView from "../components/employer/EmployerProfileView";
 import EmployerJobList from "../components/employer/EmployerJobList";
 import CreateJobForm from "../components/employer/CreateJobForm";
 import EmployerPayment from "../components/employer/EmployerPayment";
+import EmployerPaymentHistory from "../components/employer/EmployerPaymentHistory"; // ✅ NEW
 
 import employerService from "../services/employerService";
 
@@ -18,8 +19,8 @@ function EmployerPage() {
   /* =====================
      STATE
   ===================== */
-  const [mode, setMode] = useState("profile"); // profile | jobs | create | payment
-  const [profileMode, setProfileMode] = useState("view"); // view | edit
+  const [mode, setMode] = useState("profile"); // profile | jobs | create | payment | payment-history
+  const [profileMode, setProfileMode] = useState("view");
 
   const [profile, setProfile] = useState(null);
   const [profileCompleted, setProfileCompleted] = useState(true);
@@ -88,9 +89,7 @@ function EmployerPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
-        {/* =====================
-            HEADER
-        ===================== */}
+        {/* HEADER */}
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold text-gray-900">
             Bảng điều khiển nhà tuyển dụng
@@ -99,7 +98,6 @@ function EmployerPage() {
             Quản lý doanh nghiệp, tin tuyển dụng và ứng viên
           </p>
 
-          {/* PROFILE STATUS */}
           <div className="mt-2 flex items-center gap-2 text-sm">
             {profileCompleted ? (
               <>
@@ -119,24 +117,20 @@ function EmployerPage() {
           </div>
         </div>
 
-        {/* =====================
-            LAYOUT
-        ===================== */}
+        {/* LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* ===== SIDEBAR ===== */}
+          {/* SIDEBAR */}
           <aside className="lg:col-span-3 space-y-6">
             <UserAvatar
-  name={profile.company_name}
-  image={profile.logo}          // ✅ ĐÚNG FIELD
-  label="Thay đổi logo công ty"
-  defaultImage="/default-company.png"
-  onUpload={async (file) => {
-    const res = await employerService.updateLogo(file);
-    await loadEmployerData();
-    return res; // { logo }
-  }}
-/>
-
+              name={profile.company_name}
+              image={profile.logo}
+              label="Thay đổi logo công ty"
+              defaultImage="/default-company.png"
+              onUpload={async (file) => {
+                await employerService.updateLogo(file);
+                await loadEmployerData();
+              }}
+            />
 
             <EmployerSideBarTool
               currentMode={mode}
@@ -145,85 +139,53 @@ function EmployerPage() {
             />
           </aside>
 
-          {/* ===== MAIN CONTENT ===== */}
+          {/* MAIN */}
           <main className="lg:col-span-9 space-y-6">
-            {/* =====================
-                WARNING
-            ===================== */}
+            {/* WARNING */}
             {showWarning && !profileCompleted && (
-              <div className="flex items-start gap-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-5">
-                <div className="w-10 h-10 rounded-xl bg-yellow-100 text-yellow-700 flex items-center justify-center">
-                  <AlertTriangle size={20} />
-                </div>
-
-                <div className="flex-1">
+              <div className="flex items-start gap-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-5">
+                <AlertTriangle className="text-yellow-700" />
+                <div>
                   <p className="font-semibold text-yellow-900">
                     Hồ sơ công ty chưa hoàn thiện
                   </p>
-                  <p className="text-sm text-yellow-800 mt-1">
-                    Bạn cần hoàn thiện hồ sơ doanh nghiệp trước khi đăng tin
-                    tuyển dụng hoặc sử dụng đầy đủ tính năng hệ thống.
+                  <p className="text-sm text-yellow-800">
+                    Bạn cần hoàn thiện hồ sơ trước khi đăng tin.
                   </p>
-
-                  <button
-                    onClick={() => {
-                      setMode("profile");
-                      setProfileMode("edit");
-                    }}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:underline"
-                  >
-                    Hoàn thiện hồ sơ ngay →
-                  </button>
                 </div>
               </div>
             )}
 
-            {/* =====================
-                PROFILE
-            ===================== */}
-            {mode === "profile" && (
-              <>
-                {profileMode === "view" ? (
-                  <EmployerProfileView
-                    profile={profile}
-                    onEdit={() => setProfileMode("edit")}
-                  />
-                ) : (
-                  <EmployerProfileForm
-                    profile={profile}
-                    onProfileCompleted={() => {
-                      setProfileCompleted(true);
-                      setShowWarning(false);
-                      setProfileMode("view");
-                    }}
-                  />
-                )}
-              </>
-            )}
+            {/* PROFILE */}
+            {mode === "profile" &&
+              (profileMode === "view" ? (
+                <EmployerProfileView
+                  profile={profile}
+                  onEdit={() => setProfileMode("edit")}
+                />
+              ) : (
+                <EmployerProfileForm
+                  profile={profile}
+                  onProfileCompleted={() => {
+                    setProfileCompleted(true);
+                    setShowWarning(false);
+                    setProfileMode("view");
+                  }}
+                />
+              ))}
 
-            {/* =====================
-                JOBS
-            ===================== */}
+            {/* JOBS */}
             {mode === "jobs" && <EmployerJobList />}
 
-            {/* =====================
-                CREATE JOB
-            ===================== */}
-            {mode === "create" && profileCompleted && (
-              <CreateJobForm />
-            )}
+            {/* CREATE */}
+            {mode === "create" && profileCompleted && <CreateJobForm />}
 
-            {/* =====================
-                PAYMENT
-            ===================== */}
+            {/* PAYMENT */}
             {mode === "payment" && <EmployerPayment />}
-          </main>
-        </div>
 
-        {/* FOOTER NOTE */}
-        <div className="text-xs text-gray-400 italic text-center pt-6">
-          Quy trình nhà tuyển dụng: Hoàn thiện hồ sơ → Đăng tin → Nhận hồ sơ →
-          Phỏng vấn → Tuyển dụng
+            {/* 🔥 PAYMENT HISTORY */}
+            {mode === "payment-history" && <EmployerPaymentHistory />}
+          </main>
         </div>
       </div>
     </div>

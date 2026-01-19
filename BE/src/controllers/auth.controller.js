@@ -99,13 +99,15 @@ exports.login = async (req, res) => {
     const [rows] = await db.execute(
       `
       SELECT 
-        id,
-        email,
-        password,
-        role,
-        status
-      FROM users
-      WHERE email = ?
+        u.id,
+        u.email,
+        u.password,
+        u.role,
+        u.status,
+        e.is_premium
+      FROM users u
+      LEFT JOIN employer e ON e.user_id = u.id
+      WHERE u.email = ?
       LIMIT 1
       `,
       [email]
@@ -147,6 +149,8 @@ exports.login = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
+        // ✅ QUAN TRỌNG: chỉ employer mới có premium
+        is_premium: user.role === 'employer' ? user.is_premium ?? 0 : null,
       },
     });
   } catch (error) {
@@ -156,6 +160,7 @@ exports.login = async (req, res) => {
     });
   }
 };
+
 
 exports.changePassword = async (req, res) => {
   try {

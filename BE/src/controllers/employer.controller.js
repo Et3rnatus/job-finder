@@ -324,3 +324,38 @@ exports.updateEmployerLogo = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+/* =====================
+   GET PAYMENT HISTORY
+===================== */
+exports.getPaymentHistory = async (req, res) => {
+  try {
+    // req.user.id lấy từ JWT middleware
+    const userId = req.user.id;
+
+    const [rows] = await db.execute(
+      `
+      SELECT payment_history
+      FROM employer
+      WHERE user_id = ?
+      LIMIT 1
+      `,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Employer not found",
+      });
+    }
+
+    return res.json({
+      history: rows[0].payment_history || [],
+    });
+  } catch (error) {
+    console.error("GET PAYMENT HISTORY ERROR:", error);
+    return res.status(500).json({
+      message: "Get payment history failed",
+    });
+  }
+};
