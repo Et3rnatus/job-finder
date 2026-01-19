@@ -61,8 +61,13 @@ function NotificationBell() {
   const role = localStorage.getItem("role");
   const token = localStorage.getItem("token");
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
-  const readCount = notifications.filter((n) => n.is_read).length;
+  const unreadCount = notifications.filter(
+    (n) => Number(n.is_read) === 0
+  ).length;
+
+  const readCount = notifications.filter(
+    (n) => Number(n.is_read) === 1
+  ).length;
 
   const groupedNotifications =
     groupNotificationsByDate(notifications);
@@ -144,17 +149,8 @@ function NotificationBell() {
       }
 
       if (role === "candidate") {
-        if (
-          ["APPLICATION_APPROVED", "APPLICATION_REJECTED"].includes(
-            noti.type
-          )
-        ) {
-          navigate("/account/candidate/applications");
-        } else if (noti.related_id) {
-          navigate(`/jobs/${noti.related_id}`);
-        } else {
-          navigate("/account/candidate");
-        }
+        // ✅ FIX ĐÚNG: luôn về trang CÔNG VIỆC ĐÃ ỨNG TUYỂN
+        navigate("/candidate/applications");
       }
 
       setOpen(false);
@@ -191,7 +187,7 @@ function NotificationBell() {
       setProcessing(true);
       await deleteReadNotifications();
       setNotifications((prev) =>
-        prev.filter((n) => !n.is_read)
+        prev.filter((n) => Number(n.is_read) === 0)
       );
     } finally {
       setProcessing(false);
@@ -325,13 +321,13 @@ function NotificationBell() {
                           px-5 py-4 flex gap-4 cursor-pointer
                           transition
                           ${
-                            noti.is_read
+                            Number(noti.is_read) === 1
                               ? "hover:bg-gray-50"
                               : "bg-emerald-50/60 hover:bg-emerald-50"
                           }
                         `}
                       >
-                        {!noti.is_read && (
+                        {Number(noti.is_read) === 0 && (
                           <span className="w-2 h-2 mt-2 bg-emerald-600 rounded-full" />
                         )}
 
