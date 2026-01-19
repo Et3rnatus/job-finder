@@ -171,6 +171,39 @@ exports.applyJob = async (req, res) => {
   }
 };
 
+exports.checkAppliedJob = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { jobId } = req.params;
+
+    const [[candidate]] = await db.execute(
+      "SELECT id FROM candidate WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!candidate) {
+      return res.json({ applied: false });
+    }
+
+    const [[row]] = await db.execute(
+      `
+      SELECT id
+      FROM application
+      WHERE candidate_id = ?
+        AND job_id = ?
+        AND status != 'cancelled'
+        AND is_deleted = 0
+      LIMIT 1
+      `,
+      [candidate.id, jobId]
+    );
+
+    res.json({ applied: !!row });
+  } catch (error) {
+    console.error("CHECK APPLIED JOB ERROR:", error);
+    res.status(500).json({ applied: false });
+  }
+};
 /* =========================
    GET MY APPLICATIONS
 ========================= */
@@ -297,7 +330,7 @@ exports.getApplicantsByJob = async (req, res) => {
         status: app.status,
         applied_at: app.applied_at,
         cover_letter: app.cover_letter,
-        snapshot: JSON.parse(app.snapshot_cv_json || "{}"),
+        snapshot: app.snapshot_cv_json || "{}",
       }))
     );
   } catch (error) {
@@ -339,7 +372,7 @@ exports.getApplicationDetail = async (req, res) => {
       status: app.status,
       applied_at: app.applied_at,
       cover_letter: app.cover_letter,
-      snapshot: JSON.parse(app.snapshot_cv_json || "{}"),
+      snapshot: app.snapshot_cv_json || {},
     });
   } catch (error) {
     console.error("GET APPLICATION DETAIL ERROR:", error);
@@ -356,6 +389,7 @@ exports.updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { status, reject_reason } = req.body;
 
+    // Validate input
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
@@ -364,14 +398,20 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(400).json({ message: "Reject reason is required" });
     }
 
+    // Check application + permission
     const [[row]] = await db.execute(
       `
-      SELECT a.id, a.status, c.user_id AS candidate_user_id, j.title AS job_title
+      SELECT
+        a.id,
+        a.status,
+        c.user_id AS candidate_user_id,
+        j.title AS job_title
       FROM application a
       JOIN job j ON a.job_id = j.id
       JOIN employer e ON j.employer_id = e.id
       JOIN candidate c ON a.candidate_id = c.id
-      WHERE a.id = ? AND e.user_id = ?
+      WHERE a.id = ?
+        AND e.user_id = ?
       `,
       [id, employerUserId]
     );
@@ -380,12 +420,21 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    if (row.status !== "interview") {
+    // ❌ Đã kết thúc thì không xử lý nữa
+    if (["approved", "rejected", "cancelled"].includes(row.status)) {
       return res.status(400).json({
-        message: "Only interviewed applications can be evaluated",
+        message: "Application already finalized",
       });
     }
 
+    // ❌ Không cho approve khi chưa phỏng vấn
+    if (status === "approved" && row.status !== "interview") {
+      return res.status(400).json({
+        message: "Only interviewed applications can be approved",
+      });
+    }
+
+    // Update status
     await db.execute(
       `
       UPDATE application
@@ -401,6 +450,7 @@ exports.updateApplicationStatus = async (req, res) => {
     res.status(500).json({ message: "Update status failed" });
   }
 };
+
 
 /* =========================
    INVITE TO INTERVIEW
@@ -480,5 +530,41 @@ exports.inviteToInterview = async (req, res) => {
   } catch (error) {
     console.error("INVITE INTERVIEW ERROR:", error);
     res.status(500).json({ message: "Invite interview failed" });
+  }
+};
+
+/* =========================
+   DELETE ALL APPLICATION HISTORY (SOFT DELETE)
+========================= */
+exports.deleteApplicationHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [[candidate]] = await db.execute(
+      "SELECT id FROM candidate WHERE user_id = ?",
+      [userId]
+    );
+
+    if (!candidate) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const [result] = await db.execute(
+      `
+      UPDATE application
+      SET is_deleted = 1
+      WHERE candidate_id = ?
+        AND is_deleted = 0
+      `,
+      [candidate.id]
+    );
+
+    return res.json({
+      message: "Đã xóa toàn bộ lịch sử ứng tuyển",
+      deleted_count: result.affectedRows,
+    });
+  } catch (error) {
+    console.error("DELETE APPLICATION HISTORY ERROR:", error);
+    res.status(500).json({ message: "Delete history failed" });
   }
 };
