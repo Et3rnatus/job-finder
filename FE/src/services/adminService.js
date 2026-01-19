@@ -125,3 +125,49 @@ export const toggleCategory = async (id) => {
   );
   return res.data;
 };
+/* =========================
+   SKILL MANAGEMENT
+========================= */
+
+// GET /api/admin/skills
+// params: category_id, skill_type
+export const getSkills = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+
+  const res = await axios.get(
+    `${API_URL}/skills${query ? `?${query}` : ""}`,
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};
+
+// POST /api/admin/skills
+export const createSkill = async (data) => {
+  // data: { name, category_id, skill_type }
+  const res = await axios.post(
+    `${API_URL}/skills`,
+    data,
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};
+
+// PUT /api/admin/skills/:id
+export const updateSkill = async (id, data) => {
+  // data: { name, category_id, skill_type }
+  const res = await axios.put(
+    `${API_URL}/skills/${id}`,
+    data,
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};
+
+// DELETE /api/admin/skills/:id
+export const deleteSkill = async (id) => {
+  const res = await axios.delete(
+    `${API_URL}/skills/${id}`,
+    { headers: getAuthHeader() }
+  );
+  return res.data;
+};

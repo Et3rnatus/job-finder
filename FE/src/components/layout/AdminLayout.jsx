@@ -8,6 +8,7 @@ import {
   LogOut,
   ShieldCheck,
   ChevronLeft,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -101,7 +102,14 @@ export default function AdminLayout() {
             {!collapsed && "Categories"}
           </NavLink>
 
-          <NavLink to="/admin/payments" className={navClass}>
+          {/* ⭐ SKILLS */}
+          <NavLink to="/admin/skills" className={navClass}>
+            <Wrench className="w-5 h-5" />
+            {!collapsed && "Skills"}
+          </NavLink>
+
+          {/* ✅ FIX ROUTE */}
+          <NavLink to="/admin/payment" className={navClass}>
             <CreditCard className="w-5 h-5" />
             {!collapsed && "Payments"}
           </NavLink>

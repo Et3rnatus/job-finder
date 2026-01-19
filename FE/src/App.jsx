@@ -47,6 +47,8 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminJobsPage from "./pages/admin/AdminJobsPage";
 import AdminCategoryPage from "./pages/admin/AdminCategoryPage";
 import AdminPaymentPage from "./pages/admin/AdminPaymentPage";
+import AdminSkillPage from "./pages/admin/AdminSkillPage";
+
 
 /* =====================
    CANDIDATE SUB PAGES
@@ -210,6 +212,7 @@ function App() {
                 path="payment"
                 element={<AdminPaymentPage />}
               />
+              <Route path="skills" element={<AdminSkillPage />} />
             </Route>
           </Route>
         </Routes>

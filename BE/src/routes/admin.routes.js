@@ -87,4 +87,9 @@ router.patch(
   adminController.toggleCategory
 );
 
+router.get("/skills", adminController.getSkills);
+router.post("/skills", adminController.createSkill);
+router.put("/skills/:id", adminController.updateSkill);
+router.delete("/skills/:id", adminController.deleteSkill);
+
 module.exports = router;

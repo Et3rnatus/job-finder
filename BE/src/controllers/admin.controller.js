@@ -291,3 +291,125 @@ exports.toggleCategory = async (req, res) => {
   );
   res.json({ message: "Updated" });
 };
+
+// SKILLS MANAGEMENT
+exports.getSkills = async (req, res) => {
+  try {
+    const { category_id, skill_type } = req.query;
+
+    let sql = `
+      SELECT
+        s.id,
+        s.name,
+        s.skill_type,
+        jc.name AS category_name,
+        COUNT(DISTINCT js.job_id) AS job_count,
+        COUNT(DISTINCT cs.candidate_id) AS candidate_count
+      FROM skill s
+      LEFT JOIN job_category jc ON s.category_id = jc.id
+      LEFT JOIN job_skill js ON s.id = js.skill_id
+      LEFT JOIN candidate_skill cs ON s.id = cs.skill_id
+      WHERE 1 = 1
+    `;
+
+    const params = [];
+
+    if (category_id) {
+      sql += " AND s.category_id = ?";
+      params.push(category_id);
+    }
+
+    if (skill_type) {
+      sql += " AND s.skill_type = ?";
+      params.push(skill_type);
+    }
+
+    sql += `
+      GROUP BY s.id
+      ORDER BY s.name
+    `;
+
+    const [rows] = await db.execute(sql, params);
+    res.json(rows);
+  } catch (err) {
+    console.error("GET SKILLS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+exports.createSkill = async (req, res) => {
+  const { name, category_id, skill_type } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ message: "Skill name is required" });
+  }
+
+  try {
+    await db.execute(
+      `
+      INSERT INTO skill (name, category_id, skill_type)
+      VALUES (?, ?, ?)
+      `,
+      [name, category_id || null, skill_type || "technical"]
+    );
+
+    res.json({ message: "Skill created" });
+  } catch (err) {
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({ message: "Skill already exists" });
+    }
+    console.error("CREATE SKILL ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.updateSkill = async (req, res) => {
+  const { id } = req.params;
+  const { name, category_id, skill_type } = req.body;
+
+  try {
+    const [result] = await db.execute(
+      `
+      UPDATE skill
+      SET name = ?, category_id = ?, skill_type = ?
+      WHERE id = ?
+      `,
+      [name, category_id || null, skill_type, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Skill not found" });
+    }
+
+    res.json({ message: "Skill updated" });
+  } catch (err) {
+    console.error("UPDATE SKILL ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.deleteSkill = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [[usage]] = await db.execute(
+      `
+      SELECT
+        (SELECT COUNT(*) FROM job_skill WHERE skill_id = ?) +
+        (SELECT COUNT(*) FROM candidate_skill WHERE skill_id = ?) AS total_usage
+      `,
+      [id, id]
+    );
+
+    if (usage.total_usage > 0) {
+      return res.status(400).json({
+        message: "Skill is in use and cannot be deleted",
+      });
+    }
+
+    await db.execute("DELETE FROM skill WHERE id = ?", [id]);
+    res.json({ message: "Skill deleted" });
+  } catch (err) {
+    console.error("DELETE SKILL ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
