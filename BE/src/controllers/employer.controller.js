@@ -445,5 +445,3 @@ exports.getPackageStatus = async (req, res) => {
     });
   }
 };
-
-
