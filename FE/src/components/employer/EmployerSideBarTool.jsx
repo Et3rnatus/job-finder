@@ -41,6 +41,9 @@ export default function EmployerSideBarTool({
 
   const isActive = (mode) => currentMode === mode;
 
+  /* =====================
+     ITEM (🔥 FIX UI Ở ĐÂY)
+  ===================== */
   const Item = ({
     icon,
     label,
@@ -51,7 +54,7 @@ export default function EmployerSideBarTool({
   }) => (
     <li
       onClick={disabled ? undefined : onClick}
-      className={`group flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${
+      className={`group flex items-center px-4 py-3 rounded-2xl transition-all ${
         disabled
           ? "cursor-not-allowed opacity-60"
           : "cursor-pointer"
@@ -61,7 +64,8 @@ export default function EmployerSideBarTool({
           : "text-gray-700 hover:bg-gray-100"
       }`}
     >
-      <div className="flex items-center gap-3">
+      {/* LEFT */}
+      <div className="flex items-center gap-3 min-w-0">
         <span
           className={`transition ${
             isActive(mode)
@@ -72,11 +76,16 @@ export default function EmployerSideBarTool({
           {icon}
         </span>
 
-        <span className="font-semibold">{label}</span>
+        <span className="font-semibold truncate">
+          {label}
+        </span>
+      </div>
 
+      {/* RIGHT */}
+      <div className="flex items-center gap-2 shrink-0">
         {badge && (
           <span
-            className={`ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+            className={`px-2 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap ${
               badge.type === "danger"
                 ? "bg-red-100 text-red-700"
                 : "bg-emerald-100 text-emerald-700"
@@ -85,16 +94,16 @@ export default function EmployerSideBarTool({
             {badge.text}
           </span>
         )}
-      </div>
 
-      <ChevronRight
-        size={14}
-        className={`transition ${
-          isActive(mode)
-            ? "text-emerald-500"
-            : "text-gray-300 group-hover:text-gray-500"
-        }`}
-      />
+        <ChevronRight
+          size={14}
+          className={`transition ${
+            isActive(mode)
+              ? "text-emerald-500"
+              : "text-gray-300 group-hover:text-gray-500"
+          }`}
+        />
+      </div>
     </li>
   );
 
@@ -160,7 +169,7 @@ export default function EmployerSideBarTool({
           }}
         />
 
-        {/* PACKAGE SUMMARY (NÚT – ĐÚNG Ý MÀY) */}
+        {/* 🔥 PACKAGE SUMMARY (NÚT RIÊNG) */}
         <Item
           icon={<Package size={18} />}
           label="Gói đang sử dụng"

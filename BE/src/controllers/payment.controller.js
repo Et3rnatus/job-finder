@@ -121,21 +121,17 @@ exports.approvePayment = async (req, res) => {
     const payment = demoPayments[orderId];
 
     if (!payment) {
-      return res.status(404).json({
-        message: "Payment not found",
-      });
+      return res.status(404).json({ message: "Payment not found" });
     }
 
     if (payment.status === "SUCCESS") {
-      return res.status(400).json({
-        message: "Payment already approved",
-      });
+      return res.status(400).json({ message: "Payment already approved" });
     }
 
     const now = new Date();
 
     /* =====================
-       1️⃣ GET EMPLOYER CURRENT STATE
+       1️⃣ GET EMPLOYER
     ===================== */
     const [rows] = await db.execute(
       `
@@ -145,34 +141,34 @@ exports.approvePayment = async (req, res) => {
         payment_history
       FROM employer
       WHERE user_id = ?
+      LIMIT 1
       `,
       [payment.userId]
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({
-        message: "Employer not found",
-      });
+      return res.status(404).json({ message: "Employer not found" });
     }
 
     const employer = rows[0];
-    const history = employer.payment_history
-      ? JSON.parse(employer.payment_history)
+
+    // ✅ mysql2 đã parse JSON
+    const history = Array.isArray(employer.payment_history)
+      ? employer.payment_history
       : [];
 
-    const lastPackage = history.length
-      ? history[history.length - 1]
-      : null;
+    const lastPackage =
+      history.length > 0 ? history[history.length - 1] : null;
 
     let newExpiredAt;
     let newJobPostLimit;
     let newJobPostUsed = employer.job_post_used || 0;
 
     /* =====================
-       2️⃣ CHECK CÒN HẠN KHÔNG
+       2️⃣ CỘNG DỒN / RESET
     ===================== */
     if (lastPackage && new Date(lastPackage.expiredAt) > now) {
-      // ✅ CỘNG DỒN
+      // ✅ CÒN HẠN → GIA HẠN + CỘNG QUOTA
       newExpiredAt = new Date(
         new Date(lastPackage.expiredAt).getTime() +
           payment.durationDays * 86400000
@@ -181,7 +177,7 @@ exports.approvePayment = async (req, res) => {
       newJobPostLimit =
         (employer.job_post_limit || 0) + payment.postLimit;
     } else {
-      // ❌ RESET
+      // ❌ HẾT HẠN → RESET
       newExpiredAt = new Date(
         now.getTime() + payment.durationDays * 86400000
       );
@@ -198,7 +194,7 @@ exports.approvePayment = async (req, res) => {
     payment.expiredAt = newExpiredAt;
 
     /* =====================
-       4️⃣ BUILD PAYMENT HISTORY ITEM
+       4️⃣ PUSH HISTORY
     ===================== */
     const paymentHistoryItem = {
       orderId: payment.orderId,
@@ -213,6 +209,8 @@ exports.approvePayment = async (req, res) => {
       expiredAt: newExpiredAt,
     };
 
+    history.push(paymentHistoryItem);
+
     /* =====================
        5️⃣ UPDATE EMPLOYER
     ===================== */
@@ -224,18 +222,14 @@ exports.approvePayment = async (req, res) => {
         premium_activated_at = ?,
         job_post_limit = ?,
         job_post_used = ?,
-        payment_history = JSON_ARRAY_APPEND(
-          IFNULL(payment_history, JSON_ARRAY()),
-          '$',
-          CAST(? AS JSON)
-        )
+        payment_history = ?
       WHERE user_id = ?
       `,
       [
         now,
         newJobPostLimit,
         newJobPostUsed,
-        JSON.stringify(paymentHistoryItem),
+        JSON.stringify(history), // ✅ stringify 1 lần DUY NHẤT
         payment.userId,
       ]
     );
@@ -255,6 +249,7 @@ exports.approvePayment = async (req, res) => {
     });
   }
 };
+
 
 
 

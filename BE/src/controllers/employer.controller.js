@@ -387,20 +387,25 @@ exports.getPackageStatus = async (req, res) => {
     const now = new Date();
 
     /* =====================
-       PARSE PAYMENT HISTORY
+       SAFE PAYMENT HISTORY
     ===================== */
     let history = [];
-    try {
-      history = row.payment_history
-        ? JSON.parse(row.payment_history)
-        : [];
-    } catch (err) {
-      console.error("PAYMENT_HISTORY PARSE ERROR:", err);
-      history = [];
+
+    if (Array.isArray(row.payment_history)) {
+      // ✅ MySQL JSON column (mysql2 auto-parse)
+      history = row.payment_history;
+    } else if (typeof row.payment_history === "string") {
+      // ⚠️ fallback nếu DB cũ / data bẩn
+      try {
+        history = JSON.parse(row.payment_history);
+      } catch (err) {
+        console.error("PAYMENT_HISTORY PARSE ERROR:", err);
+        history = [];
+      }
     }
 
     /* =====================
-       GET CURRENT PACKAGE
+       CURRENT PACKAGE
     ===================== */
     let currentPackage = null;
 
@@ -440,4 +445,5 @@ exports.getPackageStatus = async (req, res) => {
     });
   }
 };
+
 

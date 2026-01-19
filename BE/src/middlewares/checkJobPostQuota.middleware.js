@@ -3,7 +3,6 @@ const db = require("../config/db");
 /* =====================
    CHECK JOB POST QUOTA
 ===================== */
-const db = require("../config/db");
 
 exports.checkJobPostQuota = async (req, res, next) => {
   try {
