@@ -137,6 +137,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
+    // Ngày sinh
     const dob = new Date(date_of_birth);
     if (isNaN(dob.getTime())) {
       return res.status(400).json({
@@ -144,6 +145,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
+    // Giới tính
     const allowedGenders = ["Nam", "Nữ", "Khác"];
     if (gender && !allowedGenders.includes(gender)) {
       return res.status(400).json({
@@ -151,29 +153,46 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
+    // Số điện thoại VN
+    const phoneRegex = /^(0\d{9}|\+84\d{9})$/;
+    if (!phoneRegex.test(contact_number.trim())) {
+      return res.status(400).json({
+        message:
+          "Số điện thoại không hợp lệ (định dạng: 0xxxxxxxxx hoặc +84xxxxxxxxx)",
+      });
+    }
+
+    // Skills
     if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
         message: "Vui lòng chọn ít nhất một kỹ năng",
       });
     }
 
+    // Education
     if (!Array.isArray(education) || education.length === 0) {
       return res.status(400).json({
         message: "Vui lòng nhập ít nhất một học vấn",
       });
     }
 
-    const validEducation = education.filter(
-      (edu) => edu.school && edu.school.trim()
-    );
+    // ✅ Học vấn hợp lệ: có ít nhất 1 thông tin
+    const validEducation = education.filter((edu) => {
+      return (
+        (edu.school && edu.school.trim()) ||
+        (edu.institution && edu.institution.trim()) ||
+        (edu.degree && edu.degree.trim()) ||
+        (edu.major && edu.major.trim())
+      );
+    });
 
     if (validEducation.length === 0) {
       return res.status(400).json({
-        message: "Học vấn phải có ít nhất một trường đào tạo hợp lệ",
+        message: "Mỗi học vấn phải có ít nhất một thông tin (trường, bằng cấp hoặc chuyên ngành)",
       });
     }
 
-    /* Validate skills tồn tại trong DB */
+    // Validate skill tồn tại
     const [skillRows] = await connection.query(
       "SELECT id FROM skill WHERE id IN (?)",
       [skills]
@@ -190,7 +209,7 @@ exports.updateProfile = async (req, res) => {
     ===================== */
     await connection.beginTransaction();
 
-    /* Update candidate info */
+    /* Update candidate */
     await connection.query(
       `
       UPDATE candidate
@@ -240,21 +259,34 @@ exports.updateProfile = async (req, res) => {
       await connection.query(
         `
         INSERT INTO education
-        (candidate_id, school, degree, major, start_date, end_date)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (
+          candidate_id,
+          level,
+          institution,
+          school,
+          degree,
+          major,
+          status,
+          start_date,
+          end_date
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           candidate.id,
-          edu.school.trim(),
+          edu.level || null,
+          edu.institution || null,
+          edu.school || null,
           edu.degree || null,
           edu.major || null,
+          edu.status || null,
           edu.start_date || null,
           edu.end_date || null,
         ]
       );
     }
 
-    /* Update experience */
+    /* Update work experience */
     await connection.query(
       "DELETE FROM work_experience WHERE candidate_id = ?",
       [candidate.id]
@@ -297,9 +329,7 @@ exports.updateProfile = async (req, res) => {
               SELECT 1 FROM candidate_skill WHERE candidate_id = ?
             )
             AND EXISTS (
-              SELECT 1 FROM education
-              WHERE candidate_id = ?
-              AND TRIM(school) <> ''
+              SELECT 1 FROM education WHERE candidate_id = ?
             )
           THEN 1 ELSE 0
         END AS completed

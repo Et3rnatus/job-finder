@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 
 /* =====================
-   DISPLAY GROUP (UI ONLY)
-   Phục vụ hiển thị – KHÔNG phải schema
+   SKILL DISPLAY (UI ONLY)
 ===================== */
 const SKILL_DISPLAY_GROUPS = {
   IT: [
@@ -52,7 +51,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
   });
 
   const [allSkills, setAllSkills] = useState([]);
-  const [skillFilter, setSkillFilter] = useState("IT"); // IT | SOFT | OTHER | ALL
+  const [skillFilter, setSkillFilter] = useState("IT");
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -74,7 +73,13 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
       skills: Array.isArray(profile.skills)
         ? profile.skills.map((s) => s.id)
         : [],
-      education: profile.education || [],
+      education: Array.isArray(profile.education)
+        ? profile.education.map((e) => ({
+            institution: e.institution || "",
+            level: e.level || "",
+            major: e.major || "",
+          }))
+        : [],
       experiences: profile.experiences || [],
     });
   }, [profile]);
@@ -111,32 +116,25 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
 
   const visibleSkills = allSkills.filter((skill) => {
     if (skillFilter === "ALL") return true;
-
     if (skillFilter === "IT")
       return SKILL_DISPLAY_GROUPS.IT.includes(skill.name);
-
     if (skillFilter === "SOFT")
       return SKILL_DISPLAY_GROUPS.SOFT.includes(skill.name);
-
     if (skillFilter === "OTHER")
       return (
         !SKILL_DISPLAY_GROUPS.IT.includes(skill.name) &&
         !SKILL_DISPLAY_GROUPS.SOFT.includes(skill.name)
       );
-
     return true;
   });
 
   /* =====================
-     EDUCATION
+     EDUCATION (SIMPLIFIED)
   ===================== */
   const addEducation = () =>
     setForm((p) => ({
       ...p,
-      education: [
-        ...p.education,
-        { institution: "", level: "", major: "" },
-      ],
+      education: [...p.education, { institution: "", level: "", major: "" }],
     }));
 
   const updateEducation = (i, f, v) => {
@@ -209,11 +207,9 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
         gender: form.gender || null,
         date_of_birth: form.date_of_birth,
         skills: form.skills,
-        education: form.education.map((e) => ({
-          school: e.institution,
-          degree: e.level,
-          major: e.major,
-        })),
+        education: form.education.filter(
+          (e) => e.institution || e.level || e.major
+        ),
         experiences: form.experiences,
       };
 
@@ -241,9 +237,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
     <>
       <div className="max-w-5xl mx-auto bg-white border rounded-2xl shadow-sm p-8">
         <form onSubmit={handleSubmit} className="space-y-14">
-          {/* =====================
-              PERSONAL
-          ===================== */}
+          {/* PERSONAL */}
           <Section icon={<User size={18} />} title="Thông tin cá nhân">
             <Grid>
               <Input
@@ -297,65 +291,49 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
             </Grid>
           </Section>
 
-          {/* =====================
-              SKILLS
-          ===================== */}
+          {/* SKILLS */}
           <Section icon={<Wrench size={18} />} title="Kỹ năng">
-            {/* FILTER */}
             <div className="flex gap-2 mb-4">
-              {[
-                { key: "IT", label: "💻 IT" },
-                { key: "SOFT", label: "🤝 Kỹ năng mềm" },
-                { key: "OTHER", label: "📦 Khác" },
-                { key: "ALL", label: "Tất cả" },
-              ].map((f) => (
+              {["IT", "SOFT", "OTHER", "ALL"].map((k) => (
                 <button
-                  key={f.key}
+                  key={k}
                   type="button"
-                  onClick={() => setSkillFilter(f.key)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium border
-                    ${
-                      skillFilter === f.key
-                        ? "bg-green-600 text-white border-green-600"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                  onClick={() => setSkillFilter(k)}
+                  className={`px-4 py-1.5 rounded-full text-sm border ${
+                    skillFilter === k
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-gray-100"
+                  }`}
                 >
-                  {f.label}
+                  {k}
                 </button>
               ))}
             </div>
 
-            {/* SKILL LIST */}
             <div className="flex flex-wrap gap-2">
-              {visibleSkills.map((skill) => {
-                const active = form.skills.includes(skill.id);
-                return (
-                  <button
-                    type="button"
-                    key={skill.id}
-                    onClick={() => toggleSkill(skill.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition
-                      ${
-                        active
-                          ? "bg-green-600 text-white border-green-600"
-                          : "bg-gray-100 text-gray-700 hover:border-green-500"
-                      }`}
-                  >
-                    {skill.name}
-                  </button>
-                );
-              })}
+              {visibleSkills.map((skill) => (
+                <button
+                  key={skill.id}
+                  type="button"
+                  onClick={() => toggleSkill(skill.id)}
+                  className={`px-3 py-1.5 rounded-full text-sm border ${
+                    form.skills.includes(skill.id)
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  {skill.name}
+                </button>
+              ))}
             </div>
           </Section>
 
-          {/* =====================
-              EDUCATION
-          ===================== */}
+          {/* EDUCATION */}
           <Section icon={<GraduationCap size={18} />} title="Học vấn">
             {form.education.map((edu, i) => (
               <Card key={i} onRemove={() => removeEducation(i)}>
                 <Input
-                  label="Trường"
+                  label="Tên trường"
                   value={edu.institution}
                   onChange={(e) =>
                     updateEducation(i, "institution", e.target.value)
@@ -363,6 +341,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
                 />
                 <Input
                   label="Trình độ"
+                  placeholder="VD: THPT, Cao đẳng, Đại học"
                   value={edu.level}
                   onChange={(e) =>
                     updateEducation(i, "level", e.target.value)
@@ -370,6 +349,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
                 />
                 <Input
                   label="Ngành"
+                  placeholder="VD: Công nghệ thông tin"
                   value={edu.major}
                   onChange={(e) =>
                     updateEducation(i, "major", e.target.value)
@@ -380,9 +360,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
             <AddButton label="Thêm học vấn" onClick={addEducation} />
           </Section>
 
-          {/* =====================
-              EXPERIENCE
-          ===================== */}
+          {/* EXPERIENCE */}
           <Section icon={<Briefcase size={18} />} title="Kinh nghiệm">
             {form.experiences.map((exp, i) => (
               <Card key={i} onRemove={() => removeExperience(i)}>
@@ -412,65 +390,44 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
             <AddButton label="Thêm kinh nghiệm" onClick={addExperience} />
           </Section>
 
-          {/* =====================
-              ACTIONS
-          ===================== */}
-          <div className="flex gap-3 pt-8 mt-10 border-t">
-  <button
-    disabled={saving}
-    className="
-      inline-flex items-center justify-center gap-2
-      h-11 px-6
-      rounded-lg text-sm font-semibold
-      bg-green-600 text-white
-      hover:bg-green-700
-      disabled:opacity-50
-    "
-  >
-    <Save size={16} />
-    {saving ? "Đang lưu..." : "Lưu thay đổi"}
-  </button>
-
-  <button
-    type="button"
-    onClick={onCancel}
-    className="
-      inline-flex items-center justify-center gap-2
-      h-11 px-6
-      rounded-lg text-sm font-semibold
-      bg-gray-200 text-gray-800
-      hover:bg-gray-300
-    "
-  >
-    <X size={16} />
-    Hủy
-  </button>
-</div>
-
+          {/* ACTIONS */}
+          <div className="flex gap-3 pt-8 border-t">
+            <button
+              disabled={saving}
+              className="h-11 px-6 bg-green-600 text-white rounded-lg flex items-center gap-2"
+            >
+              <Save size={16} />
+              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="h-11 px-6 bg-gray-200 rounded-lg flex items-center gap-2"
+            >
+              <X size={16} />
+              Hủy
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* =====================
-          ALERT MODAL
-      ===================== */}
+      {/* ALERT */}
       {alert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-6 text-center shadow-xl">
-            <div className="flex justify-center mb-4">
-              {alert.type === "success" ? (
-                <CheckCircle2 className="text-green-600" size={36} />
-              ) : (
-                <AlertTriangle className="text-red-600" size={36} />
-              )}
-            </div>
-            <h3 className="text-lg font-semibold mb-2">{alert.title}</h3>
-            <p className="text-sm text-gray-600 mb-6">{alert.message}</p>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded-2xl text-center">
+            {alert.type === "success" ? (
+              <CheckCircle2 className="text-green-600 mx-auto" size={36} />
+            ) : (
+              <AlertTriangle className="text-red-600 mx-auto" size={36} />
+            )}
+            <h3 className="font-semibold mt-3">{alert.title}</h3>
+            <p className="text-sm text-gray-600 mt-2">{alert.message}</p>
             <button
               onClick={() => {
                 setAlert(null);
                 if (alert.type === "success") onUpdated();
               }}
-              className="px-6 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700"
+              className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg"
             >
               OK
             </button>
@@ -504,7 +461,7 @@ const Input = ({ label, ...props }) => (
     <label className="text-sm text-gray-600">{label}</label>
     <input
       {...props}
-      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
+      className="w-full border px-3 py-2 rounded-lg mt-1"
     />
   </div>
 );
@@ -515,7 +472,7 @@ const Textarea = ({ label, ...props }) => (
     <textarea
       {...props}
       rows={4}
-      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
+      className="w-full border px-3 py-2 rounded-lg mt-1"
     />
   </div>
 );
@@ -525,7 +482,7 @@ const Select = ({ label, options, ...props }) => (
     <label className="text-sm text-gray-600">{label}</label>
     <select
       {...props}
-      className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring-2 focus:ring-green-500 outline-none"
+      className="w-full border px-3 py-2 rounded-lg mt-1"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
@@ -541,7 +498,7 @@ const Card = ({ children, onRemove }) => (
     <button
       type="button"
       onClick={onRemove}
-      className="absolute top-3 right-3 text-red-500 hover:text-red-700"
+      className="absolute top-3 right-3 text-red-500"
     >
       <Trash2 size={16} />
     </button>
