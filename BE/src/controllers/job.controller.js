@@ -217,18 +217,18 @@ exports.createJob = async (req, res) => {
       );
     }
 
-    /* =========================
-       🔥 UPDATE QUOTA (BƯỚC 4)
-       CHỈ TĂNG KHI TẠO JOB THÀNH CÔNG
-    ========================= */
-    await connection.execute(
-      `
-      UPDATE employer
-      SET job_post_used = job_post_used + 1
-      WHERE user_id = ?
-      `,
-      [userId]
-    );
+   /* =========================
+   🔥 UPDATE QUOTA (CHUẨN)
+========================= */
+await connection.execute(
+  `
+  UPDATE employer
+  SET job_post_used = job_post_used + 1
+  WHERE user_id = ?
+    AND job_post_limit <> -1
+  `,
+  [userId]
+);
 
     await connection.commit();
 

@@ -126,25 +126,79 @@ exports.approvePayment = async (req, res) => {
       });
     }
 
-    // ❌ Không cho duyệt lại
     if (payment.status === "SUCCESS") {
       return res.status(400).json({
         message: "Payment already approved",
       });
     }
 
-    /* =====================
-       1️⃣ UPDATE PAYMENT (DEMO)
-    ===================== */
-    payment.status = "SUCCESS";
-    payment.approvedAt = new Date();
-    payment.expiredAt = new Date(
-      Date.now() + payment.durationDays * 86400000
-    );
+    const now = new Date();
 
     /* =====================
-       2️⃣ BUILD PAYMENT HISTORY ITEM
-       (LƯU CẢ GÓI + QUOTA)
+       1️⃣ GET EMPLOYER CURRENT STATE
+    ===================== */
+    const [rows] = await db.execute(
+      `
+      SELECT 
+        job_post_limit,
+        job_post_used,
+        payment_history
+      FROM employer
+      WHERE user_id = ?
+      `,
+      [payment.userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Employer not found",
+      });
+    }
+
+    const employer = rows[0];
+    const history = employer.payment_history
+      ? JSON.parse(employer.payment_history)
+      : [];
+
+    const lastPackage = history.length
+      ? history[history.length - 1]
+      : null;
+
+    let newExpiredAt;
+    let newJobPostLimit;
+    let newJobPostUsed = employer.job_post_used || 0;
+
+    /* =====================
+       2️⃣ CHECK CÒN HẠN KHÔNG
+    ===================== */
+    if (lastPackage && new Date(lastPackage.expiredAt) > now) {
+      // ✅ CỘNG DỒN
+      newExpiredAt = new Date(
+        new Date(lastPackage.expiredAt).getTime() +
+          payment.durationDays * 86400000
+      );
+
+      newJobPostLimit =
+        (employer.job_post_limit || 0) + payment.postLimit;
+    } else {
+      // ❌ RESET
+      newExpiredAt = new Date(
+        now.getTime() + payment.durationDays * 86400000
+      );
+
+      newJobPostLimit = payment.postLimit;
+      newJobPostUsed = 0;
+    }
+
+    /* =====================
+       3️⃣ UPDATE PAYMENT (DEMO)
+    ===================== */
+    payment.status = "SUCCESS";
+    payment.approvedAt = now;
+    payment.expiredAt = newExpiredAt;
+
+    /* =====================
+       4️⃣ BUILD PAYMENT HISTORY ITEM
     ===================== */
     const paymentHistoryItem = {
       orderId: payment.orderId,
@@ -152,28 +206,24 @@ exports.approvePayment = async (req, res) => {
       packageName: payment.packageName,
       amount: payment.amount,
       durationDays: payment.durationDays,
-      postLimit: payment.postLimit, // 🔥 SỐ TIN CỦA GÓI
+      postLimit: payment.postLimit,
       method: "VietQR",
       status: "SUCCESS",
-      approvedAt: payment.approvedAt,
-      expiredAt: payment.expiredAt,
+      approvedAt: now,
+      expiredAt: newExpiredAt,
     };
 
     /* =====================
-       3️⃣ UPDATE EMPLOYER (DB THẬT)
-       - kích hoạt premium
-       - gán quota
-       - reset đã dùng
-       - lưu lịch sử
+       5️⃣ UPDATE EMPLOYER
     ===================== */
     await db.execute(
       `
       UPDATE employer
       SET 
         is_premium = 1,
-        premium_activated_at = NOW(),
-        job_post_limit = ?,   -- 🔥 quota theo gói
-        job_post_used = 0,    -- 🔥 reset
+        premium_activated_at = ?,
+        job_post_limit = ?,
+        job_post_used = ?,
         payment_history = JSON_ARRAY_APPEND(
           IFNULL(payment_history, JSON_ARRAY()),
           '$',
@@ -182,16 +232,21 @@ exports.approvePayment = async (req, res) => {
       WHERE user_id = ?
       `,
       [
-        payment.postLimit,
+        now,
+        newJobPostLimit,
+        newJobPostUsed,
         JSON.stringify(paymentHistoryItem),
         payment.userId,
       ]
     );
 
     return res.json({
-      message:
-        "Payment approved. Employer premium & quota activated successfully.",
-      payment,
+      message: "Payment approved. Package quota updated successfully.",
+      currentQuota: {
+        job_post_limit: newJobPostLimit,
+        job_post_used: newJobPostUsed,
+        expiredAt: newExpiredAt,
+      },
     });
   } catch (error) {
     console.error("APPROVE PAYMENT ERROR:", error);
@@ -200,6 +255,7 @@ exports.approvePayment = async (req, res) => {
     });
   }
 };
+
 
 
 /* =====================

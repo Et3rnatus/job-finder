@@ -378,15 +378,34 @@ exports.getPackageStatus = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Employer not found" });
+      return res.status(404).json({
+        message: "Employer not found",
+      });
     }
 
     const row = rows[0];
+    const now = new Date();
+
+    /* =====================
+       PARSE PAYMENT HISTORY
+    ===================== */
+    let history = [];
+    try {
+      history = row.payment_history
+        ? JSON.parse(row.payment_history)
+        : [];
+    } catch (err) {
+      console.error("PAYMENT_HISTORY PARSE ERROR:", err);
+      history = [];
+    }
+
+    /* =====================
+       GET CURRENT PACKAGE
+    ===================== */
     let currentPackage = null;
 
-    if (Array.isArray(row.payment_history) && row.payment_history.length > 0) {
-      const latest = row.payment_history[row.payment_history.length - 1];
-      const now = new Date();
+    if (history.length > 0) {
+      const latest = history[history.length - 1];
       const expiredAt = new Date(latest.expiredAt);
 
       currentPackage = {
@@ -416,6 +435,9 @@ exports.getPackageStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("GET PACKAGE STATUS ERROR:", error);
-    return res.status(500).json({ message: "Get package status failed" });
+    return res.status(500).json({
+      message: "Get package status failed",
+    });
   }
 };
+
