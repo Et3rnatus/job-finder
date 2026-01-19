@@ -42,7 +42,7 @@ export default function EmployerSideBarTool({
   const isActive = (mode) => currentMode === mode;
 
   /* =====================
-     ITEM (🔥 FIX UI Ở ĐÂY)
+     ITEM (🔥 FIX WRAP + ALIGN)
   ===================== */
   const Item = ({
     icon,
@@ -54,20 +54,22 @@ export default function EmployerSideBarTool({
   }) => (
     <li
       onClick={disabled ? undefined : onClick}
-      className={`group flex items-center px-4 py-3 rounded-2xl transition-all ${
-        disabled
-          ? "cursor-not-allowed opacity-60"
-          : "cursor-pointer"
-      } ${
-        isActive(mode)
-          ? "bg-emerald-50 text-emerald-700 shadow-sm"
-          : "text-gray-700 hover:bg-gray-100"
-      }`}
+      className={`
+        group flex items-start
+        px-4 py-3 rounded-2xl
+        transition-all
+        ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}
+        ${
+          isActive(mode)
+            ? "bg-emerald-50 text-emerald-700 shadow-sm"
+            : "text-gray-700 hover:bg-gray-100"
+        }
+      `}
     >
       {/* LEFT */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-start gap-3">
         <span
-          className={`transition ${
+          className={`mt-0.5 transition ${
             isActive(mode)
               ? "text-emerald-600"
               : "text-gray-400 group-hover:text-gray-700"
@@ -76,20 +78,25 @@ export default function EmployerSideBarTool({
           {icon}
         </span>
 
-        <span className="font-semibold truncate">
+        <span className="font-semibold leading-snug break-words">
           {label}
         </span>
       </div>
 
-      {/* RIGHT */}
-      <div className="flex items-center gap-2 shrink-0">
+      {/* RIGHT (LUÔN GIỮA ITEM) */}
+      <div className="flex items-center gap-3 ml-auto pl-4 shrink-0 self-center">
         {badge && (
           <span
-            className={`px-2 py-0.5 text-[10px] font-semibold rounded-full whitespace-nowrap ${
-              badge.type === "danger"
-                ? "bg-red-100 text-red-700"
-                : "bg-emerald-100 text-emerald-700"
-            }`}
+            className={`
+              px-2 py-0.5
+              text-[10px] font-semibold
+              rounded-full whitespace-nowrap
+              ${
+                badge.type === "danger"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-emerald-100 text-emerald-700"
+              }
+            `}
           >
             {badge.text}
           </span>
@@ -130,7 +137,6 @@ export default function EmployerSideBarTool({
       </h3>
 
       <ul className="space-y-1 text-sm">
-        {/* PROFILE */}
         <Item
           icon={<Building2 size={18} />}
           label="Hồ sơ công ty"
@@ -142,7 +148,6 @@ export default function EmployerSideBarTool({
           }}
         />
 
-        {/* JOB LIST */}
         <Item
           icon={<Briefcase size={18} />}
           label="Việc làm đã đăng"
@@ -150,7 +155,6 @@ export default function EmployerSideBarTool({
           onClick={() => setMode("jobs")}
         />
 
-        {/* CREATE JOB */}
         <Item
           icon={<PlusCircle size={18} />}
           label="Đăng tuyển mới"
@@ -169,7 +173,6 @@ export default function EmployerSideBarTool({
           }}
         />
 
-        {/* 🔥 PACKAGE SUMMARY (NÚT RIÊNG) */}
         <Item
           icon={<Package size={18} />}
           label="Gói đang sử dụng"
@@ -177,7 +180,6 @@ export default function EmployerSideBarTool({
           onClick={() => setMode("package")}
         />
 
-        {/* PAYMENT */}
         <Item
           icon={<CreditCard size={18} />}
           label="Nâng cấp tài khoản"
@@ -186,7 +188,6 @@ export default function EmployerSideBarTool({
           onClick={() => setMode("payment")}
         />
 
-        {/* PAYMENT HISTORY */}
         <Item
           icon={<Receipt size={18} />}
           label="Lịch sử thanh toán"
@@ -196,7 +197,6 @@ export default function EmployerSideBarTool({
 
         <div className="my-5 border-t border-gray-200" />
 
-        {/* LOGOUT */}
         <li
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer text-red-600 font-semibold hover:bg-red-50 transition"
