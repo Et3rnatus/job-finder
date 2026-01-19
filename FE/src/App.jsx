@@ -33,7 +33,6 @@ import EmployerApplicantsPage from "./pages/EmployerApplicantsPage";
 import ApplicationDetailPage from "./pages/ApplicationDetailPage";
 import SavedJobListPage from "./pages/SavedJobListPage";
 import ViewedJobList from "./components/candidate/ViewedJobList";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -179,10 +178,6 @@ function App() {
             <Route
               path="/employer/applications/:applicationId"
               element={<ApplicationDetailPage />}
-            />
-            <Route
-              path="/payment-success"
-              element={<PaymentSuccessPage />}
             />
           </Route>
 
