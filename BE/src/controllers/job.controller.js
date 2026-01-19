@@ -52,40 +52,19 @@ exports.createJob = async (req, res) => {
     /* =========================
        VALIDATE BẮT BUỘC
     ========================= */
-    if (!title) {
-      return res.status(400).json({ message: "Title is required" });
-    }
-
-    if (!description) {
-      return res.status(400).json({ message: "Description is required" });
-    }
-
-    if (!job_requirements) {
-      return res.status(400).json({ message: "Job requirements are required" });
-    }
-
-    if (!benefits) {
-      return res.status(400).json({ message: "Benefits are required" });
-    }
-
-    if (!employment_type) {
-      return res.status(400).json({ message: "Employment type is required" });
-    }
-
-    if (!category_id) {
-      return res.status(400).json({ message: "Category is required" });
-    }
+    if (!title) return res.status(400).json({ message: "Title is required" });
+    if (!description) return res.status(400).json({ message: "Description is required" });
+    if (!job_requirements) return res.status(400).json({ message: "Job requirements are required" });
+    if (!benefits) return res.status(400).json({ message: "Benefits are required" });
+    if (!employment_type) return res.status(400).json({ message: "Employment type is required" });
+    if (!category_id) return res.status(400).json({ message: "Category is required" });
 
     if (!Array.isArray(skill_ids) || skill_ids.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "At least one skill is required" });
+      return res.status(400).json({ message: "At least one skill is required" });
     }
 
     if (!hiring_quantity || Number(hiring_quantity) <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Hiring quantity must be greater than 0" });
+      return res.status(400).json({ message: "Hiring quantity must be greater than 0" });
     }
 
     if (!expired_at) {
@@ -95,27 +74,20 @@ exports.createJob = async (req, res) => {
     const expiredDate = new Date(expired_at);
     expiredDate.setHours(23, 59, 59, 999);
     if (expiredDate <= new Date()) {
-      return res
-        .status(400)
-        .json({ message: "Expired date must be in the future" });
+      return res.status(400).json({ message: "Expired date must be in the future" });
     }
 
     /* =========================
-       SALARY (CÓ ĐIỀU KIỆN)
+       SALARY
     ========================= */
     const isNegotiable = Number(is_salary_negotiable) === 1;
 
     if (!isNegotiable) {
       if (min_salary == null || max_salary == null) {
-        return res
-          .status(400)
-          .json({ message: "Salary range is required" });
+        return res.status(400).json({ message: "Salary range is required" });
       }
-
       if (Number(min_salary) > Number(max_salary)) {
-        return res
-          .status(400)
-          .json({ message: "Min salary cannot be greater than max salary" });
+        return res.status(400).json({ message: "Min salary cannot be greater than max salary" });
       }
     }
 
@@ -128,9 +100,7 @@ exports.createJob = async (req, res) => {
     );
 
     if (employerRows.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Employer profile not found" });
+      return res.status(400).json({ message: "Employer profile not found" });
     }
 
     const employerId = employerRows[0].id;
@@ -140,15 +110,11 @@ exports.createJob = async (req, res) => {
         : employerRows[0].address;
 
     if (!finalAddress) {
-      return res
-        .status(400)
-        .json({ message: "Company address not found" });
+      return res.status(400).json({ message: "Company address not found" });
     }
 
     /* =========================
-       VALIDATE SKILL:
-       - Skill đúng ngành
-       - HOẶC skill mềm
+       VALIDATE SKILL
     ========================= */
     const [skillRows] = await connection.query(
       `
@@ -158,9 +124,7 @@ exports.createJob = async (req, res) => {
         AND (
           category_id = ?
           OR category_id = (
-            SELECT id
-            FROM job_category
-            WHERE name = 'Kỹ năng mềm'
+            SELECT id FROM job_category WHERE name = 'Kỹ năng mềm'
           )
         )
       `,
@@ -169,8 +133,7 @@ exports.createJob = async (req, res) => {
 
     if (skillRows.length !== skill_ids.length) {
       return res.status(400).json({
-        message:
-          "One or more skills do not belong to the selected category or soft skills",
+        message: "One or more skills do not belong to the selected category or soft skills",
       });
     }
 
@@ -254,6 +217,19 @@ exports.createJob = async (req, res) => {
       );
     }
 
+    /* =========================
+       🔥 UPDATE QUOTA (BƯỚC 4)
+       CHỈ TĂNG KHI TẠO JOB THÀNH CÔNG
+    ========================= */
+    await connection.execute(
+      `
+      UPDATE employer
+      SET job_post_used = job_post_used + 1
+      WHERE user_id = ?
+      `,
+      [userId]
+    );
+
     await connection.commit();
 
     return res.status(201).json({
@@ -268,6 +244,7 @@ exports.createJob = async (req, res) => {
     connection.release();
   }
 };
+
 
 
 /* =====================

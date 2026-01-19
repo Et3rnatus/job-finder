@@ -9,7 +9,8 @@ import EmployerProfileView from "../components/employer/EmployerProfileView";
 import EmployerJobList from "../components/employer/EmployerJobList";
 import CreateJobForm from "../components/employer/CreateJobForm";
 import EmployerPayment from "../components/employer/EmployerPayment";
-import EmployerPaymentHistory from "../components/employer/EmployerPaymentHistory"; // ✅ NEW
+import EmployerPaymentHistory from "../components/employer/EmployerPaymentHistory";
+import EmployerPackageSummary from "../components/employer/EmployerPackageSummary";
 
 import employerService from "../services/employerService";
 
@@ -19,7 +20,8 @@ function EmployerPage() {
   /* =====================
      STATE
   ===================== */
-  const [mode, setMode] = useState("profile"); // profile | jobs | create | payment | payment-history
+  const [mode, setMode] = useState("profile");
+  // profile | jobs | create | payment | payment-history | package
   const [profileMode, setProfileMode] = useState("view");
 
   const [profile, setProfile] = useState(null);
@@ -183,8 +185,11 @@ function EmployerPage() {
             {/* PAYMENT */}
             {mode === "payment" && <EmployerPayment />}
 
-            {/* 🔥 PAYMENT HISTORY */}
+            {/* PAYMENT HISTORY */}
             {mode === "payment-history" && <EmployerPaymentHistory />}
+
+            {/* PACKAGE SUMMARY */}
+            {mode === "package" && <EmployerPackageSummary />}
           </main>
         </div>
       </div>

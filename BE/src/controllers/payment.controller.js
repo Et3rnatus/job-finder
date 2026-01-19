@@ -144,12 +144,16 @@ exports.approvePayment = async (req, res) => {
 
     /* =====================
        2️⃣ BUILD PAYMENT HISTORY ITEM
+       (LƯU CẢ GÓI + QUOTA)
     ===================== */
     const paymentHistoryItem = {
-      orderId,
+      orderId: payment.orderId,
+      packageId: payment.packageId,
+      packageName: payment.packageName,
       amount: payment.amount,
       durationDays: payment.durationDays,
-      method: "MoMo",
+      postLimit: payment.postLimit, // 🔥 SỐ TIN CỦA GÓI
+      method: "VietQR",
       status: "SUCCESS",
       approvedAt: payment.approvedAt,
       expiredAt: payment.expiredAt,
@@ -157,7 +161,10 @@ exports.approvePayment = async (req, res) => {
 
     /* =====================
        3️⃣ UPDATE EMPLOYER (DB THẬT)
-       + LƯU LỊCH SỬ GIAO DỊCH
+       - kích hoạt premium
+       - gán quota
+       - reset đã dùng
+       - lưu lịch sử
     ===================== */
     await db.execute(
       `
@@ -165,6 +172,8 @@ exports.approvePayment = async (req, res) => {
       SET 
         is_premium = 1,
         premium_activated_at = NOW(),
+        job_post_limit = ?,   -- 🔥 quota theo gói
+        job_post_used = 0,    -- 🔥 reset
         payment_history = JSON_ARRAY_APPEND(
           IFNULL(payment_history, JSON_ARRAY()),
           '$',
@@ -172,12 +181,16 @@ exports.approvePayment = async (req, res) => {
         )
       WHERE user_id = ?
       `,
-      [JSON.stringify(paymentHistoryItem), payment.userId]
+      [
+        payment.postLimit,
+        JSON.stringify(paymentHistoryItem),
+        payment.userId,
+      ]
     );
 
     return res.json({
       message:
-        "Payment approved. Employer premium activated successfully.",
+        "Payment approved. Employer premium & quota activated successfully.",
       payment,
     });
   } catch (error) {
@@ -187,6 +200,7 @@ exports.approvePayment = async (req, res) => {
     });
   }
 };
+
 
 /* =====================
    ADMIN: LIST PAYMENTS

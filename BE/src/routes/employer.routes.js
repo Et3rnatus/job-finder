@@ -70,4 +70,11 @@ router.get(
   employerController.getPaymentHistory
 );
 
+router.get(
+  "/package-status",
+  verifyToken,
+  requireRole("employer"),
+  employerController.getPackageStatus
+);
+
 module.exports = router;

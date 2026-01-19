@@ -5,6 +5,7 @@ const jobController = require('../controllers/job.controller');
 const { verifyToken, requireRole } = require('../middlewares/auth.middleware');
 const { requireCompletedEmployerProfile } = require('../middlewares/employerProfile.middleware');
 const { checkEmployerPremium } = require("../middlewares/checkEmployerPremium.middleware");
+const { checkJobPostQuota} = require("../middlewares/checkJobPostQuota.middleware");
 
 
 // employer đăng job
@@ -14,6 +15,7 @@ router.post(
   requireRole('employer'),
   requireCompletedEmployerProfile,
   checkEmployerPremium,
+  checkJobPostQuota,
   jobController.createJob
 );
 

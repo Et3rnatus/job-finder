@@ -109,6 +109,13 @@ const getPaymentHistory = async () => {
   return res.data; // { history: [...] }
 };
 
+const getPackageStatus = async () => {
+  const res = await axios.get(`${API_URL}/package-status`, {
+    headers: getAuthHeader(),
+  });
+  return res.data;
+};
+
 
 export default {
   // profile
@@ -125,4 +132,5 @@ export default {
   reopenJob,
   resubmitJob,
   getPaymentHistory,
+  getPackageStatus,
 };

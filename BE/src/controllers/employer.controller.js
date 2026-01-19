@@ -359,3 +359,63 @@ exports.getPaymentHistory = async (req, res) => {
     });
   }
 };
+
+exports.getPackageStatus = async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        is_premium,
+        premium_activated_at,
+        job_post_limit,
+        job_post_used,
+        payment_history
+      FROM employer
+      WHERE user_id = ?
+      LIMIT 1
+      `,
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Employer not found" });
+    }
+
+    const row = rows[0];
+    let currentPackage = null;
+
+    if (Array.isArray(row.payment_history) && row.payment_history.length > 0) {
+      const latest = row.payment_history[row.payment_history.length - 1];
+      const now = new Date();
+      const expiredAt = new Date(latest.expiredAt);
+
+      currentPackage = {
+        packageId: latest.packageId,
+        packageName: latest.packageName,
+        durationDays: latest.durationDays,
+        postLimit: latest.postLimit,
+        approvedAt: latest.approvedAt,
+        expiredAt: latest.expiredAt,
+        isActive: expiredAt > now,
+        remainingDays: Math.max(
+          0,
+          Math.ceil((expiredAt - now) / (1000 * 60 * 60 * 24))
+        ),
+      };
+    }
+
+    return res.json({
+      is_premium: row.is_premium,
+      job_post_limit: row.job_post_limit,
+      job_post_used: row.job_post_used,
+      remaining_posts:
+        row.job_post_limit === -1
+          ? -1
+          : Math.max(0, row.job_post_limit - row.job_post_used),
+      currentPackage,
+    });
+  } catch (error) {
+    console.error("GET PACKAGE STATUS ERROR:", error);
+    return res.status(500).json({ message: "Get package status failed" });
+  }
+};

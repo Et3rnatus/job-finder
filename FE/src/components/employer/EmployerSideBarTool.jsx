@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   Building2,
   Briefcase,
@@ -6,8 +7,11 @@ import {
   CreditCard,
   LogOut,
   ChevronRight,
-  Receipt, // ✅ icon lịch sử
+  Receipt,
+  Package,
 } from "lucide-react";
+
+import employerService from "../../services/employerService";
 
 export default function EmployerSideBarTool({
   setMode,
@@ -15,9 +19,17 @@ export default function EmployerSideBarTool({
   currentMode,
 }) {
   const navigate = useNavigate();
+  const [packageStatus, setPackageStatus] = useState(null);
 
-  // ✅ đọc trạng thái premium từ localStorage
+  // fallback cho logic cũ
   const isPremium = localStorage.getItem("is_premium") === "1";
+
+  useEffect(() => {
+    employerService
+      .getPackageStatus()
+      .then(setPackageStatus)
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -63,8 +75,14 @@ export default function EmployerSideBarTool({
         <span className="font-semibold">{label}</span>
 
         {badge && (
-          <span className="ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700">
-            {badge}
+          <span
+            className={`ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+              badge.type === "danger"
+                ? "bg-red-100 text-red-700"
+                : "bg-emerald-100 text-emerald-700"
+            }`}
+          >
+            {badge.text}
           </span>
         )}
       </div>
@@ -80,6 +98,22 @@ export default function EmployerSideBarTool({
     </li>
   );
 
+  /* =====================
+     BADGE CHO ĐĂNG TIN
+  ===================== */
+  let quotaBadge = null;
+  if (packageStatus?.currentPackage) {
+    if (!packageStatus.currentPackage.isActive) {
+      quotaBadge = { text: "Hết hạn", type: "danger" };
+    } else if (packageStatus.job_post_limit === -1) {
+      quotaBadge = { text: "Không giới hạn" };
+    } else {
+      quotaBadge = {
+        text: `Còn ${packageStatus.remaining_posts} tin`,
+      };
+    }
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-6 mt-6 shadow-sm">
       <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">
@@ -92,7 +126,7 @@ export default function EmployerSideBarTool({
           icon={<Building2 size={18} />}
           label="Hồ sơ công ty"
           mode="profile"
-          badge="Bắt buộc"
+          badge={{ text: "Bắt buộc" }}
           onClick={() => {
             setMode("profile");
             setProfileMode?.("view");
@@ -112,14 +146,26 @@ export default function EmployerSideBarTool({
           icon={<PlusCircle size={18} />}
           label="Đăng tuyển mới"
           mode="create"
-          badge={!isPremium ? "Cần nâng cấp" : null}
+          badge={
+            !isPremium
+              ? { text: "Cần nâng cấp", type: "danger" }
+              : quotaBadge
+          }
           onClick={() => {
             if (!isPremium) {
-              setMode("payment"); // ép sang thanh toán
+              setMode("payment");
               return;
             }
             setMode("create");
           }}
+        />
+
+        {/* PACKAGE SUMMARY (NÚT – ĐÚNG Ý MÀY) */}
+        <Item
+          icon={<Package size={18} />}
+          label="Gói đang sử dụng"
+          mode="package"
+          onClick={() => setMode("package")}
         />
 
         {/* PAYMENT */}
@@ -127,11 +173,11 @@ export default function EmployerSideBarTool({
           icon={<CreditCard size={18} />}
           label="Nâng cấp tài khoản"
           mode="payment"
-          badge="Pro"
+          badge={{ text: "Pro" }}
           onClick={() => setMode("payment")}
         />
 
-        {/* 🔥 PAYMENT HISTORY */}
+        {/* PAYMENT HISTORY */}
         <Item
           icon={<Receipt size={18} />}
           label="Lịch sử thanh toán"
