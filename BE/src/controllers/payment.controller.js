@@ -1,8 +1,15 @@
+/**
+ * NOTE:
+ * Module mô phỏng thanh toán VietQR cho mục đích học thuật (luận văn).
+ * KHÔNG kết nối ngân hàng thật, KHÔNG phát sinh giao dịch tài chính.
+ */
+
 const db = require("../config/db");
 
 /* =====================
    DEMO IN-MEMORY STORE
 ===================== */
+// Lưu tạm giao dịch để demo (không dùng DB thật)
 const demoPayments = {};
 
 /* =====================
@@ -24,7 +31,7 @@ const PACKAGES = {
   premium: {
     name: "Gói Cao Cấp",
     price: 300000,
-    postLimit: -1,
+    postLimit: -1, // không giới hạn
     durationDays: 30,
   },
 };
@@ -35,8 +42,8 @@ const PACKAGES = {
 exports.createVietQRPayment = async (req, res) => {
   try {
     const { packageId } = req.body;
-
     const pkg = PACKAGES[packageId];
+
     if (!pkg) {
       return res.status(400).json({
         message: "Invalid package",
@@ -45,7 +52,18 @@ exports.createVietQRPayment = async (req, res) => {
 
     const orderId = "VIETQR_" + Date.now();
 
-    // 🔹 Lưu giao dịch demo (PENDING)
+    /* =====================
+       TRANSFER INFO (REALISTIC)
+    ===================== */
+    // Nội dung chuyển tiền (chuẩn đối soát ngân hàng)
+    const transferContent = `JOBFINDER ${packageId.toUpperCase()} U${req.user.id} ${orderId}`;
+
+    // Tên người nhận (demo)
+    const accountName = "CONG TY JOBFINDER (DEMO)";
+
+    /* =====================
+       SAVE PAYMENT (DEMO)
+    ===================== */
     const payment = {
       orderId,
       userId: req.user.id,
@@ -54,6 +72,8 @@ exports.createVietQRPayment = async (req, res) => {
       amount: pkg.price,
       postLimit: pkg.postLimit,
       durationDays: pkg.durationDays,
+      transferContent,
+      accountName,
       status: "PENDING",
       createdAt: new Date(),
     };
@@ -61,17 +81,11 @@ exports.createVietQRPayment = async (req, res) => {
     demoPayments[orderId] = payment;
 
     /* =====================
-       TRANSFER INFO (REALISTIC)
+       GENERATE SAFE VIETQR
+       (STK GIẢ – KHÔNG TỒN TẠI)
     ===================== */
-
-    // Nội dung chuyển tiền (chuẩn ngân hàng)
-    const transferContent = `JOBFINDER ${packageId.toUpperCase()} U${payment.userId} ${orderId}`;
-
-    // Tên người nhận
-    const accountName = "CONG TY JOBFINDER";
-
-    // 🔹 Sinh QR VietQR (chuẩn Napas)
-    const qrUrl = `https://img.vietqr.io/image/970422-0000000000-compact.png` +
+    const qrUrl =
+      `https://img.vietqr.io/image/970422-0000000000-compact.png` +
       `?amount=${pkg.price}` +
       `&addInfo=${encodeURIComponent(transferContent)}` +
       `&accountName=${encodeURIComponent(accountName)}`;
@@ -98,7 +112,6 @@ exports.createVietQRPayment = async (req, res) => {
   }
 };
 
-
 /* =====================
    ADMIN: APPROVE PAYMENT
 ===================== */
@@ -113,14 +126,21 @@ exports.approvePayment = async (req, res) => {
       });
     }
 
-    // 1️⃣ Update payment demo
+    // ❌ Không cho duyệt lại
+    if (payment.status === "SUCCESS") {
+      return res.status(400).json({
+        message: "Payment already approved",
+      });
+    }
+
+    // 1️⃣ Update trạng thái payment
     payment.status = "SUCCESS";
     payment.approvedAt = new Date();
     payment.expiredAt = new Date(
       Date.now() + payment.durationDays * 86400000
     );
 
-    // 2️⃣ MỞ QUYỀN EMPLOYER (THẬT)
+    // 2️⃣ MỞ QUYỀN EMPLOYER (DB THẬT)
     await db.execute(
       `UPDATE users
        SET status = 'active'
@@ -131,7 +151,9 @@ exports.approvePayment = async (req, res) => {
     console.log(
       "✅ EMPLOYER ACTIVATED:",
       payment.userId,
-      "EXPIRED AT:",
+      "| PACKAGE:",
+      payment.packageId,
+      "| EXPIRED AT:",
       payment.expiredAt
     );
 
