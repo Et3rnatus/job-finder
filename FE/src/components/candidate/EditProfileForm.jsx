@@ -14,29 +14,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-/* =====================
-   SKILL DISPLAY (UI ONLY)
-===================== */
-const SKILL_DISPLAY_GROUPS = {
-  IT: [
-    "JavaScript",
-    "Node.js",
-    "React",
-    "HTML",
-    "CSS",
-    "MySQL",
-    "PostgreSQL",
-    "REST API",
-  ],
-  SOFT: [
-    "Giao tiếp",
-    "Làm việc nhóm",
-    "Quản lý thời gian",
-    "Giải quyết vấn đề",
-    "Thuyết trình",
-  ],
-};
-
 export default function EditProfileForm({ profile, onUpdated, onCancel }) {
   const [form, setForm] = useState({
     full_name: "",
@@ -51,7 +28,11 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
   });
 
   const [allSkills, setAllSkills] = useState([]);
-  const [skillFilter, setSkillFilter] = useState("IT");
+
+  // 🔥 FILTER STATE
+  const [skillType, setSkillType] = useState("ALL"); // ALL | TECH | SOFT
+  const [categoryId, setCategoryId] = useState("ALL"); // ALL | number
+
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -75,12 +56,14 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
         : [],
       education: Array.isArray(profile.education)
         ? profile.education.map((e) => ({
-            institution: e.institution || "",
-            level: e.level || "",
+            institution: e.school || "",
+            level: e.degree || "",
             major: e.major || "",
           }))
         : [],
-      experiences: profile.experiences || [],
+      experiences: Array.isArray(profile.experiences)
+        ? profile.experiences
+        : [],
     });
   }, [profile]);
 
@@ -88,22 +71,26 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
      LOAD SKILLS
   ===================== */
   useEffect(() => {
-    getAllSkills()
-      .then(setAllSkills)
-      .catch(() =>
-        setAlert({
-          type: "error",
-          title: "Lỗi",
-          message: "Không thể tải danh sách kỹ năng",
-        })
-      );
-  }, []);
+  getAllSkills()
+    .then((skills) => {
+      setAllSkills(skills); // skills là ARRAY
+    })
+    .catch(() =>
+      setAlert({
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải danh sách kỹ năng",
+      })
+    );
+}, []);
+
+
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   /* =====================
-     SKILLS
+     SKILLS (NGÀNH + LOẠI)
   ===================== */
   const toggleSkill = (skillId) => {
     setForm((prev) => ({
@@ -114,22 +101,31 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
     }));
   };
 
-  const visibleSkills = allSkills.filter((skill) => {
-    if (skillFilter === "ALL") return true;
-    if (skillFilter === "IT")
-      return SKILL_DISPLAY_GROUPS.IT.includes(skill.name);
-    if (skillFilter === "SOFT")
-      return SKILL_DISPLAY_GROUPS.SOFT.includes(skill.name);
-    if (skillFilter === "OTHER")
-      return (
-        !SKILL_DISPLAY_GROUPS.IT.includes(skill.name) &&
-        !SKILL_DISPLAY_GROUPS.SOFT.includes(skill.name)
-      );
+  const visibleSkills = (Array.isArray(allSkills) ? allSkills : [])
+  .filter((skill) => {
+    const skillCategoryId = Number(skill.category_id);
+    const selectedCategoryId =
+      categoryId === "ALL" ? "ALL" : Number(categoryId);
+
+    if (skillType === "TECH" && skill.skill_type !== "technical") return false;
+    if (skillType === "SOFT" && skill.skill_type !== "soft") return false;
+
+    if (selectedCategoryId !== "ALL") {
+      if (
+        skill.skill_type === "technical" &&
+        skillCategoryId !== selectedCategoryId
+      ) {
+        return false;
+      }
+    }
+
     return true;
-  });
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
+
 
   /* =====================
-     EDUCATION (SIMPLIFIED)
+     EDUCATION
   ===================== */
   const addEducation = () =>
     setForm((p) => ({
@@ -183,8 +179,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
       return setAlert({
         type: "error",
         title: "Thiếu thông tin",
-        message:
-          "Vui lòng nhập đầy đủ họ tên, số điện thoại và ngày sinh",
+        message: "Vui lòng nhập đầy đủ họ tên, số điện thoại và ngày sinh",
       });
     }
 
@@ -207,9 +202,13 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
         gender: form.gender || null,
         date_of_birth: form.date_of_birth,
         skills: form.skills,
-        education: form.education.filter(
-          (e) => e.institution || e.level || e.major
-        ),
+        education: form.education
+          .filter((e) => e.institution || e.level || e.major)
+          .map((e) => ({
+            school: e.institution,
+            degree: e.level,
+            major: e.major,
+          })),
         experiences: form.experiences,
       };
 
@@ -225,8 +224,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
         type: "error",
         title: "Thất bại",
         message:
-          err.response?.data?.message ||
-          "Cập nhật hồ sơ thất bại",
+          err.response?.data?.message || "Cập nhật hồ sơ thất bại",
       });
     } finally {
       setSaving(false);
@@ -237,36 +235,17 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
     <>
       <div className="max-w-5xl mx-auto bg-white border rounded-2xl shadow-sm p-8">
         <form onSubmit={handleSubmit} className="space-y-14">
+
           {/* PERSONAL */}
           <Section icon={<User size={18} />} title="Thông tin cá nhân">
             <Grid>
-              <Input
-                label="Họ và tên *"
-                name="full_name"
-                value={form.full_name}
-                onChange={handleChange}
-              />
-              <Input
-                label="Số điện thoại *"
-                name="contact_number"
-                value={form.contact_number}
-                onChange={handleChange}
-              />
+              <Input label="Họ và tên *" name="full_name" value={form.full_name} onChange={handleChange} />
+              <Input label="Số điện thoại *" name="contact_number" value={form.contact_number} onChange={handleChange} />
               <Input label="Email" value={profile.email || ""} disabled />
-              <Input
-                label="Địa chỉ"
-                name="address"
-                value={form.address}
-                onChange={handleChange}
-              />
+              <Input label="Địa chỉ" name="address" value={form.address} onChange={handleChange} />
             </Grid>
 
-            <Textarea
-              label="Giới thiệu bản thân"
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-            />
+            <Textarea label="Giới thiệu bản thân" name="bio" value={form.bio} onChange={handleChange} />
 
             <Grid>
               <Select
@@ -281,31 +260,54 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
                   { value: "Khác", label: "Khác" },
                 ]}
               />
-              <Input
-                type="date"
-                label="Ngày sinh *"
-                name="date_of_birth"
-                value={form.date_of_birth}
-                onChange={handleChange}
-              />
+              <Input type="date" label="Ngày sinh *" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} />
             </Grid>
           </Section>
 
           {/* SKILLS */}
           <Section icon={<Wrench size={18} />} title="Kỹ năng">
-            <div className="flex gap-2 mb-4">
-              {["IT", "SOFT", "OTHER", "ALL"].map((k) => (
+
+            {/* CHỌN NGÀNH */}
+            <div className="flex gap-2 mb-3">
+              {[
+                { id: "ALL", label: "Tất cả" },
+                { id: 1, label: "CNTT" },
+                { id: 2, label: "Marketing" },
+                { id: 3, label: "Kinh doanh" },
+              ].map((c) => (
                 <button
-                  key={k}
+                  key={c.id}
                   type="button"
-                  onClick={() => setSkillFilter(k)}
+                  onClick={() => setCategoryId(c.id)}
                   className={`px-4 py-1.5 rounded-full text-sm border ${
-                    skillFilter === k
+                    categoryId === c.id
                       ? "bg-green-600 text-white border-green-600"
                       : "bg-gray-100"
                   }`}
                 >
-                  {k}
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            {/* CHỌN LOẠI */}
+            <div className="flex gap-2 mb-4">
+              {[
+                { id: "ALL", label: "Tất cả" },
+                { id: "TECH", label: "Kỹ năng cứng" },
+                { id: "SOFT", label: "Kỹ năng mềm" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setSkillType(t.id)}
+                  className={`px-4 py-1.5 rounded-full text-sm border ${
+                    skillType === t.id
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -332,29 +334,9 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
           <Section icon={<GraduationCap size={18} />} title="Học vấn">
             {form.education.map((edu, i) => (
               <Card key={i} onRemove={() => removeEducation(i)}>
-                <Input
-                  label="Tên trường"
-                  value={edu.institution}
-                  onChange={(e) =>
-                    updateEducation(i, "institution", e.target.value)
-                  }
-                />
-                <Input
-                  label="Trình độ"
-                  placeholder="VD: THPT, Cao đẳng, Đại học"
-                  value={edu.level}
-                  onChange={(e) =>
-                    updateEducation(i, "level", e.target.value)
-                  }
-                />
-                <Input
-                  label="Ngành"
-                  placeholder="VD: Công nghệ thông tin"
-                  value={edu.major}
-                  onChange={(e) =>
-                    updateEducation(i, "major", e.target.value)
-                  }
-                />
+                <Input label="Tên trường" value={edu.institution} onChange={(e) => updateEducation(i, "institution", e.target.value)} />
+                <Input label="Trình độ" value={edu.level} onChange={(e) => updateEducation(i, "level", e.target.value)} />
+                <Input label="Ngành" value={edu.major} onChange={(e) => updateEducation(i, "major", e.target.value)} />
               </Card>
             ))}
             <AddButton label="Thêm học vấn" onClick={addEducation} />
@@ -364,27 +346,9 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
           <Section icon={<Briefcase size={18} />} title="Kinh nghiệm">
             {form.experiences.map((exp, i) => (
               <Card key={i} onRemove={() => removeExperience(i)}>
-                <Input
-                  label="Công ty"
-                  value={exp.company}
-                  onChange={(e) =>
-                    updateExperience(i, "company", e.target.value)
-                  }
-                />
-                <Input
-                  label="Vị trí"
-                  value={exp.position}
-                  onChange={(e) =>
-                    updateExperience(i, "position", e.target.value)
-                  }
-                />
-                <Textarea
-                  label="Mô tả công việc"
-                  value={exp.description}
-                  onChange={(e) =>
-                    updateExperience(i, "description", e.target.value)
-                  }
-                />
+                <Input label="Công ty" value={exp.company} onChange={(e) => updateExperience(i, "company", e.target.value)} />
+                <Input label="Vị trí" value={exp.position} onChange={(e) => updateExperience(i, "position", e.target.value)} />
+                <Textarea label="Mô tả công việc" value={exp.description} onChange={(e) => updateExperience(i, "description", e.target.value)} />
               </Card>
             ))}
             <AddButton label="Thêm kinh nghiệm" onClick={addExperience} />
@@ -392,18 +356,11 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
 
           {/* ACTIONS */}
           <div className="flex gap-3 pt-8 border-t">
-            <button
-              disabled={saving}
-              className="h-11 px-6 bg-green-600 text-white rounded-lg flex items-center gap-2"
-            >
+            <button disabled={saving} className="h-11 px-6 bg-green-600 text-white rounded-lg flex items-center gap-2">
               <Save size={16} />
               {saving ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
-            <button
-              type="button"
-              onClick={onCancel}
-              className="h-11 px-6 bg-gray-200 rounded-lg flex items-center gap-2"
-            >
+            <button type="button" onClick={onCancel} className="h-11 px-6 bg-gray-200 rounded-lg flex items-center gap-2">
               <X size={16} />
               Hủy
             </button>
@@ -411,7 +368,6 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
         </form>
       </div>
 
-      {/* ALERT */}
       {alert && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50">
           <div className="bg-white p-6 rounded-2xl text-center">
@@ -459,31 +415,21 @@ const Grid = ({ children }) => (
 const Input = ({ label, ...props }) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <input
-      {...props}
-      className="w-full border px-3 py-2 rounded-lg mt-1"
-    />
+    <input {...props} className="w-full border px-3 py-2 rounded-lg mt-1" />
   </div>
 );
 
 const Textarea = ({ label, ...props }) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <textarea
-      {...props}
-      rows={4}
-      className="w-full border px-3 py-2 rounded-lg mt-1"
-    />
+    <textarea {...props} rows={4} className="w-full border px-3 py-2 rounded-lg mt-1" />
   </div>
 );
 
 const Select = ({ label, options, ...props }) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <select
-      {...props}
-      className="w-full border px-3 py-2 rounded-lg mt-1"
-    >
+    <select {...props} className="w-full border px-3 py-2 rounded-lg mt-1">
       {options.map((o) => (
         <option key={o.value} value={o.value}>
           {o.label}
@@ -495,11 +441,7 @@ const Select = ({ label, options, ...props }) => (
 
 const Card = ({ children, onRemove }) => (
   <div className="border rounded-xl p-4 bg-gray-50 relative space-y-3">
-    <button
-      type="button"
-      onClick={onRemove}
-      className="absolute top-3 right-3 text-red-500"
-    >
+    <button type="button" onClick={onRemove} className="absolute top-3 right-3 text-red-500">
       <Trash2 size={16} />
     </button>
     {children}
@@ -507,11 +449,7 @@ const Card = ({ children, onRemove }) => (
 );
 
 const AddButton = ({ label, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="text-green-600 flex items-center gap-1 text-sm hover:underline"
-  >
+  <button type="button" onClick={onClick} className="text-green-600 flex items-center gap-1 text-sm hover:underline">
     <Plus size={14} /> {label}
   </button>
 );

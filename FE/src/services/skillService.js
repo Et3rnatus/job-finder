@@ -20,5 +20,6 @@ export const getSkillsByCategory = async (categoryId) => {
  */
 export const getAllSkills = async () => {
   const res = await axios.get(API_URL);
-  return res.data;
+  return res.data; // ✅ ĐÚNG 100% VỚI BACKEND
 };
+
