@@ -71,12 +71,13 @@ exports.createJob = async (req, res) => {
       return res.status(400).json({ message: "Category is required", field: "category_id",  });
     }
 
-    if (!Array.isArray(skill_ids) || skill_ids.length === 0) {
-      return res.status(400).json({
-        message: "At least one skill is required",
-        field: "skill_ids",
-      });
-    }
+    if (skill_ids && !Array.isArray(skill_ids)) {
+  return res.status(400).json({
+    message: "Skill ids must be an array",
+    field: "skill_ids",
+  });
+}
+
 
     if (!hiring_quantity || Number(hiring_quantity) <= 0) {
       return res.status(400).json({
@@ -168,31 +169,39 @@ exports.createJob = async (req, res) => {
         .status(400)
         .json({ message: "Company address not found" });
     }
+    const [[otherCategory]] = await connection.query(
+  `SELECT id FROM job_category WHERE name = 'Khác' LIMIT 1`
+);
+
+const isOtherCategory =
+  otherCategory && Number(category_id) === otherCategory.id;
 
     /* =========================
        VALIDATE SKILL
     ========================= */
-    const [skillRows] = await connection.query(
-      `
-      SELECT id
-      FROM skill
-      WHERE id IN (?)
-        AND (
-          category_id = ?
-          OR category_id = (
-            SELECT id FROM job_category WHERE name = 'Kỹ năng mềm'
-          )
-        )
-      `,
-      [skill_ids, category_id]
-    );
+    if (!isOtherCategory && skill_ids && skill_ids.length > 0) {
+  const [skillRows] = await connection.query(
+    `
+    SELECT id
+    FROM skill
+    WHERE id IN (?)
+      AND (
+        category_id = ?
+        OR skill_type = 'soft'
+      )
+    `,
+    [skill_ids, category_id]
+  );
 
-    if (skillRows.length !== skill_ids.length) {
-      return res.status(400).json({
-        message:
-          "One or more skills do not belong to the selected category or soft skills",
-      });
-    }
+  if (skillRows.length !== skill_ids.length) {
+    return res.status(400).json({
+      message:
+        "One or more skills do not belong to the selected category or soft skills",
+      field: "skill_ids",
+    });
+  }
+}
+
 
     /* =========================
        INSERT JOB
@@ -275,12 +284,15 @@ exports.createJob = async (req, res) => {
     /* =========================
        INSERT JOB SKILLS
     ========================= */
-    for (const skillId of skill_ids) {
-      await connection.execute(
-        "INSERT INTO job_skill (job_id, skill_id) VALUES (?, ?)",
-        [jobId, skillId]
-      );
-    }
+    if (Array.isArray(skill_ids) && skill_ids.length > 0) {
+  for (const skillId of skill_ids) {
+    await connection.execute(
+      "INSERT INTO job_skill (job_id, skill_id) VALUES (?, ?)",
+      [jobId, skillId]
+    );
+  }
+}
+
 
     /* =========================
        UPDATE QUOTA

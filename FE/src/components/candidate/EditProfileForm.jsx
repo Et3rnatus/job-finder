@@ -266,6 +266,10 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
 
           {/* SKILLS */}
           <Section icon={<Wrench size={18} />} title="Kỹ năng">
+  <p className="text-sm text-gray-500 mb-2">
+    Bạn có thể chọn kỹ năng mềm nếu không thuộc ngành nghề cụ thể.
+  </p>
+
 
             {/* CHỌN NGÀNH */}
             <div className="flex gap-2 mb-3">
@@ -294,7 +298,7 @@ export default function EditProfileForm({ profile, onUpdated, onCancel }) {
             <div className="flex gap-2 mb-4">
               {[
                 { id: "ALL", label: "Tất cả" },
-                { id: "TECH", label: "Kỹ năng cứng" },
+                { id: "TECH", label: "Kỹ năng chuyên môn" },
                 { id: "SOFT", label: "Kỹ năng mềm" },
               ].map((t) => (
                 <button

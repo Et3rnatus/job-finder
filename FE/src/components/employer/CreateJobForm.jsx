@@ -165,6 +165,13 @@ const scrollToFirstError = (errors) => {
       return next;
     });
   };
+  const isOtherCategory = () => {
+  const selected = categories.find(
+    (c) => c.id === form.category_id
+  );
+  return selected?.name === "Khác";
+};
+
   const validateForm = () => {
   const newErrors = {};
 
@@ -176,9 +183,14 @@ const scrollToFirstError = (errors) => {
     newErrors.category_id = "Vui lòng chọn ngành nghề";
   }
 
-  if (!form.skill_ids.length) {
-    newErrors.skill_ids = "Vui lòng chọn ít nhất 1 kỹ năng";
-  }
+  if (
+  !isOtherCategory() &&
+  skills.length > 0 &&
+  !form.skill_ids.length
+) {
+  newErrors.skill_ids = "Vui lòng chọn ít nhất 1 kỹ năng";
+}
+
 
   if (!form.description.trim()) {
     newErrors.description = "Vui lòng nhập mô tả công việc";
@@ -569,58 +581,80 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
   </p>
 </Section>
 
-<Section icon={<Wrench />} title="Kỹ năng yêu cầu">
-  {!form.category_id && (
-    <p className="text-sm text-gray-400">
-      Vui lòng chọn ngành nghề để hiển thị danh sách kỹ năng
+{/* NOTE khi chọn ngành "Khác" */}
+{isOtherCategory() && (
+  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+    <p>
+      Bạn đã chọn <span className="font-medium">ngành nghề Khác</span>.
     </p>
-  )}
-
-  {form.category_id && skills.length === 0 && (
-    <p className="text-sm text-gray-400">
-      Ngành nghề này chưa có kỹ năng cụ thể
+    <p className="mt-1">
+      Với các vị trí phổ thông hoặc đặc thù (ví dụ: tài xế, bảo vệ, lao động phổ thông),
+      hệ thống không yêu cầu kỹ năng cụ thể.
     </p>
-  )}
-
-  {skills.length > 0 && (
-    <div className="flex flex-wrap gap-3">
-      {skills.map((s) => (
-        <label
-          key={s.id}
-          className={`px-4 py-2 rounded-full border cursor-pointer ${
-            form.skill_ids.includes(s.id)
-              ? "bg-emerald-600 text-white"
-              : ""
-          }`}
-        >
-          <input
-            type="checkbox"
-            hidden
-            checked={form.skill_ids.includes(s.id)}
-            onChange={(e) => {
-              setIsDirty(true);
-              setForm((p) => ({
-                ...p,
-                skill_ids: e.target.checked
-                  ? [...p.skill_ids, s.id]
-                  : p.skill_ids.filter((id) => id !== s.id),
-              }));
-              setErrors((prev) => ({ ...prev, skill_ids: null }));
-            }}
-          />
-          {s.name}
-        </label>
-      ))}
-    </div>
-  )}
-
-  {errors.skill_ids && (
-    <p className="text-sm text-red-600 mt-2">
-      {errors.skill_ids}
+    <p className="mt-1">
+      Vui lòng mô tả chi tiết yêu cầu công việc ở phần mô tả & yêu cầu bên dưới.
     </p>
-  )}
-</Section>
+  </div>
+)}
 
+{/* SECTION KỸ NĂNG – CHỈ HIỆN KHI KHÔNG PHẢI "KHÁC" */}
+{!isOtherCategory() && (
+  <Section icon={<Wrench />} title="Kỹ năng yêu cầu">
+    {/* Chưa chọn ngành */}
+    {!form.category_id && (
+      <p className="text-sm text-gray-400">
+        Vui lòng chọn ngành nghề để hiển thị danh sách kỹ năng
+      </p>
+    )}
+
+    {/* Ngành có nhưng chưa có skill */}
+    {form.category_id && skills.length === 0 && (
+      <p className="text-sm text-gray-400">
+        Ngành nghề này chưa có kỹ năng cụ thể
+      </p>
+    )}
+
+    {/* Danh sách kỹ năng */}
+    {skills.length > 0 && (
+      <div className="flex flex-wrap gap-3">
+        {skills.map((s) => (
+          <label
+            key={s.id}
+            className={`px-4 py-2 rounded-full border cursor-pointer ${
+              form.skill_ids.includes(s.id)
+                ? "bg-emerald-600 text-white"
+                : ""
+            }`}
+          >
+            <input
+              type="checkbox"
+              hidden
+              checked={form.skill_ids.includes(s.id)}
+              onChange={(e) => {
+                setIsDirty(true);
+                setForm((p) => ({
+                  ...p,
+                  skill_ids: e.target.checked
+                    ? [...p.skill_ids, s.id]
+                    : p.skill_ids.filter((id) => id !== s.id),
+                }));
+                setErrors((prev) => ({ ...prev, skill_ids: null }));
+              }}
+            />
+            {s.name}
+          </label>
+        ))}
+      </div>
+    )}
+
+    {/* Lỗi validate */}
+    {errors.skill_ids && (
+      <p className="text-sm text-red-600 mt-2">
+        {errors.skill_ids}
+      </p>
+    )}
+  </Section>
+)}
         <Section icon={<FileText />} title="Mô tả & yêu cầu">
   {/* MÔ TẢ CÔNG VIỆC */}
   <div className="space-y-1">

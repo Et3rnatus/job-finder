@@ -8,16 +8,39 @@ exports.getSkillsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
 
-    const [rows] = await db.execute(
-      `
-      SELECT id, name
-      FROM skill
-      WHERE category_id = ?
-      ORDER BY name ASC
-      `,
-      [categoryId]
+    // 🔹 Lấy category "Khác"
+    const [[otherCategory]] = await db.execute(
+      `SELECT id FROM job_category WHERE name = 'Khác' LIMIT 1`
     );
 
+    const isOtherCategory =
+      otherCategory && Number(categoryId) === otherCategory.id;
+
+    let query = "";
+    let params = [];
+
+    if (isOtherCategory) {
+      // 👉 "Khác" → CHỈ soft skill
+      query = `
+        SELECT id, name
+        FROM skill
+        WHERE skill_type = 'soft'
+        ORDER BY name ASC
+      `;
+    } else {
+      // 👉 Ngành cụ thể → technical theo ngành + soft skill
+      query = `
+        SELECT id, name
+        FROM skill
+        WHERE 
+          (category_id = ? AND skill_type = 'technical')
+          OR skill_type = 'soft'
+        ORDER BY name ASC
+      `;
+      params = [categoryId];
+    }
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
     console.error("GET SKILLS BY CATEGORY ERROR:", error);
@@ -25,10 +48,6 @@ exports.getSkillsByCategory = async (req, res) => {
   }
 };
 
-/**
- * GET /api/skills
- * Toàn bộ skills (cho CANDIDATE)
- */
 /**
  * GET /api/skills
  * Toàn bộ skills (cho CANDIDATE)
