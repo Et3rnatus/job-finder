@@ -61,6 +61,18 @@ function NotificationBell() {
   const role = localStorage.getItem("role");
   const token = localStorage.getItem("token");
 
+  const getNotificationSource = (type) => {
+  switch (type) {
+    case "NEW_APPLICATION":
+      return "Thông báo có ứng viên ứng tuyển";
+    case "job_approved":
+    case "job_rejected":
+      return "Thông báo từ Admin";
+    default:
+      return "Thông báo hệ thống";
+  }
+};
+
   const unreadCount = notifications.filter(
     (n) => Number(n.is_read) === 0
   ).length;
@@ -135,18 +147,26 @@ function NotificationBell() {
         );
       }
 
-      if (role === "employer") {
-        if (
-          noti.type === "NEW_APPLICATION" &&
-          noti.related_id
-        ) {
-          navigate(
-            `/employer/jobs/${noti.related_id}/applications`
-          );
-        } else {
-          navigate("/account/employer");
-        }
-      }
+     if (role === "employer") {
+  // Ứng viên nộp hồ sơ → vẫn vào danh sách ứng viên của job
+  if (noti.type === "NEW_APPLICATION" && noti.related_id) {
+    navigate(`/employer/jobs/${noti.related_id}/applications`);
+  } 
+  // Admin duyệt / từ chối job → về trang job đã đăng
+  else if (
+    noti.type === "job_approved" ||
+    noti.type === "job_rejected"
+  ) {
+    navigate("/employer/jobs"); // 👈 TRANG JOB ĐÃ ĐĂNG
+  } 
+  else {
+    navigate("/employer/jobs");
+  }
+
+  setOpen(false);
+  return;
+}
+
 
       if (role === "candidate") {
         // ✅ FIX ĐÚNG: luôn về trang CÔNG VIỆC ĐÃ ỨNG TUYỂN
@@ -311,34 +331,41 @@ function NotificationBell() {
                     </div>
 
                     {/* ITEMS */}
-                    {items.map((noti) => (
-                      <div
-                        key={noti.id}
-                        onClick={() =>
-                          handleClickNotification(noti)
-                        }
-                        className={`
-                          px-5 py-4 flex gap-4 cursor-pointer
-                          transition
-                          ${
-                            Number(noti.is_read) === 1
-                              ? "hover:bg-gray-50"
-                              : "bg-emerald-50/60 hover:bg-emerald-50"
+                      {items.map((noti) => (
+                        <div
+                          key={noti.id}
+                          onClick={() =>
+                            handleClickNotification(noti)
                           }
-                        `}
-                      >
-                        {Number(noti.is_read) === 0 && (
-                          <span className="w-2 h-2 mt-2 bg-emerald-600 rounded-full" />
-                        )}
+                          className={`
+                            px-5 py-4 flex gap-4 cursor-pointer
+                            transition
+                            ${
+                              Number(noti.is_read) === 1
+                                ? "hover:bg-gray-50"
+                                : "bg-emerald-50/60 hover:bg-emerald-50"
+                            }
+                          `}
+                        >
+                          {Number(noti.is_read) === 0 && (
+                            <span className="w-2 h-2 mt-2 bg-emerald-600 rounded-full" />
+                          )}
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {noti.title}
-                          </p>
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {noti.message}
-                          </p>
-                        </div>
+                          <div className="flex-1 min-w-0">
+  <p className="text-sm font-semibold text-gray-900 truncate">
+    {noti.title}
+  </p>
+
+  <p className="text-sm text-gray-600 line-clamp-2">
+    {noti.message}
+  </p>
+
+  {/* 👇 DÒNG PHÂN BIỆT LOẠI THÔNG BÁO */}
+  <p className="mt-1 text-xs text-gray-400 italic">
+    {getNotificationSource(noti.type)}
+  </p>
+</div>
+
 
                         <span className="text-xs text-gray-400 whitespace-nowrap">
                           {new Date(
@@ -347,7 +374,7 @@ function NotificationBell() {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
-                        </span>
+                        </span> 
                       </div>
                     ))}
                   </div>

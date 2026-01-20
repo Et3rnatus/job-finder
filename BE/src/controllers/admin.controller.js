@@ -183,6 +183,23 @@ exports.approveJob = async (req, res) => {
     return res.status(403).json({ message: "Admin only" });
   }
 
+  // 1️⃣ Lấy employer user_id + job title
+  const [[job]] = await db.execute(
+    `
+    SELECT u.id AS employer_user_id, j.title
+    FROM job j
+    JOIN employer e ON j.employer_id = e.id
+    JOIN users u ON e.user_id = u.id
+    WHERE j.id = ?
+    `,
+    [id]
+  );
+
+  if (!job) {
+    return res.status(404).json({ message: "Job not found" });
+  }
+
+  // 2️⃣ Update job
   const [result] = await db.execute(
     `
     UPDATE job
@@ -201,19 +218,53 @@ exports.approveJob = async (req, res) => {
     });
   }
 
-  res.json({ message: "Job approved" });
+  // 3️⃣ Tạo notification cho employer
+  await db.execute(
+    `
+    INSERT INTO notification (user_id, type, title, message, related_id)
+    VALUES (?, ?, ?, ?, ?)
+    `,
+    [
+      job.employer_user_id,
+      "job_approved",
+      "Tin tuyển dụng đã được duyệt",
+      `Tin "${job.title}" đã được admin duyệt và công khai.`,
+      id,
+    ]
+  );
+
+  // 4️⃣ Trả message cho frontend (toast)
+  res.json({ message: "Job approved successfully" });
 };
+
 
 exports.rejectJob = async (req, res) => {
   const { id } = req.params;
   const { admin_note } = req.body;
 
-  if (!admin_note || !admin_note.trim()) {
+  if (typeof admin_note !== "string" || !admin_note.trim()) {
     return res.status(400).json({
       message: "Reject reason is required",
     });
   }
 
+  // 1️⃣ Lấy employer user_id + job title
+  const [[job]] = await db.execute(
+    `
+    SELECT u.id AS employer_user_id, j.title
+    FROM job j
+    JOIN employer e ON j.employer_id = e.id
+    JOIN users u ON e.user_id = u.id
+    WHERE j.id = ?
+    `,
+    [id]
+  );
+
+  if (!job) {
+    return res.status(404).json({ message: "Job not found" });
+  }
+
+  // 2️⃣ Update job
   const [result] = await db.execute(
     `
     UPDATE job
@@ -223,7 +274,7 @@ exports.rejectJob = async (req, res) => {
         approved_at = NOW()
     WHERE id = ? AND status = 'pending'
     `,
-    [admin_note, req.user.id, id]
+    [admin_note.trim(), req.user.id, id]
   );
 
   if (result.affectedRows === 0) {
@@ -232,8 +283,25 @@ exports.rejectJob = async (req, res) => {
     });
   }
 
+  // 3️⃣ Tạo notification cho employer
+  await db.execute(
+    `
+    INSERT INTO notification (user_id, type, title, message, related_id)
+    VALUES (?, ?, ?, ?, ?)
+    `,
+    [
+      job.employer_user_id,
+      "job_rejected",
+      "Tin tuyển dụng bị từ chối",
+      `Tin "${job.title}" đã bị từ chối. Lý do: ${admin_note.trim()}`,
+      id,
+    ]
+  );
+
   res.json({ message: "Job rejected" });
 };
+
+
 
 
 //JOB DETAIL (ADMIN)
@@ -379,6 +447,12 @@ exports.updateSkill = async (req, res) => {
   const { id } = req.params;
   const { name, category_id, skill_type } = req.body;
 
+  if (!name || !category_id || !skill_type) {
+    return res.status(400).json({
+      message: "Name, category and skill type are required",
+    });
+  }
+
   try {
     const [result] = await db.execute(
       `
@@ -386,7 +460,7 @@ exports.updateSkill = async (req, res) => {
       SET name = ?, category_id = ?, skill_type = ?
       WHERE id = ?
       `,
-      [name, category_id || null, skill_type, id]
+      [name, category_id, skill_type, id]
     );
 
     if (result.affectedRows === 0) {
@@ -399,6 +473,7 @@ exports.updateSkill = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 exports.deleteSkill = async (req, res) => {
   const { id } = req.params;
 

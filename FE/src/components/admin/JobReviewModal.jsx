@@ -14,6 +14,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+import { toast } from "react-hot-toast";
+
 /* =====================
    ENUM MAPS
 ===================== */
@@ -64,29 +66,46 @@ export default function JobReviewModal({
      ACTIONS
   ===================== */
   const approve = async () => {
-    try {
-      setSubmitting(true);
-      await approveJob(jobId);
-      onSuccess?.();
-      onClose();
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  try {
+    setSubmitting(true);
+    const res = await approveJob(jobId);
+
+    toast.success(res.message || "Duyệt tin thành công"); // ✅ TOAST
+
+    onSuccess?.();
+    onClose();
+  } catch (err) {
+    toast.error(
+      err.response?.data?.message || "Duyệt tin thất bại"
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const reject = async () => {
-    if (!rejectNote.trim()) return;
-    try {
-      setSubmitting(true);
-      await rejectJob(jobId, {
-        admin_note: rejectNote.trim(),
-      });
-      onSuccess?.();
-      onClose();
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  if (!rejectNote.trim()) {
+    toast.error("Vui lòng nhập lý do từ chối");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+    await rejectJob(jobId, rejectNote.trim());
+    toast.success("Đã từ chối tin tuyển dụng");
+    onSuccess?.();
+    onClose();
+  } catch (err) {
+    toast.error(
+      err.response?.data?.message || "Từ chối tin thất bại"
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
@@ -256,7 +275,7 @@ export default function JobReviewModal({
           type={confirm}
           onCancel={() => setConfirm(null)}
           onConfirm={confirm === "approve" ? approve : reject}
-          disabled={submitting || (confirm === "reject" && !rejectNote.trim())}
+          disabled={submitting}
         />
       )}
     </div>
