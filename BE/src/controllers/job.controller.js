@@ -20,13 +20,15 @@ exports.createJob = async (req, res) => {
       // ===== BẮT BUỘC =====
       title,
       description,
-      job_requirements,
-      benefits,
       hiring_quantity,
       expired_at,
       employment_type,
       category_id,
       skill_ids,
+
+      // ===== OPTIONAL =====
+      job_requirements,
+      benefits,
 
       // ===== SALARY =====
       min_salary,
@@ -39,7 +41,7 @@ exports.createJob = async (req, res) => {
       level,
       education_level,
 
-      // ===== FIELD MỚI =====
+      // ===== FIELD KHÁC =====
       working_time,
       working_day,
       application_language,
@@ -52,19 +54,32 @@ exports.createJob = async (req, res) => {
     /* =========================
        VALIDATE BẮT BUỘC
     ========================= */
-    if (!title) return res.status(400).json({ message: "Title is required" });
-    if (!description) return res.status(400).json({ message: "Description is required" });
-    if (!job_requirements) return res.status(400).json({ message: "Job requirements are required" });
-    if (!benefits) return res.status(400).json({ message: "Benefits are required" });
-    if (!employment_type) return res.status(400).json({ message: "Employment type is required" });
-    if (!category_id) return res.status(400).json({ message: "Category is required" });
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    if (!employment_type) {
+      return res.status(400).json({ message: "Employment type is required" });
+    }
+
+    if (!category_id) {
+      return res.status(400).json({ message: "Category is required" });
+    }
 
     if (!Array.isArray(skill_ids) || skill_ids.length === 0) {
-      return res.status(400).json({ message: "At least one skill is required" });
+      return res.status(400).json({
+        message: "At least one skill is required",
+      });
     }
 
     if (!hiring_quantity || Number(hiring_quantity) <= 0) {
-      return res.status(400).json({ message: "Hiring quantity must be greater than 0" });
+      return res.status(400).json({
+        message: "Hiring quantity must be greater than 0",
+      });
     }
 
     if (!expired_at) {
@@ -74,7 +89,9 @@ exports.createJob = async (req, res) => {
     const expiredDate = new Date(expired_at);
     expiredDate.setHours(23, 59, 59, 999);
     if (expiredDate <= new Date()) {
-      return res.status(400).json({ message: "Expired date must be in the future" });
+      return res.status(400).json({
+        message: "Expired date must be in the future",
+      });
     }
 
     /* =========================
@@ -84,11 +101,39 @@ exports.createJob = async (req, res) => {
 
     if (!isNegotiable) {
       if (min_salary == null || max_salary == null) {
-        return res.status(400).json({ message: "Salary range is required" });
+        return res.status(400).json({
+          message: "Salary range is required",
+        });
       }
+
       if (Number(min_salary) > Number(max_salary)) {
-        return res.status(400).json({ message: "Min salary cannot be greater than max salary" });
+        return res.status(400).json({
+          message: "Min salary cannot be greater than max salary",
+        });
       }
+    }
+
+    /* =========================
+       VALIDATE PREFERRED
+    ========================= */
+    const allowedGender = ["any", "male", "female"];
+    if (
+      preferred_gender &&
+      !allowedGender.includes(preferred_gender)
+    ) {
+      return res.status(400).json({
+        message: "Invalid preferred gender",
+      });
+    }
+
+    if (
+      preferred_age_min &&
+      preferred_age_max &&
+      Number(preferred_age_min) > Number(preferred_age_max)
+    ) {
+      return res.status(400).json({
+        message: "Invalid preferred age range",
+      });
     }
 
     /* =========================
@@ -100,17 +145,22 @@ exports.createJob = async (req, res) => {
     );
 
     if (employerRows.length === 0) {
-      return res.status(400).json({ message: "Employer profile not found" });
+      return res
+        .status(400)
+        .json({ message: "Employer profile not found" });
     }
 
     const employerId = employerRows[0].id;
-    const finalAddress =
+    const finalAddress = employerRows[0].address;
+    const finalLocation =
       location && location.trim() !== ""
         ? location.trim()
-        : employerRows[0].address;
+        : null;
 
     if (!finalAddress) {
-      return res.status(400).json({ message: "Company address not found" });
+      return res
+        .status(400)
+        .json({ message: "Company address not found" });
     }
 
     /* =========================
@@ -133,7 +183,8 @@ exports.createJob = async (req, res) => {
 
     if (skillRows.length !== skill_ids.length) {
       return res.status(400).json({
-        message: "One or more skills do not belong to the selected category or soft skills",
+        message:
+          "One or more skills do not belong to the selected category or soft skills",
       });
     }
 
@@ -173,9 +224,17 @@ exports.createJob = async (req, res) => {
         preferred_age_max,
         preferred_nationality
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'pending',
-              ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?, ?, ?, ?)
+      VALUES (
+        ?, ?, ?,
+        ?, ?, ?,
+        ?, ?, ?,
+        NOW(), ?, 'pending',
+        ?, ?,
+        ?, ?,
+        ?, ?, ?,
+        ?, ?,
+        ?, ?, ?, ?, ?
+      )
       `,
       [
         employerId,
@@ -185,10 +244,10 @@ exports.createJob = async (req, res) => {
         isNegotiable ? null : max_salary,
         isNegotiable ? 1 : 0,
         hiring_quantity,
-        job_requirements,
-        benefits,
+        job_requirements || null,
+        benefits || null,
         expired_at,
-        finalAddress,
+        finalLocation,
         finalAddress,
         employment_type,
         category_id,
@@ -197,7 +256,7 @@ exports.createJob = async (req, res) => {
         education_level || null,
         working_time || null,
         working_day || null,
-        application_language || null,
+        application_language || "vi",
         preferred_gender || "any",
         preferred_age_min || null,
         preferred_age_max || null,
@@ -217,35 +276,42 @@ exports.createJob = async (req, res) => {
       );
     }
 
-   /* =========================
-   🔥 UPDATE QUOTA (CHUẨN)
-========================= */
-await connection.execute(
-  `
-  UPDATE employer
-  SET job_post_used = job_post_used + 1
-  WHERE user_id = ?
-    AND job_post_limit <> -1
-  `,
-  [userId]
-);
+    /* =========================
+       UPDATE QUOTA
+    ========================= */
+    const [quotaResult] = await connection.execute(
+      `
+      UPDATE employer
+      SET job_post_used = job_post_used + 1
+      WHERE user_id = ?
+        AND job_post_limit <> -1
+      `,
+      [userId]
+    );
+
+    if (quotaResult.affectedRows === 0) {
+      throw new Error("Job post quota exceeded");
+    }
 
     await connection.commit();
 
     return res.status(201).json({
-      message: "Tin tuyển dụng đã được tạo và đang chờ xét duyệt",
+      message:
+        "Tin tuyển dụng đã được tạo và đang chờ xét duyệt",
       job_id: jobId,
     });
   } catch (error) {
-    if (transactionStarted) await connection.rollback();
+    if (transactionStarted) {
+      await connection.rollback();
+    }
     console.error("CREATE JOB ERROR:", error);
-    return res.status(500).json({ message: "Create job failed" });
+    return res
+      .status(500)
+      .json({ message: "Create job failed" });
   } finally {
     connection.release();
   }
 };
-
-
 
 /* =====================
    GET ALL JOBS

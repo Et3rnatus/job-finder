@@ -94,6 +94,28 @@ export default function CreateJobForm() {
 
 
   /* =====================
+   SALARY HELPERS
+===================== */
+const formatSalary = (value) => {
+  const number = value.replace(/\D/g, "");
+  return number.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+const parseSalary = (value) =>
+  value ? Number(value.replace(/\./g, "")) : null;
+
+const handleSalaryChange = (e) => {
+  setIsDirty(true);
+  const raw = e.target.value.replace(/\./g, "");
+  if (!/^\d*$/.test(raw)) return;
+
+  setForm((p) => ({
+    ...p,
+    [e.target.name]: formatSalary(raw),
+  }));
+};
+
+  /* =====================
      HANDLERS
   ===================== */
   const handleChange = (e) => {
@@ -111,7 +133,19 @@ export default function CreateJobForm() {
     setForm((p) => ({ ...p, city: cityId, district: "" }));
     setDistricts(city ? city.Districts : []);
   };
-
+  const toggleSalaryNegotiable = () => {
+    setSalaryNegotiable((prev) => {
+      const next = !prev;
+      if (next) {
+        setForm((p) => ({
+          ...p,
+          min_salary: "",
+          max_salary: "",
+        }));
+      }
+      return next;
+    });
+  };
   /* =====================
      SUBMIT
   ===================== */
@@ -128,16 +162,29 @@ if (!form.employment_type) {
   return setAlert({ type: "error", message: "Vui lòng chọn hình thức làm việc" });
 }
 
-
+    
     /* SALARY */
     if (!salaryNegotiable) {
-      if (!form.min_salary || !form.max_salary) {
-        return setAlert({ type: "error", message: "Vui lòng nhập mức lương" });
-      }
-      if (Number(form.min_salary) > Number(form.max_salary)) {
-        return setAlert({ type: "error", message: "Lương không hợp lệ" });
-      }
-    }
+  const min = parseSalary(form.min_salary);
+  const max = parseSalary(form.max_salary);
+
+  if (!min || !max) {
+    return setAlert({ type: "error", message: "Vui lòng nhập mức lương hợp lệ" });
+  }
+
+  if (min < 1000000) {
+    return setAlert({ type: "error", message: "Lương tối thiểu quá thấp" });
+  }
+
+  if (max > 200000000) {
+    return setAlert({ type: "error", message: "Lương tối đa không hợp lý" });
+  }
+
+  if (min > max) {
+    return setAlert({ type: "error", message: "Lương không hợp lệ" });
+  }
+}
+
 
     /* EXPIRED DATE */
     if (form.expired_at) {
@@ -191,8 +238,8 @@ if (!form.employment_type) {
         location,
         address: form.address_detail,
 
-        min_salary: salaryNegotiable ? null : Number(form.min_salary),
-        max_salary: salaryNegotiable ? null : Number(form.max_salary),
+        min_salary: salaryNegotiable ? null : parseSalary(form.min_salary),
+max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
         is_salary_negotiable: salaryNegotiable ? 1 : 0,
 
         application_language: form.application_language,
@@ -533,14 +580,11 @@ if (!form.employment_type) {
             Lương tối thiểu (VNĐ / tháng)
           </label>
           <Input
-            type="number"
-            min={0}
-            step={100000}
-            name="min_salary"
-            value={form.min_salary}
-            onChange={handleChange}
-            placeholder="VD: 8.000.000"
-          />
+  name="min_salary"
+  value={form.min_salary}
+  onChange={handleSalaryChange}
+/>
+
         </div>
 
         <div className="space-y-1">
@@ -548,14 +592,11 @@ if (!form.employment_type) {
             Lương tối đa (VNĐ / tháng)
           </label>
           <Input
-            type="number"
-            min={0}
-            step={100000}
-            name="max_salary"
-            value={form.max_salary}
-            onChange={handleChange}
-            placeholder="VD: 12.000.000"
-          />
+  name="max_salary"
+  value={form.max_salary}
+  onChange={handleSalaryChange}
+/>
+
         </div>
       </Grid>
 
@@ -676,7 +717,7 @@ const Input = (props) => (
   <input {...props} className="w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-emerald-500" />
 );
 
-const Textarea = (props) => (
+const Textarea = (props) => ( 
   <textarea {...props} rows={5} className="w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-emerald-500" />
 );
 

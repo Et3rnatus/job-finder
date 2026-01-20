@@ -17,29 +17,32 @@ function JobHeader({ job }) {
   // VNĐ → triệu
   const toMillion = (value) => {
   if (!value || value <= 0) return null;
-  return Math.round(value / 1_000_000);
+  return Math.floor(value / 1_000_000);
 };
 
 
+
   const formatSalary = () => {
-    if (job.is_salary_negotiable) return "Thỏa thuận";
+  if (job.is_salary_negotiable) return "Thỏa thuận";
 
-    if (job.min_salary && job.max_salary) {
-      return `${toMillion(job.min_salary)} – ${toMillion(
-        job.max_salary
-      )} triệu`;
-    }
+  const min = Number(job.min_salary);
+  const max = Number(job.max_salary);
 
-    if (job.min_salary) {
-      return `Từ ${toMillion(job.min_salary)} triệu`;
-    }
+  if (min > 0 && max > 0) {
+    return `${toMillion(min)} – ${toMillion(max)} triệu`;
+  }
 
-    if (job.max_salary) {
-      return `Đến ${toMillion(job.max_salary)} triệu`;
-    }
+  if (min > 0) {
+    return `Từ ${toMillion(min)} triệu`;
+  }
 
-    return "Đang cập nhật";
-  };
+  if (max > 0) {
+    return `Đến ${toMillion(max)} triệu`;
+  }
+
+  return "Đang cập nhật";
+};
+
 
   const formatDeadline = () => {
     if (!job.expired_at) return null;
@@ -72,10 +75,11 @@ function JobHeader({ job }) {
      LOCATION (CITY ONLY)
   ===================== */
   const getCityFromLocation = () => {
-    if (!job.location) return null;
-    const parts = job.location.split(",");
-    return parts[parts.length - 1].trim();
-  };
+  if (!job.location) return null;
+  const parts = job.location.split(",").map(p => p.trim()).filter(Boolean);
+  return parts[parts.length - 1] || null;
+};
+
 
   return (
     <section className="relative bg-white border border-gray-200 rounded-3xl p-6 md:p-8 shadow-sm overflow-hidden">
