@@ -391,7 +391,6 @@ exports.updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { status, reject_reason } = req.body;
 
-    // Validate input
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
@@ -408,7 +407,7 @@ exports.updateApplicationStatus = async (req, res) => {
       SELECT
         a.id,
         a.status,
-        a.job_id, -- ✅ LẤY job_id (INT)
+        a.job_id,
         c.user_id AS candidate_user_id,
         j.title AS job_title
       FROM application a
@@ -452,7 +451,7 @@ exports.updateApplicationStatus = async (req, res) => {
       [status, status === "rejected" ? reject_reason : null, id]
     );
 
-    // 🔔 CREATE NOTIFICATION FOR CANDIDATE
+
     if (status === "rejected") {
       await connection.execute(
         `
@@ -462,7 +461,7 @@ exports.updateApplicationStatus = async (req, res) => {
         [
           row.candidate_user_id,
           `Hồ sơ ứng tuyển vị trí "${row.job_title}" đã bị từ chối. Lý do: ${reject_reason}`,
-          row.job_id, // ✅ INT — KHÔNG UUID
+          row.job_id,
         ]
       );
     }
@@ -476,7 +475,7 @@ exports.updateApplicationStatus = async (req, res) => {
         [
           row.candidate_user_id,
           `Hồ sơ ứng tuyển vị trí "${row.job_title}" đã được duyệt.`,
-          row.job_id, // ✅ INT — KHÔNG UUID
+          row.job_id,
         ]
       );
     }
@@ -492,9 +491,6 @@ exports.updateApplicationStatus = async (req, res) => {
     connection.release();
   }
 };
-
-
-
 
 /* =========================
    INVITE TO INTERVIEW

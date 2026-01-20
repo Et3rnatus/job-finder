@@ -265,18 +265,19 @@ export default function ApplicationDetailPage() {
           </Section>
 
           <Section title="Học vấn">
-            {education.length ? (
-              education.map((e, i) => (
-                <Timeline
-                  key={i}
-                  title={e.institution}
-                  subtitle={`${e.level} – ${e.major}`}
-                />
-              ))
-            ) : (
-              <Empty />
-            )}
-          </Section>
+  {education.length ? (
+    education.map((e, i) => (
+      <Timeline
+  key={i}
+  title={e.school || "—"}
+  subtitle={`${e.degree || ""}${e.major ? " – " + e.major : ""}`}
+/>
+    ))
+  ) : (
+    <Empty />
+  )}
+</Section>
+
         </div>
 
         {/* RIGHT */}
