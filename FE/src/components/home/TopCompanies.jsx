@@ -1,12 +1,20 @@
 import { Sparkles, ArrowRight } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function TopCompanies() {
   const companies = [
-    { name: "VPBank", logo: "/logos/vpbank.png" },
-    { name: "Techcombank", logo: "/logos/techcombank.png" },
-    { name: "MB Bank", logo: "/logos/mb.png" },
-    { name: "VIB", logo: "/logos/vib.png" },
+    { name: "Viettel Group", logo: "/images/viettel.jpg" },
+    { name: "FPT Corporation", logo: "/images/fpt.png" },
+    { name: "Vingroup", logo: "/images/vingroup.png" },
+    { name: "MB Bank", logo: "/images/mb.jpg" },
   ];
+
+  const handleComingSoon = () => {
+    toast("Chức năng đang được phát triển 🚧", {
+      icon: "🚀",
+      duration: 2500,
+    });
+  };
 
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-6 mt-20">
@@ -32,6 +40,7 @@ export default function TopCompanies() {
         {companies.map((company, index) => (
           <div
             key={index}
+            onClick={handleComingSoon}
             className="
               group relative
               rounded-2xl border border-slate-200 bg-white

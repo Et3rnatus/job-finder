@@ -18,6 +18,7 @@ import JobList from "../components/home/JobList";
 import KeyIndustries from "../components/home/KeyIndustries";
 import TopCompanies from "../components/home/TopCompanies";
 import employerService from "../services/employerService";
+import { toast } from "react-hot-toast";
 
 /* ================= REVEAL ================= */
 const Reveal = ({ children, delay = 0 }) => (
@@ -91,7 +92,9 @@ function HomePage() {
               </div>
             </section>
           </Reveal>
-
+          <Reveal delay={0.05}>
+  <KeyIndustries />
+</Reveal>
           {/* SOCIAL PROOF */}
           <Reveal delay={0.1}>
             <section className="relative bg-white rounded-3xl border border-slate-200 p-10 overflow-hidden">
@@ -252,13 +255,15 @@ function HomePage() {
                 </p>
 
                 <button
-                  onClick={() =>
-                    navigate(role === "employer" ? "/jobs/create" : "/jobs")
-                  }
-                  className="inline-flex items-center gap-2 px-12 py-5 rounded-full bg-white text-emerald-700 font-semibold shadow-lg hover:shadow-xl transition"
-                >
-                  Khám phá ngay <ArrowRight size={18} />
-                </button>
+  onClick={() =>
+    toast("Chức năng đang phát triển 🚧", {
+      icon: "🚀",
+    })
+  }
+  className="inline-flex items-center gap-2 px-12 py-5 rounded-full bg-white text-emerald-700 font-semibold shadow-lg hover:shadow-xl transition"
+>
+  Khám phá ngay <ArrowRight size={18} />
+</button>
               </div>
             </section>
           </Reveal>

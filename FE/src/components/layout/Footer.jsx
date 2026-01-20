@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import {
   FaFacebookF,
   FaLinkedinIn,
@@ -17,6 +18,14 @@ import {
 } from "react-icons/fa";
 
 function Footer() {
+  const handleComingSoon = (e) => {
+    e.preventDefault();
+    toast("Chức năng đang được phát triển 🚧", {
+      icon: "🚀",
+      duration: 2500,
+    });
+  };
+
   return (
     <footer className="bg-gray-950 text-gray-400">
       {/* =====================
@@ -55,48 +64,48 @@ function Footer() {
 
         {/* ===== CANDIDATE ===== */}
         <FooterGroup title="Ứng viên">
-          <FooterLink to="/jobs" icon={<FaBriefcase />}>
+          <FooterLink to="/jobs" icon={<FaBriefcase />} onClick={handleComingSoon}>
             Tìm việc làm
           </FooterLink>
-          <FooterLink to="/jobs?category=it" icon={<FaLaptopCode />}>
+          <FooterLink to="/jobs?category=it" icon={<FaLaptopCode />} onClick={handleComingSoon}>
             Việc làm IT
           </FooterLink>
-          <FooterLink to="/jobs?type=intern" icon={<FaUserGraduate />}>
+          <FooterLink to="/jobs?type=intern" icon={<FaUserGraduate />} onClick={handleComingSoon}>
             Việc làm thực tập
           </FooterLink>
-          <FooterLink to="/profile" icon={<FaUser />}>
+          <FooterLink to="/profile" icon={<FaUser />} onClick={handleComingSoon}>
             Hồ sơ cá nhân
           </FooterLink>
         </FooterGroup>
 
         {/* ===== EMPLOYER ===== */}
         <FooterGroup title="Nhà tuyển dụng">
-          <FooterLink to="/employer/post-job" icon={<FaBullhorn />}>
+          <FooterLink to="/employer/post-job" icon={<FaBullhorn />} onClick={handleComingSoon}>
             Đăng tin tuyển dụng
           </FooterLink>
-          <FooterLink to="/employer/jobs" icon={<FaClipboardList />}>
+          <FooterLink to="/employer/jobs" icon={<FaClipboardList />} onClick={handleComingSoon}>
             Quản lý tin tuyển dụng
           </FooterLink>
-          <FooterLink to="/employer/candidates" icon={<FaUsers />}>
+          <FooterLink to="/employer/candidates" icon={<FaUsers />} onClick={handleComingSoon}>
             Tìm kiếm ứng viên
           </FooterLink>
-          <FooterLink to="/pricing" icon={<FaMoneyBillWave />}>
+          <FooterLink to="/pricing" icon={<FaMoneyBillWave />} onClick={handleComingSoon}>
             Bảng giá dịch vụ
           </FooterLink>
         </FooterGroup>
 
         {/* ===== SUPPORT ===== */}
         <FooterGroup title="Hỗ trợ & pháp lý">
-          <FooterLink to="/support" icon={<FaHeadset />}>
+          <FooterLink to="/support" icon={<FaHeadset />} onClick={handleComingSoon}>
             Trung tâm hỗ trợ
           </FooterLink>
-          <FooterLink to="/terms" icon={<FaFileContract />}>
+          <FooterLink to="/terms" icon={<FaFileContract />} onClick={handleComingSoon}>
             Điều khoản sử dụng
           </FooterLink>
-          <FooterLink to="/privacy" icon={<FaShieldAlt />}>
+          <FooterLink to="/privacy" icon={<FaShieldAlt />} onClick={handleComingSoon}>
             Chính sách bảo mật
           </FooterLink>
-          <FooterLink to="/contact" icon={<FaEnvelope />}>
+          <FooterLink to="/contact" icon={<FaEnvelope />} onClick={handleComingSoon}>
             Liên hệ
           </FooterLink>
         </FooterGroup>
@@ -108,11 +117,7 @@ function Footer() {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2 text-xs">
           <span>
-            © 2026 JobFinder Việt Nam. All rights reserved.
-          </span>
-
-          <span className="text-gray-500">
-            Made with ❤️ for graduation thesis
+            © 2025 JobFinder Việt Nam. All rights reserved.
           </span>
         </div>
       </div>
@@ -135,11 +140,12 @@ function FooterGroup({ title, children }) {
   );
 }
 
-function FooterLink({ to, icon, children }) {
+function FooterLink({ to, icon, children, onClick }) {
   return (
     <li>
       <Link
         to={to}
+        onClick={onClick}
         className="flex items-center gap-2 text-gray-400 hover:text-white transition"
       >
         <span className="text-xs opacity-80">{icon}</span>

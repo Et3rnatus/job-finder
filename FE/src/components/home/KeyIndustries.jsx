@@ -6,6 +6,7 @@ import {
   Factory,
   ArrowRight,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function KeyIndustries() {
   const industries = [
@@ -41,6 +42,12 @@ export default function KeyIndustries() {
     },
   ];
 
+  const handleClick = () => {
+    toast("Chức năng đang phát triển 🚧", {
+      icon: "🚀",
+    });
+  };
+
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-6 mt-20">
       {/* HEADER */}
@@ -62,10 +69,15 @@ export default function KeyIndustries() {
       {/* GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
         {industries.map((item, index) => (
-          <div
+          <button
             key={index}
-            className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5
-                       transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:border-transparent cursor-pointer"
+            onClick={handleClick}
+            type="button"
+            className="
+              group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5
+              transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:border-transparent
+              text-left
+            "
           >
             {/* GRADIENT BACKGROUND */}
             <div
@@ -97,7 +109,7 @@ export default function KeyIndustries() {
                 <ArrowRight size={12} />
               </span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </section>
