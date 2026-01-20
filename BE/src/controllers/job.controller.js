@@ -55,35 +55,38 @@ exports.createJob = async (req, res) => {
        VALIDATE BẮT BUỘC
     ========================= */
     if (!title) {
-      return res.status(400).json({ message: "Title is required" });
+      return res.status(400).json({ message: "Title is required",field: "title",});
+      
     }
 
     if (!description) {
-      return res.status(400).json({ message: "Description is required" });
+      return res.status(400).json({ message: "Description is required",field: "description", });
     }
 
     if (!employment_type) {
-      return res.status(400).json({ message: "Employment type is required" });
+      return res.status(400).json({ message: "Employment type is required" ,field: "employment_type",});
     }
 
     if (!category_id) {
-      return res.status(400).json({ message: "Category is required" });
+      return res.status(400).json({ message: "Category is required", field: "category_id",  });
     }
 
     if (!Array.isArray(skill_ids) || skill_ids.length === 0) {
       return res.status(400).json({
         message: "At least one skill is required",
+        field: "skill_ids",
       });
     }
 
     if (!hiring_quantity || Number(hiring_quantity) <= 0) {
       return res.status(400).json({
         message: "Hiring quantity must be greater than 0",
+        field: "hiring_quantity", 
       });
     }
 
     if (!expired_at) {
-      return res.status(400).json({ message: "Expired date is required" });
+      return res.status(400).json({ message: "Expired date is required",field: "expired_at", });
     }
 
     const expiredDate = new Date(expired_at);
@@ -91,6 +94,7 @@ exports.createJob = async (req, res) => {
     if (expiredDate <= new Date()) {
       return res.status(400).json({
         message: "Expired date must be in the future",
+        field: "expired_at",
       });
     }
 
@@ -101,14 +105,16 @@ exports.createJob = async (req, res) => {
 
     if (!isNegotiable) {
       if (min_salary == null || max_salary == null) {
-        return res.status(400).json({
-          message: "Salary range is required",
-        });
-      }
+  return res.status(400).json({
+    message: "Salary range is required",
+    field: ["min_salary", "max_salary"],
+  });
+}
+
 
       if (Number(min_salary) > Number(max_salary)) {
         return res.status(400).json({
-          message: "Min salary cannot be greater than max salary",
+          message: "Min salary cannot be greater than max salary",field: "min_salary",
         });
       }
     }

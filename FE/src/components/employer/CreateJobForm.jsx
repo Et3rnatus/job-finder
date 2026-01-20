@@ -26,6 +26,8 @@ export default function CreateJobForm() {
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [errors, setErrors] = useState({});
+
 
 
   /* =====================
@@ -119,13 +121,17 @@ const handleSalaryChange = (e) => {
      HANDLERS
   ===================== */
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setIsDirty(true);
-    setForm((p) => ({
-      ...p,
-      [name]: name === "category_id" ? Number(value) : value,
-    }));
-  };
+  const { name, value } = e.target;
+  setIsDirty(true);
+
+  setForm((p) => ({
+    ...p,
+    [name]: name === "category_id" ? Number(value) : value,
+  }));
+
+  setErrors((prev) => ({ ...prev, [name]: null }));
+};
+
 
   const handleCityChange = (e) => {
     const cityId = e.target.value;
@@ -133,6 +139,19 @@ const handleSalaryChange = (e) => {
     setForm((p) => ({ ...p, city: cityId, district: "" }));
     setDistricts(city ? city.Districts : []);
   };
+
+const scrollToFirstError = (errors) => {
+  const firstField = Object.keys(errors)[0];
+  if (!firstField) return;
+
+  const el = document.getElementById(firstField);
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - 120;
+    window.scrollTo({ top: y, behavior: "smooth" });
+    el.focus();
+  }
+};
+
   const toggleSalaryNegotiable = () => {
     setSalaryNegotiable((prev) => {
       const next = !prev;
@@ -146,23 +165,71 @@ const handleSalaryChange = (e) => {
       return next;
     });
   };
+  const validateForm = () => {
+  const newErrors = {};
+
+  if (!form.title.trim()) {
+    newErrors.title = "Vui lòng nhập tên công việc";
+  }
+
+  if (!form.category_id) {
+    newErrors.category_id = "Vui lòng chọn ngành nghề";
+  }
+
+  if (!form.skill_ids.length) {
+    newErrors.skill_ids = "Vui lòng chọn ít nhất 1 kỹ năng";
+  }
+
+  if (!form.description.trim()) {
+    newErrors.description = "Vui lòng nhập mô tả công việc";
+  }
+
+  if (!form.employment_type) {
+    newErrors.employment_type = "Vui lòng chọn hình thức làm việc";
+  }
+
+  if (!salaryNegotiable) {
+    const min = parseSalary(form.min_salary);
+    const max = parseSalary(form.max_salary);
+
+    if (!min) newErrors.min_salary = "Vui lòng nhập lương tối thiểu";
+    if (!max) newErrors.max_salary = "Vui lòng nhập lương tối đa";
+    if (min && max && min > max) {
+      newErrors.max_salary = "Lương tối đa phải lớn hơn lương tối thiểu";
+    }
+  }
+
+  if (
+    form.preferred_age_min &&
+    form.preferred_age_max &&
+    Number(form.preferred_age_min) > Number(form.preferred_age_max)
+  ) {
+    newErrors.preferred_age_max = "Độ tuổi không hợp lệ";
+  }
+
+  setErrors(newErrors);
+
+if (Object.keys(newErrors).length > 0) {
+  scrollToFirstError(newErrors);
+}
+
+return Object.keys(newErrors).length === 0;
+};
+
   /* =====================
      SUBMIT
   ===================== */
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAlert(null);
+  e.preventDefault();
+  setAlert(null);
 
-    /* REQUIRED */
-    if (!form.title || !form.category_id || !form.skill_ids.length || !form.description) {
-      return setAlert({ type: "error", message: "Vui lòng nhập đầy đủ thông tin bắt buộc" });
-    }
+  if (!validateForm()) return;
+
+  // toàn bộ logic validate + submit cũ giữ nguyên phía 
     /* EMPLOYMENT TYPE */
 if (!form.employment_type) {
   return setAlert({ type: "error", message: "Vui lòng chọn hình thức làm việc" });
 }
-
-    
     /* SALARY */
     if (!salaryNegotiable) {
   const min = parseSalary(form.min_salary);
@@ -287,6 +354,7 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
       <form onSubmit={handleSubmit} className="space-y-14">
         <Section icon={<Briefcase />} title="Thông tin công việc">
           <Input
+  id="title"
   name="title"
   value={form.title}
   onChange={handleChange}
@@ -294,23 +362,38 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
   maxLength={150}
 />
 
+{errors.title && (
+  <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+)}
+
+
+
 
           <Grid>
   <div className="space-y-1">
   <label className="text-sm text-gray-600">Hình thức làm việc</label>
-  <Select
-    name="employment_type"
-    value={form.employment_type}
-    onChange={handleChange}
-  >
-    <option value="">Chọn hình thức</option>
-    <option value="full_time">Toàn thời gian</option>
-    <option value="part_time">Bán thời gian</option>
-    <option value="internship">Thực tập</option>
-  </Select>
-  <p className="text-xs text-gray-400">
-    Giúp ứng viên biết thời gian và cách làm việc của vị trí này
-  </p>
+
+    <Select
+      id="employment_type"
+      name="employment_type"
+      value={form.employment_type}
+      onChange={handleChange}
+    >
+      <option value="">Chọn hình thức</option>
+      <option value="full_time">Toàn thời gian</option>
+      <option value="part_time">Bán thời gian</option>
+      <option value="internship">Thực tập</option>
+    </Select>
+
+    {errors.employment_type && (
+      <p className="text-sm text-red-600 mt-1">
+        {errors.employment_type}
+      </p>
+    )}
+
+    <p className="text-xs text-gray-400">
+      Giúp ứng viên biết thời gian và cách làm việc của vị trí này
+    </p>
 </div>
 
 
@@ -384,41 +467,57 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
   </div>
 </Grid>
 
-
           <Grid>
   <div className="space-y-1">
-  <label className="text-sm text-gray-600">
-    Số lượng tuyển
-  </label>
-  <Input
-    type="number"
-    min={1}
-    name="hiring_quantity"
-    value={form.hiring_quantity}
-    onChange={handleChange}
-    placeholder="VD: 5"
-  />
-  <p className="text-xs text-gray-400">
-    Số ứng viên cần tuyển cho vị trí này
-  </p>
-</div>
+    <label className="text-sm text-gray-600">
+      Số lượng tuyển
+    </label>
 
+    <Input
+      id="hiring_quantity"
+      type="number"
+      min={1}
+      name="hiring_quantity"
+      value={form.hiring_quantity}
+      onChange={handleChange}
+      placeholder="VD: 5"
+    />
+
+    {errors.hiring_quantity && (
+      <p className="text-sm text-red-600 mt-1">
+        {errors.hiring_quantity}
+      </p>
+    )}
+
+    <p className="text-xs text-gray-400">
+      Số ứng viên cần tuyển cho vị trí này
+    </p>
+  </div>
 
   <div className="space-y-1">
-  <label className="text-sm text-gray-600">
-    Hạn nộp hồ sơ
-  </label>
-  <Input
-    type="date"
-    min={new Date().toISOString().split("T")[0]}
-    name="expired_at"
-    value={form.expired_at}
-    onChange={handleChange}
-  />
-  <p className="text-xs text-gray-400">
-    Sau ngày này, tin tuyển dụng sẽ không nhận hồ sơ mới
-  </p>
-</div>
+    <label className="text-sm text-gray-600">
+      Hạn nộp hồ sơ
+    </label>
+
+    <Input
+      id="expired_at"
+      type="date"
+      min={new Date().toISOString().split("T")[0]}
+      name="expired_at"
+      value={form.expired_at}
+      onChange={handleChange}
+    />
+
+    {errors.expired_at && (
+      <p className="text-sm text-red-600 mt-1">
+        {errors.expired_at}
+      </p>
+    )}
+
+    <p className="text-xs text-gray-400">
+      Sau ngày này, tin tuyển dụng sẽ không nhận hồ sơ mới
+    </p>
+  </div>
 </Grid>
 
 
@@ -444,22 +543,33 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
 </div>
 
         </Section>
-
         <Section icon={<Layers />} title="Ngành nghề">
-  <Select name="category_id" value={form.category_id} onChange={handleChange}>
+  <Select
+    id="category_id"
+    name="category_id"
+    value={form.category_id}
+    onChange={handleChange}
+  >
     <option value="">Chọn ngành nghề *</option>
     {categories.map((c) => (
-      <option key={c.id} value={c.id}>{c.name}</option>
+      <option key={c.id} value={c.id}>
+        {c.name}
+      </option>
     ))}
   </Select>
+
+  {errors.category_id && (
+    <p className="text-sm text-red-600 mt-1">
+      {errors.category_id}
+    </p>
+  )}
 
   <p className="text-sm text-gray-400">
     Ngành nghề dùng để xác định kỹ năng yêu cầu bên dưới
   </p>
 </Section>
 
-
-        <Section icon={<Wrench />} title="Kỹ năng yêu cầu">
+<Section icon={<Wrench />} title="Kỹ năng yêu cầu">
   {!form.category_id && (
     <p className="text-sm text-gray-400">
       Vui lòng chọn ngành nghề để hiển thị danh sách kỹ năng
@@ -487,14 +597,15 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
             type="checkbox"
             hidden
             checked={form.skill_ids.includes(s.id)}
-            onChange={(e) =>{
+            onChange={(e) => {
               setIsDirty(true);
               setForm((p) => ({
                 ...p,
                 skill_ids: e.target.checked
                   ? [...p.skill_ids, s.id]
                   : p.skill_ids.filter((id) => id !== s.id),
-              }))
+              }));
+              setErrors((prev) => ({ ...prev, skill_ids: null }));
             }}
           />
           {s.name}
@@ -502,23 +613,39 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
       ))}
     </div>
   )}
+
+  {errors.skill_ids && (
+    <p className="text-sm text-red-600 mt-2">
+      {errors.skill_ids}
+    </p>
+  )}
 </Section>
+
         <Section icon={<FileText />} title="Mô tả & yêu cầu">
   {/* MÔ TẢ CÔNG VIỆC */}
   <div className="space-y-1">
-    <Textarea
-      name="description"
-      value={form.description}
-      onChange={handleChange}
-      placeholder={`Mô tả công việc chính, ví dụ:
+  <Textarea
+    id="description"
+    name="description"
+    value={form.description}
+    onChange={handleChange}
+    placeholder={`Mô tả công việc chính, ví dụ:
 - Thực hiện các công việc liên quan đến vị trí
 - Phối hợp với các bộ phận liên quan
 - Báo cáo tiến độ cho quản lý`}
-    />
-    <p className="text-xs text-gray-400">
-      Mô tả rõ nhiệm vụ để ứng viên hiểu công việc sẽ làm
+  />
+
+  {errors.description && (
+    <p className="text-sm text-red-600 mt-1">
+      {errors.description}
     </p>
-  </div>
+  )}
+
+  <p className="text-xs text-gray-400">
+    Mô tả rõ nhiệm vụ để ứng viên hiểu công việc sẽ làm
+  </p>
+</div>
+
 
   {/* YÊU CẦU ỨNG VIÊN */}
   <div className="space-y-1">
@@ -579,24 +706,38 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
           <label className="text-sm text-gray-600">
             Lương tối thiểu (VNĐ / tháng)
           </label>
-          <Input
-  name="min_salary"
-  value={form.min_salary}
-  onChange={handleSalaryChange}
-/>
 
+          <Input
+            id="min_salary"
+            name="min_salary"
+            value={form.min_salary}
+            onChange={handleSalaryChange}
+          />
+
+          {errors.min_salary && (
+            <p className="text-sm text-red-600 mt-1">
+              {errors.min_salary}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1">
           <label className="text-sm text-gray-600">
             Lương tối đa (VNĐ / tháng)
           </label>
-          <Input
-  name="max_salary"
-  value={form.max_salary}
-  onChange={handleSalaryChange}
-/>
 
+          <Input
+          id="max_salary"
+            name="max_salary"
+            value={form.max_salary}
+            onChange={handleSalaryChange}
+          />
+
+          {errors.max_salary && (
+            <p className="text-sm text-red-600 mt-1">
+              {errors.max_salary}
+            </p>
+          )}
         </div>
       </Grid>
 
@@ -606,7 +747,6 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
     </div>
   )}
 </Section>
-
 
         <Section icon={<AlertTriangle />} title="Điều kiện ưu tiên (không bắt buộc)">
   {/* Giới tính */}

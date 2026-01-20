@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
 
     if (exists.length > 0) {
       await connection.rollback();
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Email đã tồn tại' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
