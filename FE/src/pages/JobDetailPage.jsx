@@ -210,8 +210,59 @@ function JobDetailPage() {
                 title="Quyền lợi"
                 content={job.benefits}
               />
-            </div>
+              <JobInfoSection
+  title="Thời gian & ngày làm việc"
+  content={
+    <>
+      {job.working_time && (
+        <p>• Thời gian: {job.working_time}</p>
+      )}
+      {job.working_day && (
+        <p>• Ngày làm việc: {job.working_day}</p>
+      )}
 
+      {!job.working_time && !job.working_day && (
+        <p>Đang cập nhật</p>
+      )}
+    </>
+  }
+/>
+<JobInfoSection
+  title="Điều kiện ưu tiên"
+  content={
+    <>
+      {job.preferred_gender !== "any" && (
+        <p>• Giới tính: {job.preferred_gender === "male" ? "Nam" : "Nữ"}</p>
+      )}
+
+      {(job.preferred_age_min || job.preferred_age_max) && (
+        <p>
+          • Độ tuổi:{" "}
+          {job.preferred_age_min || "?"} – {job.preferred_age_max || "?"}
+        </p>
+      )}
+
+      {job.preferred_nationality && (
+        <p>
+          • Quốc tịch:{" "}
+          {job.preferred_nationality === "vn"
+            ? "Việt Nam"
+            : "Người nước ngoài"}
+        </p>
+      )}
+
+      {/* FALLBACK */}
+      {job.preferred_gender === "any" &&
+        !job.preferred_age_min &&
+        !job.preferred_age_max &&
+        !job.preferred_nationality && (
+          <p>Không có điều kiện ưu tiên</p>
+        )}
+    </>
+  }
+/>
+
+            </div>
             {/* =====================
                 SIDEBAR
             ===================== */}

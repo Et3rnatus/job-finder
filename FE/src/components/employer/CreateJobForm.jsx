@@ -303,6 +303,39 @@ if (!form.employment_type) {
     </Select>
   </div>
 </Grid>
+        <Grid>
+  {/* THỜI GIAN LÀM VIỆC */}
+  <div className="space-y-1">
+    <label className="text-sm text-gray-600">
+      Thời gian làm việc
+    </label>
+    <Input
+      name="working_time"
+      value={form.working_time}
+      onChange={handleChange}
+      placeholder="VD: 8h00 – 17h00"
+    />
+    <p className="text-xs text-gray-400">
+      Khung giờ làm việc trong ngày
+    </p>
+  </div>
+
+  {/* NGÀY LÀM VIỆC */}
+  <div className="space-y-1">
+    <label className="text-sm text-gray-600">
+      Ngày làm việc
+    </label>
+    <Input
+      name="working_day"
+      value={form.working_day}
+      onChange={handleChange}
+      placeholder="VD: Thứ 2 – Thứ 6"
+    />
+    <p className="text-xs text-gray-400">
+      Các ngày làm việc trong tuần
+    </p>
+  </div>
+</Grid>
 
 
           <Grid>

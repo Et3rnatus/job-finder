@@ -11,14 +11,34 @@ function JobHeader({ job }) {
   if (!job) return null;
 
   /* =====================
-     FORMATTERS
+     HELPERS
   ===================== */
+
+  // VNĐ → triệu
+  const toMillion = (value) => {
+  if (!value || value <= 0) return null;
+  return Math.round(value / 1_000_000);
+};
+
+
   const formatSalary = () => {
     if (job.is_salary_negotiable) return "Thỏa thuận";
+
     if (job.min_salary && job.max_salary) {
-      return `${job.min_salary} – ${job.max_salary} triệu`;
+      return `${toMillion(job.min_salary)} – ${toMillion(
+        job.max_salary
+      )} triệu`;
     }
-    return "Thỏa thuận";
+
+    if (job.min_salary) {
+      return `Từ ${toMillion(job.min_salary)} triệu`;
+    }
+
+    if (job.max_salary) {
+      return `Đến ${toMillion(job.max_salary)} triệu`;
+    }
+
+    return "Đang cập nhật";
   };
 
   const formatDeadline = () => {

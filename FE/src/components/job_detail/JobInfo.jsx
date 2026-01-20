@@ -60,11 +60,13 @@ function JobInfo({ title, content }) {
         )}
 
         {/* TEXT CONTENT */}
-        {!isEmpty && !isArray && (
-          <p className="whitespace-pre-line leading-relaxed text-gray-800">
-            {content}
-          </p>
-        )}
+        {/* TEXT CONTENT */}
+{!isEmpty && !isArray && (
+  <div className="whitespace-pre-line leading-relaxed text-gray-800">
+    {content}
+  </div>
+)}
+
       </div>
     </section>
   );

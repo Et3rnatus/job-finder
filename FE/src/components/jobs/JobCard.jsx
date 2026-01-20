@@ -42,16 +42,47 @@ const API_URL = "http://127.0.0.1:3001";
 function JobCard({
   id,
   title,
-  salary,
+
+  /* 👉 SALARY (RAW DATA) */
+  min_salary,
+  max_salary,
+  is_salary_negotiable,
+
   location,
   company,
-  companyLogo, // 👈 LOGO EMPLOYER (job.logo từ API)
+  companyLogo,
   skills,
 }) {
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  /* =====================
+     SALARY FORMATTER
+  ===================== */
+  const toMillion = (value) => {
+    if (!value || value <= 0) return null;
+    return Math.round(value / 1_000_000);
+  };
+
+  const formatSalary = () => {
+    if (Number(is_salary_negotiable) === 1) {
+  return "Thỏa thuận";
+}
+
+    const min = toMillion(min_salary);
+    const max = toMillion(max_salary);
+
+    if (min && max) return `${min} – ${max} triệu`;
+    if (min) return `Từ ${min} triệu`;
+    if (max) return `Đến ${max} triệu`;
+
+    return "Thỏa thuận";
+  };
+
+  /* =====================
+     HANDLERS
+  ===================== */
   const handleApply = (e) => {
     e.stopPropagation();
     navigate(`/jobs/${id}`);
@@ -83,7 +114,7 @@ function JobCard({
   const skillList = skills ? skills.split(",") : [];
 
   /* =====================
-     LOGO SRC (EMPLOYER)
+     LOGO SRC
   ===================== */
   const logoSrc = companyLogo
     ? companyLogo.startsWith("http")
@@ -119,7 +150,7 @@ function JobCard({
       {/* LEFT ACCENT */}
       <span className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-600 opacity-0 group-hover:opacity-100 transition" />
 
-      {/* ================= LOGO EMPLOYER ================= */}
+      {/* LOGO */}
       <div className="w-12 h-12 flex-shrink-0">
         <img
           src={logoSrc}
@@ -134,15 +165,12 @@ function JobCard({
         />
       </div>
 
-      {/* ================= CONTENT ================= */}
+      {/* CONTENT */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* BADGES */}
         <div className="flex flex-wrap gap-2 mb-1">
           <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
             Mới
-          </span>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
-            Full-time
           </span>
         </div>
 
@@ -167,13 +195,15 @@ function JobCard({
         <div className="flex flex-wrap gap-x-5 gap-y-2 mt-2 text-xs text-gray-600">
           <span className="flex items-center gap-1.5">
             <Wallet className="w-4 h-4 text-emerald-600/80" />
-            {salary}
+            {formatSalary()}
           </span>
 
-          <span className="flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-emerald-600/80" />
-            {location}
-          </span>
+          {location && (
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-emerald-600/80" />
+              {location}
+            </span>
+          )}
         </div>
 
         {/* SKILLS */}
@@ -200,7 +230,7 @@ function JobCard({
         )}
       </div>
 
-      {/* ================= ACTIONS ================= */}
+      {/* ACTIONS */}
       <div className="flex flex-col items-end justify-between gap-2">
         {/* SAVE */}
         <button
