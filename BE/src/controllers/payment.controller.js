@@ -1,15 +1,6 @@
-/**
- * NOTE:
- * Module mô phỏng thanh toán VietQR cho mục đích học thuật (luận văn).
- * KHÔNG kết nối ngân hàng thật, KHÔNG phát sinh giao dịch tài chính.
- */
+
 
 const db = require("../config/db");
-
-/* =====================
-   DEMO IN-MEMORY STORE
-===================== */
-// Lưu tạm giao dịch để demo (không dùng DB thật)
 const demoPayments = {};
 
 /* =====================
@@ -31,7 +22,7 @@ const PACKAGES = {
   premium: {
     name: "Gói Cao Cấp",
     price: 300000,
-    postLimit: -1, // không giới hạn
+    postLimit: -1,
     durationDays: 30,
   },
 };
@@ -52,13 +43,8 @@ exports.createVietQRPayment = async (req, res) => {
 
     const orderId = "VIETQR_" + Date.now();
 
-    /* =====================
-       TRANSFER INFO (REALISTIC)
-    ===================== */
-    // Nội dung chuyển tiền (chuẩn đối soát ngân hàng)
     const transferContent = `JOBFINDER ${packageId.toUpperCase()} U${req.user.id} ${orderId}`;
 
-    // Tên người nhận (demo)
     const accountName = "CONG TY JOBFINDER (DEMO)";
 
     /* =====================
@@ -131,7 +117,7 @@ exports.approvePayment = async (req, res) => {
     const now = new Date();
 
     /* =====================
-       1️⃣ GET EMPLOYER
+       GET EMPLOYER
     ===================== */
     const [rows] = await db.execute(
       `
@@ -152,7 +138,6 @@ exports.approvePayment = async (req, res) => {
 
     const employer = rows[0];
 
-    // ✅ mysql2 đã parse JSON
     const history = Array.isArray(employer.payment_history)
       ? employer.payment_history
       : [];
@@ -165,10 +150,9 @@ exports.approvePayment = async (req, res) => {
     let newJobPostUsed = employer.job_post_used || 0;
 
     /* =====================
-       2️⃣ CỘNG DỒN / RESET
+       CỘNG DỒN / RESET
     ===================== */
     if (lastPackage && new Date(lastPackage.expiredAt) > now) {
-      // ✅ CÒN HẠN → GIA HẠN + CỘNG QUOTA
       newExpiredAt = new Date(
         new Date(lastPackage.expiredAt).getTime() +
           payment.durationDays * 86400000
@@ -177,7 +161,6 @@ exports.approvePayment = async (req, res) => {
       newJobPostLimit =
         (employer.job_post_limit || 0) + payment.postLimit;
     } else {
-      // ❌ HẾT HẠN → RESET
       newExpiredAt = new Date(
         now.getTime() + payment.durationDays * 86400000
       );
@@ -187,14 +170,14 @@ exports.approvePayment = async (req, res) => {
     }
 
     /* =====================
-       3️⃣ UPDATE PAYMENT (DEMO)
+    UPDATE PAYMENT (DEMO)
     ===================== */
     payment.status = "SUCCESS";
     payment.approvedAt = now;
     payment.expiredAt = newExpiredAt;
 
     /* =====================
-       4️⃣ PUSH HISTORY
+       PUSH HISTORY
     ===================== */
     const paymentHistoryItem = {
       orderId: payment.orderId,
@@ -212,7 +195,7 @@ exports.approvePayment = async (req, res) => {
     history.push(paymentHistoryItem);
 
     /* =====================
-       5️⃣ UPDATE EMPLOYER
+       UPDATE EMPLOYER
     ===================== */
     await db.execute(
       `
@@ -229,7 +212,7 @@ exports.approvePayment = async (req, res) => {
         now,
         newJobPostLimit,
         newJobPostUsed,
-        JSON.stringify(history), // ✅ stringify 1 lần DUY NHẤT
+        JSON.stringify(history),
         payment.userId,
       ]
     );

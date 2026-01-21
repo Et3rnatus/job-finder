@@ -53,7 +53,7 @@ exports.getProfile = async (req, res) => {
       bio: candidate.bio,
       gender: candidate.gender,
       date_of_birth: candidate.date_of_birth,
-      candidate_image: candidate.candidate_image, // ✅ THÊM
+      candidate_image: candidate.candidate_image,
       is_profile_completed: candidate.is_profile_completed,
       skills,
       education,
@@ -137,7 +137,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // ✅ Validate ngày sinh
+    // Validate ngày sinh
     const dob = new Date(date_of_birth);
     if (isNaN(dob.getTime())) {
       return res.status(400).json({
@@ -145,7 +145,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // ✅ Validate giới tính
+    // Validate giới tính
     const allowedGenders = ["Nam", "Nữ", "Khác"];
     if (gender && !allowedGenders.includes(gender)) {
       return res.status(400).json({
@@ -153,7 +153,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // ✅ Validate số điện thoại (VN)
+    // Validate số điện thoại (VN)
     const phoneRegex = /^(0\d{9}|\+84\d{9})$/;
     if (!phoneRegex.test(contact_number.trim())) {
       return res.status(400).json({
@@ -162,14 +162,14 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // ✅ Validate skills
+    // Validate skills
     if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
         message: "Vui lòng chọn ít nhất một kỹ năng",
       });
     }
 
-    // ✅ Validate education
+    // Validate education
     if (!Array.isArray(education) || education.length === 0) {
       return res.status(400).json({
         message: "Vui lòng nhập ít nhất một học vấn",
@@ -186,7 +186,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // ✅ Validate skill tồn tại trong DB
+    // Validate skill tồn tại trong DB
     const [skillRows] = await connection.query(
       "SELECT id FROM skill WHERE id IN (?)",
       [skills]
@@ -203,7 +203,6 @@ exports.updateProfile = async (req, res) => {
     ===================== */
     await connection.beginTransaction();
 
-    /* Update candidate */
     await connection.query(
       `
       UPDATE candidate
@@ -227,7 +226,6 @@ exports.updateProfile = async (req, res) => {
       ]
     );
 
-    /* Update skills */
     await connection.query(
       "DELETE FROM candidate_skill WHERE candidate_id = ?",
       [candidate.id]
@@ -243,7 +241,6 @@ exports.updateProfile = async (req, res) => {
       [skillValues]
     );
 
-    /* Update education */
     await connection.query(
       "DELETE FROM education WHERE candidate_id = ?",
       [candidate.id]
@@ -267,7 +264,6 @@ exports.updateProfile = async (req, res) => {
       );
     }
 
-    /* Update work experience */
     await connection.query(
       "DELETE FROM work_experience WHERE candidate_id = ?",
       [candidate.id]

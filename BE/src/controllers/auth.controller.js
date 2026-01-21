@@ -149,7 +149,6 @@ exports.login = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        // ✅ QUAN TRỌNG: chỉ employer mới có premium
         is_premium: user.role === 'employer' ? user.is_premium ?? 0 : null,
       },
     });
@@ -224,8 +223,7 @@ exports.forgotPassword = async (req, res) => {
       'SELECT id FROM users WHERE email = ? LIMIT 1',
       [email]
     );
-
-    // 🔒 Che việc email có tồn tại hay không
+    
     if (rows.length === 0) {
       return res.status(200).json({
         success: true,

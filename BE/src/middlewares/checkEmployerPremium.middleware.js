@@ -2,7 +2,6 @@ const db = require("../config/db");
 
 exports.checkEmployerPremium = async (req, res, next) => {
   try {
-    // Không phải employer thì bỏ qua
     if (req.user.role !== "employer") return next();
 
     const [rows] = await db.execute(

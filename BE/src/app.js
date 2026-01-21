@@ -22,10 +22,8 @@ const app = express();
    GLOBAL MIDDLEWARE
 ===================== */
 app.use(cors());
-
-// 🔥 QUAN TRỌNG: PARSE TẤT CẢ BODY
 app.use(express.json()); // application/json
-app.use(express.urlencoded({ extended: true })); // form-data / x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
 
 /* =====================
    ROUTES

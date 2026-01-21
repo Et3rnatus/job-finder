@@ -1,6 +1,6 @@
 const db = require("../config/db");
 
-// GET /api/categories
+// lay cung nganh nghe hien co
 exports.getActiveCategories = async (req, res) => {
   try {
     const [rows] = await db.execute(`

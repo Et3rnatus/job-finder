@@ -60,9 +60,6 @@ router.put(
   employerController.updateEmployerLogo
 );
 
-/* =====================
-   🔥 PAYMENT HISTORY
-===================== */
 router.get(
   "/payment-history",
   verifyToken,

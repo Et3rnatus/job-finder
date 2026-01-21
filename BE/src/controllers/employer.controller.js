@@ -42,7 +42,6 @@ exports.updateProfile = async (req, res) => {
       [userId]
     );
 
-    // Nếu đã có license rồi → không cho sửa
     if (existing?.business_license) {
       return res.status(400).json({
         message: "Giấy phép kinh doanh chỉ được nhập một lần và không thể chỉnh sửa",
@@ -82,7 +81,6 @@ exports.updateProfile = async (req, res) => {
         ]
       );
     } catch (err) {
-      // Bắt lỗi UNIQUE từ MySQL
       if (err.code === "ER_DUP_ENTRY") {
         return res.status(400).json({
           message: "Giấy phép kinh doanh đã tồn tại trong hệ thống",
@@ -297,7 +295,7 @@ exports.resubmitJob = async (req, res) => {
 
 exports.updateEmployerLogo = async (req, res) => {
   try {
-    const user = req.user; // 👈 dùng user từ authMiddleware
+    const user = req.user;
 
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -330,7 +328,6 @@ exports.updateEmployerLogo = async (req, res) => {
 ===================== */
 exports.getPaymentHistory = async (req, res) => {
   try {
-    // req.user.id lấy từ JWT middleware
     const userId = req.user.id;
 
     const [rows] = await db.execute(
@@ -392,10 +389,8 @@ exports.getPackageStatus = async (req, res) => {
     let history = [];
 
     if (Array.isArray(row.payment_history)) {
-      // ✅ MySQL JSON column (mysql2 auto-parse)
       history = row.payment_history;
     } else if (typeof row.payment_history === "string") {
-      // ⚠️ fallback nếu DB cũ / data bẩn
       try {
         history = JSON.parse(row.payment_history);
       } catch (err) {
@@ -404,9 +399,6 @@ exports.getPackageStatus = async (req, res) => {
       }
     }
 
-    /* =====================
-       CURRENT PACKAGE
-    ===================== */
     let currentPackage = null;
 
     if (history.length > 0) {

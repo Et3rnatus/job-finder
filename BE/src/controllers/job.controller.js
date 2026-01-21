@@ -1,12 +1,4 @@
-/*
-|--------------------------------------------------------------------------
-| CREATE JOB (EMPLOYER)
-|--------------------------------------------------------------------------
-| - 1 job chỉ thuộc 1 category
-| - job có nhiều skill
-| - skill phải thuộc category của job
-| - status mặc định: pending
-*/
+
 const db = require("../config/db");
 
 exports.createJob = async (req, res) => {
@@ -120,9 +112,6 @@ exports.createJob = async (req, res) => {
       }
     }
 
-    /* =========================
-       VALIDATE PREFERRED
-    ========================= */
     const allowedGender = ["any", "male", "female"];
     if (
       preferred_gender &&
@@ -337,7 +326,7 @@ const isOtherCategory =
 exports.getAllJobs = async (req, res) => {
   try {
     const { keyword, city } = req.query;
-    const user = req.user; // có thể undefined nếu public
+    const user = req.user;
 
     let sql = `
       SELECT
@@ -352,7 +341,6 @@ exports.getAllJobs = async (req, res) => {
         jc.name AS category_name,
         e.company_name,
 
-        -- ✅ ĐÚNG THEO DB
         e.logo,
 
         ${
@@ -450,16 +438,7 @@ exports.getAllJobs = async (req, res) => {
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| FILTER JOBS (PUBLIC)
-|--------------------------------------------------------------------------
-| Query:
-| - categoryIds=1,2
-| - skillIds=3,5
-| - keyword=backend
-| - city=Hà Nội
-*/
+
 exports.filterJobs = async (req, res) => {
   try {
     const { categoryIds, skillIds, keyword, city } = req.query;

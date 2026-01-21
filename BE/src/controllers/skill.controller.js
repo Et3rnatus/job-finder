@@ -1,14 +1,10 @@
 const db = require("../config/db");
 
-/**
- * GET /api/skills/by-category/:categoryId
- * Skill theo ngành nghề (cho JOB)
- */
 exports.getSkillsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
 
-    // 🔹 Lấy category "Khác"
+    
     const [[otherCategory]] = await db.execute(
       `SELECT id FROM job_category WHERE name = 'Khác' LIMIT 1`
     );
@@ -20,7 +16,7 @@ exports.getSkillsByCategory = async (req, res) => {
     let params = [];
 
     if (isOtherCategory) {
-      // 👉 "Khác" → CHỈ soft skill
+      
       query = `
         SELECT id, name
         FROM skill
@@ -28,7 +24,7 @@ exports.getSkillsByCategory = async (req, res) => {
         ORDER BY name ASC
       `;
     } else {
-      // 👉 Ngành cụ thể → technical theo ngành + soft skill
+      
       query = `
         SELECT id, name
         FROM skill
@@ -48,10 +44,6 @@ exports.getSkillsByCategory = async (req, res) => {
   }
 };
 
-/**
- * GET /api/skills
- * Toàn bộ skills (cho CANDIDATE)
- */
 exports.getAllSkills = async (req, res) => {
   try {
     const [rows] = await db.execute(`

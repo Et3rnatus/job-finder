@@ -23,7 +23,7 @@ exports.dashboard = async (req, res) => {
       "SELECT COUNT(*) AS total FROM job WHERE status = 'rejected'"
     );
 
-    // ⭐ JOB HẾT HẠN
+    // JOB HẾT HẠN
     const [[expiredJobs]] = await db.execute(
       `
       SELECT COUNT(*) AS total
@@ -40,7 +40,7 @@ exports.dashboard = async (req, res) => {
       pending_jobs: pendingJobs.total,
       approved_jobs: approvedJobs.total,
       rejected_jobs: rejectedJobs.total,
-      expired_jobs: expiredJobs.total, // ⭐ thêm
+      expired_jobs: expiredJobs.total, 
     });
   } catch (err) {
     console.error("ADMIN DASHBOARD ERROR:", err);
@@ -84,7 +84,7 @@ exports.getJobTrends = async (req, res) => {
 };
 
 
-//USERS MANAGEMENT
+//api lay danh sach nguoi dung
 exports.getUsers = async (req, res) => {
   try {
     const [rows] = await db.execute(`
@@ -100,6 +100,7 @@ exports.getUsers = async (req, res) => {
   }
 };
 
+// cap nhat trang thai nguoi dung
 exports.updateUserStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -137,7 +138,7 @@ exports.updateUserStatus = async (req, res) => {
 };
 
 
-//JOB MODERATION
+//quan ly job
 exports.getJobs = async (req, res) => {
   try {
     const { status } = req.query;
@@ -175,7 +176,7 @@ exports.getJobs = async (req, res) => {
 };
 
 
-//APPROVE / REJECT JOB
+//duyet job
 exports.approveJob = async (req, res) => {
   const { id } = req.params;
 
@@ -183,7 +184,6 @@ exports.approveJob = async (req, res) => {
     return res.status(403).json({ message: "Admin only" });
   }
 
-  // 1️⃣ Lấy employer user_id + job title
   const [[job]] = await db.execute(
     `
     SELECT u.id AS employer_user_id, j.title
@@ -199,7 +199,6 @@ exports.approveJob = async (req, res) => {
     return res.status(404).json({ message: "Job not found" });
   }
 
-  // 2️⃣ Update job
   const [result] = await db.execute(
     `
     UPDATE job
@@ -218,7 +217,6 @@ exports.approveJob = async (req, res) => {
     });
   }
 
-  // 3️⃣ Tạo notification cho employer
   await db.execute(
     `
     INSERT INTO notification (user_id, type, title, message, related_id)
@@ -232,12 +230,10 @@ exports.approveJob = async (req, res) => {
       id,
     ]
   );
-
-  // 4️⃣ Trả message cho frontend (toast)
   res.json({ message: "Job approved successfully" });
 };
 
-
+// tu choi job
 exports.rejectJob = async (req, res) => {
   const { id } = req.params;
   const { admin_note } = req.body;
@@ -248,7 +244,6 @@ exports.rejectJob = async (req, res) => {
     });
   }
 
-  // 1️⃣ Lấy employer user_id + job title
   const [[job]] = await db.execute(
     `
     SELECT u.id AS employer_user_id, j.title
@@ -264,7 +259,6 @@ exports.rejectJob = async (req, res) => {
     return res.status(404).json({ message: "Job not found" });
   }
 
-  // 2️⃣ Update job
   const [result] = await db.execute(
     `
     UPDATE job
@@ -283,7 +277,6 @@ exports.rejectJob = async (req, res) => {
     });
   }
 
-  // 3️⃣ Tạo notification cho employer
   await db.execute(
     `
     INSERT INTO notification (user_id, type, title, message, related_id)
@@ -304,7 +297,7 @@ exports.rejectJob = async (req, res) => {
 
 
 
-//JOB DETAIL (ADMIN)
+//chi tiet job cho admin
 exports.getJobDetailForAdmin = async (req, res) => {
   const jobId = req.params.id;
 
@@ -343,7 +336,7 @@ exports.getJobDetailForAdmin = async (req, res) => {
 };
 
 
-//CATEGORIES
+// quan ly danh muc
 exports.getCategories = async (req, res) => {
   const [rows] = await db.execute(
     "SELECT id, name, is_active FROM job_category ORDER BY name"
@@ -351,6 +344,7 @@ exports.getCategories = async (req, res) => {
   res.json(rows);
 };
 
+// tao nganh nghe moi
 exports.createCategory = async (req, res) => {
   const { name } = req.body;
   if (!name) {
@@ -373,7 +367,7 @@ exports.toggleCategory = async (req, res) => {
   res.json({ message: "Updated" });
 };
 
-// SKILLS MANAGEMENT
+// quan ly ky nang
 exports.getSkills = async (req, res) => {
   try {
     const { category_id, skill_type } = req.query;
@@ -417,6 +411,7 @@ exports.getSkills = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// tao ky nang moi
 exports.createSkill = async (req, res) => {
   const { name, category_id, skill_type } = req.body;
 
@@ -443,6 +438,7 @@ exports.createSkill = async (req, res) => {
   }
 };
 
+//cap nhat ki nang
 exports.updateSkill = async (req, res) => {
   const { id } = req.params;
   const { name, category_id, skill_type } = req.body;
@@ -501,7 +497,7 @@ exports.deleteSkill = async (req, res) => {
   }
 };
 
-// SKILL STATS
+// lay thong ke tong so ki nang hien co
 exports.getSkillStats = async (req, res) => {
   try {
     const [[total]] = await db.execute(

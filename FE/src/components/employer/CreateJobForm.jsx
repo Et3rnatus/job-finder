@@ -339,22 +339,30 @@ max_salary: salaryNegotiable ? null : parseSalary(form.max_salary),
      SUCCESS
   ===================== */
   if (alert?.type === "success") {
-    return (
-      <div className="bg-white border rounded-3xl p-20 text-center">
-        <CheckCircle2 size={56} className="mx-auto text-emerald-600 mb-4" />
-        <h2 className="text-2xl font-semibold">Đăng tin thành công</h2>
-        <button
-          onClick={() => {
-    setIsDirty(false);
-    navigate("/account/employer");
-  }}
-          className="mt-6 px-10 py-3 bg-emerald-600 text-white rounded-full"
-        >
-          Về trang quản lý
-        </button>
-      </div>
-    );
-  }
+  return (
+    <div className="bg-white border rounded-3xl p-20 text-center">
+      <CheckCircle2 size={56} className="mx-auto text-emerald-600 mb-4" />
+
+      <h2 className="text-2xl font-semibold">
+        Tin tuyển dụng đã được gửi để admin xét duyệt
+      </h2>
+
+      <p className="text-gray-500 mt-2">
+        Tin tuyển dụng sẽ được hiển thị sau khi được admin phê duyệt.
+      </p>
+
+      <button
+        onClick={() => {
+          setIsDirty(false);
+          navigate("/account/employer");
+        }}
+        className="mt-6 px-10 py-3 bg-emerald-600 text-white rounded-full"
+      >
+        Về trang quản lý
+      </button>
+    </div>
+  );
+}
 
   /* =====================
      RENDER

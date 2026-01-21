@@ -63,7 +63,6 @@ exports.saveJob = async (req, res) => {
       message: "Job saved successfully",
     });
   } catch (error) {
-    // 🔁 Save trùng
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(400).json({
         message: "Job already saved",

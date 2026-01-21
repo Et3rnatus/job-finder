@@ -16,7 +16,6 @@ exports.applyJob = async (req, res) => {
       return res.status(400).json({ message: "Job id is required" });
     }
 
-    // ✅ Lấy candidate theo schema
     const [[candidate]] = await connection.execute(
       "SELECT id FROM candidate WHERE user_id = ?",
       [userId]
@@ -56,8 +55,8 @@ exports.applyJob = async (req, res) => {
         message: "Công việc đã hết hạn tuyển dụng",
       });
     }
-
-    // ❗ UNIQUE (candidate_id, job_id) → chỉ cho apply 1 lần
+    
+    // chi cho apply 1 lan
     const [[existed]] = await connection.execute(
       `
       SELECT id
@@ -204,9 +203,7 @@ exports.checkAppliedJob = async (req, res) => {
     res.status(500).json({ applied: false });
   }
 };
-/* =========================
-   GET MY APPLICATIONS
-========================= */
+// xem thong tin ung tuyen
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -245,9 +242,7 @@ exports.getMyApplications = async (req, res) => {
   }
 };
 
-/* =========================
-   CANCEL APPLICATION
-========================= */
+// huy ung tuyen
 exports.cancelApplication = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -297,9 +292,7 @@ exports.cancelApplication = async (req, res) => {
   }
 };
 
-/* =========================
-   GET APPLICANTS BY JOB
-========================= */
+// lay so ung vien ung tuyen cua job
 exports.getApplicantsByJob = async (req, res) => {
   try {
     const employerUserId = req.user.id;
@@ -339,9 +332,7 @@ exports.getApplicantsByJob = async (req, res) => {
   }
 };
 
-/* =========================
-   GET APPLICATION DETAIL
-========================= */
+// lay chi tiet application
 exports.getApplicationDetail = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -380,9 +371,7 @@ exports.getApplicationDetail = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE RESULT AFTER INTERVIEW
-========================= */
+// cap nhat ket qua, sau phong van
 exports.updateApplicationStatus = async (req, res) => {
   const connection = await db.getConnection();
 
@@ -401,7 +390,6 @@ exports.updateApplicationStatus = async (req, res) => {
 
     await connection.beginTransaction();
 
-    // Check application + permission
     const [[row]] = await connection.execute(
       `
       SELECT
@@ -425,7 +413,6 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    // ❌ Đã kết thúc thì không xử lý nữa
     if (["approved", "rejected", "cancelled"].includes(row.status)) {
       await connection.rollback();
       return res.status(400).json({
@@ -433,7 +420,6 @@ exports.updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // ❌ Không cho approve khi chưa phỏng vấn
     if (status === "approved" && row.status !== "interview") {
       await connection.rollback();
       return res.status(400).json({
@@ -441,7 +427,6 @@ exports.updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // Update status
     await connection.execute(
       `
       UPDATE application
@@ -492,9 +477,7 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
-/* =========================
-   INVITE TO INTERVIEW
-========================= */
+// moi phong van
 exports.inviteToInterview = async (req, res) => {
   const connection = await db.getConnection();
 
@@ -516,7 +499,7 @@ exports.inviteToInterview = async (req, res) => {
       SELECT
         a.id,
         a.status,
-        a.job_id, -- ✅ LẤY job_id (INT)
+        a.job_id,
         c.full_name,
         c.user_id AS candidate_user_id,
         u.email,
@@ -543,7 +526,6 @@ exports.inviteToInterview = async (req, res) => {
       });
     }
 
-    // Update application
     await connection.execute(
       `
       UPDATE application
@@ -563,7 +545,6 @@ exports.inviteToInterview = async (req, res) => {
       ]
     );
 
-    // 🔔 NOTIFY CANDIDATE (IN-APP)
     await connection.execute(
       `
       INSERT INTO notification (user_id, type, title, message, related_id)
@@ -574,13 +555,12 @@ exports.inviteToInterview = async (req, res) => {
         `Bạn được mời phỏng vấn cho vị trí "${app.job_title}". 
 ⏰ Thời gian: ${interview_time}
 📍 Địa điểm: ${interview_location}`,
-        app.job_id, // ✅ INT — KHÔNG UUID
+        app.job_id,
       ]
     );
 
     await connection.commit();
 
-    // 📧 SEND EMAIL (KHÔNG ẢNH HƯỞNG TRANSACTION)
     try {
       await transporter.sendMail({
         from: `"JobFinder" <no-reply@jobfinder.dev>`,
@@ -610,9 +590,7 @@ exports.inviteToInterview = async (req, res) => {
 
 
 
-/* =========================
-   DELETE ALL APPLICATION HISTORY (SOFT DELETE)
-========================= */
+// quan ly lich su ung tuyen
 exports.deleteApplicationHistory = async (req, res) => {
   try {
     const userId = req.user.id;

@@ -6,7 +6,6 @@ const db = require("../config/db");
 
 exports.checkJobPostQuota = async (req, res, next) => {
   try {
-    // chỉ áp dụng cho employer
     if (req.user.role !== "employer") {
       return next();
     }
@@ -33,7 +32,6 @@ exports.checkJobPostQuota = async (req, res, next) => {
 
     const employer = rows[0];
 
-    // ❌ Chưa từng mua gói
     if (
       !Array.isArray(employer.payment_history) ||
       employer.payment_history.length === 0
@@ -44,14 +42,12 @@ exports.checkJobPostQuota = async (req, res, next) => {
       });
     }
 
-    // 📦 Gói mới nhất
     const latestPackage =
       employer.payment_history[employer.payment_history.length - 1];
 
     const now = new Date();
     const expiredAt = new Date(latestPackage.expiredAt);
 
-    // ❌ Gói hết hạn
     if (expiredAt <= now) {
       return res.status(403).json({
         message: "Gói dịch vụ đã hết hạn",
@@ -59,12 +55,10 @@ exports.checkJobPostQuota = async (req, res, next) => {
       });
     }
 
-    // ♾️ Không giới hạn
     if (employer.job_post_limit === -1) {
       return next();
     }
 
-    // ❌ Hết quota
     if (employer.job_post_used >= employer.job_post_limit) {
       return res.status(403).json({
         message: "Bạn đã sử dụng hết số tin đăng của gói hiện tại",
@@ -72,7 +66,6 @@ exports.checkJobPostQuota = async (req, res, next) => {
       });
     }
 
-    // ✅ OK
     next();
   } catch (error) {
     console.error("CHECK JOB POST QUOTA ERROR:", error);

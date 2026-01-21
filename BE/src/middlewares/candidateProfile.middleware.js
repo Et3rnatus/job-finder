@@ -60,7 +60,6 @@ exports.requireCompletedCandidateProfile = async (req, res, next) => {
     });
   }
 
-  // 🔑 QUAN TRỌNG NHẤT
   req.candidate = candidate;
 
   next();

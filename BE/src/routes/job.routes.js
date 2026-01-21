@@ -21,7 +21,7 @@ router.post(
 
 router.get("/filter", jobController.filterJobs);
 
-// employer đóng job ✅ (THÊM)
+// employer đóng job
 router.patch(
   '/:id/close',
   verifyToken,

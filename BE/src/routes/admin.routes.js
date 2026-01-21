@@ -8,15 +8,10 @@ const {
 
 const adminController = require("../controllers/admin.controller");
 
-/* =====================================
-   ADMIN AUTH (GLOBAL)
-===================================== */
+
 router.use(verifyToken);
 router.use(requireRole("admin"));
 
-/* =====================================
-   DASHBOARD
-===================================== */
 
 // GET /api/admin/dashboard
 router.get("/dashboard", adminController.dashboard);
@@ -27,9 +22,6 @@ router.get(
   adminController.getJobTrends
 );
 
-/* =====================================
-   USER MANAGEMENT
-===================================== */
 
 // GET /api/admin/users
 router.get("/users", adminController.getUsers);
@@ -40,9 +32,7 @@ router.patch(
   adminController.updateUserStatus
 );
 
-/* =====================================
-   JOB MODERATION
-===================================== */
+
 
 // GET /api/admin/jobs?status=pending
 router.get("/jobs", adminController.getJobs);
@@ -65,9 +55,7 @@ router.patch(
   adminController.rejectJob
 );
 
-/* =====================================
-   JOB CATEGORIES
-===================================== */
+
 
 // GET /api/admin/categories
 router.get(

@@ -1,9 +1,6 @@
 const db = require("../config/db");
 
-/**
- * GET /api/notifications
- * User lấy danh sách thông báo của mình
- */
+
 exports.getMyNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -33,10 +30,7 @@ exports.getMyNotifications = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/notifications/:id/read
- * Đánh dấu thông báo đã đọc
- */
+
 exports.markAsRead = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -64,10 +58,7 @@ exports.markAsRead = async (req, res) => {
   }
 };
 
-/**
- * GET /api/notifications/unread-count
- * Lấy số lượng thông báo chưa đọc
- */
+
 exports.getUnreadCount = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -88,10 +79,7 @@ exports.getUnreadCount = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/notifications/read-all
- * Đánh dấu tất cả thông báo đã đọc
- */
+
 exports.markAllAsRead = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -112,10 +100,7 @@ exports.markAllAsRead = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/notifications/read
- * Xóa toàn bộ thông báo ĐÃ ĐỌC của user
- */
+
 exports.deleteReadNotifications = async (req, res) => {
   try {
     const userId = req.user.id;

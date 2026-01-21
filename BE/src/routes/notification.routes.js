@@ -5,8 +5,7 @@ const notificationController = require("../controllers/notification.controller")
 const { verifyToken, requireRole } = require("../middlewares/auth.middleware");
 
 /**
- * GET /api/notifications/me
- * Employer & Candidate xem danh sách thông báo
+ Employer & Candidate xem danh sách thông báo
  */
 router.get(
   "/me",
@@ -16,7 +15,6 @@ router.get(
 );
 
 /**
- * PATCH /api/notifications/:id/read
  * Đánh dấu 1 thông báo đã đọc
  */
 router.patch(
@@ -27,7 +25,6 @@ router.patch(
 );
 
 /**
- * PATCH /api/notifications/read-all
  * Đánh dấu TẤT CẢ thông báo đã đọc
  */
 router.patch(
@@ -38,7 +35,6 @@ router.patch(
 );
 
 /**
- * DELETE /api/notifications/read
  * XÓA TẤT CẢ THÔNG BÁO ĐÃ ĐỌC
  */
 router.delete(

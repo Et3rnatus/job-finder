@@ -45,7 +45,7 @@ router.patch(
   applicationController.cancelApplication
 );
 
-// 🗑 DELETE ALL APPLICATION HISTORY (SOFT DELETE)
+//  DELETE ALL APPLICATION HISTORY (SOFT DELETE)
 router.delete(
   "/history",
   verifyToken,

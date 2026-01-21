@@ -25,15 +25,10 @@ exports.verifyToken = async (req, res, next) => {
   const token = parts[1];
 
   try {
-    /* =====================
-       1️⃣ VERIFY TOKEN
-    ===================== */
+    
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    /* =====================
-       2️⃣ CHECK USER IN DB
-       🔥 QUAN TRỌNG NHẤT
-    ===================== */
+    
     const [rows] = await db.execute(
       `
       SELECT 
@@ -56,18 +51,14 @@ exports.verifyToken = async (req, res, next) => {
 
     const user = rows[0];
 
-    /* =====================
-       3️⃣ CHECK STATUS
-    ===================== */
+    
     if (user.status !== "active") {
       return res.status(401).json({
         message: "Tài khoản đã bị khóa",
       });
     }
 
-    /* =====================
-       4️⃣ ATTACH USER
-    ===================== */
+    
     req.user = {
       id: user.id,
       email: user.email,
