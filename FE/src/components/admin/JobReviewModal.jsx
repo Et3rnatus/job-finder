@@ -70,7 +70,7 @@ export default function JobReviewModal({
     setSubmitting(true);
     const res = await approveJob(jobId);
 
-    toast.success(res.message || "Duyệt tin thành công"); // ✅ TOAST
+    toast.success(res.message || "Duyệt tin thành công");
 
     onSuccess?.();
     onClose();
